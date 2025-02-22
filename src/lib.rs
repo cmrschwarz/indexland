@@ -40,6 +40,7 @@
 #![allow(clippy::missing_panics_doc)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::return_self_not_must_use)]
+#![allow(clippy::module_name_repetitions)]
 
 pub mod debuggable_nonmax;
 pub mod index_slice;
