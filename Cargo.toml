@@ -10,7 +10,7 @@ authors.workspace = true
 repository.workspace = true
 
 categories = ["data-structures", "memory-management", "rust-patterns"]
-keywords = ["index", "collection", "container", "vec", "slice", "array"]
+keywords = ["index", "collection", "container", "vec", "slice"]
 
 description = "collections based on newtype indices"
 
