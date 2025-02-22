@@ -35,31 +35,31 @@ pub struct UniverseMultiRefMutHandout<'a, I, T, const CAP: usize> {
     handed_out: ArrayVec<I, CAP>,
 }
 
-pub unsafe trait RefHandoutStack<I, T> {
-    type Child<'b>: RefHandoutStack<I, T>
+pub unsafe trait UniverseRefHandoutStack<I, T> {
+    type Child<'b>: UniverseRefHandoutStack<I, T>
     where
         Self: 'b;
     fn claim(&mut self, idx: I) -> (Self::Child<'_>, &mut T);
     fn assert_unused(&mut self, idx: I) -> NonNull<UniverseEntry<I, T>>;
 }
 
-pub struct RefHandoutStackNode<'a, I, T, P> {
+pub struct UniverseRefHandoutStackNode<'a, I, T, P> {
     base: &'a mut P,
     id: I,
     _phantom: PhantomData<fn() -> T>,
 }
 
-pub struct RefHandoutStackBase<'a, I, T> {
+pub struct UniverseRefHandoutStackBase<'a, I, T> {
     universe_data: NonNull<UniverseEntry<I, T>>,
     len: usize,
     _phantom: PhantomData<&'a mut Universe<I, T>>,
 }
 
-unsafe impl<I: IndexingType, T> RefHandoutStack<I, T>
-    for RefHandoutStackBase<'_, I, T>
+unsafe impl<I: IndexingType, T> UniverseRefHandoutStack<I, T>
+    for UniverseRefHandoutStackBase<'_, I, T>
 {
     type Child<'b>
-        = RefHandoutStackNode<'b, I, T, Self>
+        = UniverseRefHandoutStackNode<'b, I, T, Self>
     where
         Self: 'b;
 
@@ -70,7 +70,7 @@ unsafe impl<I: IndexingType, T> RefHandoutStack<I, T>
         let UniverseEntry::Occupied(elem) = elem else {
             panic!("attempted to claim vacant universe entry")
         };
-        let child = RefHandoutStackNode {
+        let child = UniverseRefHandoutStackNode {
             base: self,
             id,
             _phantom: PhantomData,
@@ -84,11 +84,12 @@ unsafe impl<I: IndexingType, T> RefHandoutStack<I, T>
     }
 }
 
-unsafe impl<I: IndexingType, T, P: RefHandoutStack<I, T>> RefHandoutStack<I, T>
-    for RefHandoutStackNode<'_, I, T, P>
+unsafe impl<I: IndexingType, T, P: UniverseRefHandoutStack<I, T>>
+    UniverseRefHandoutStack<I, T>
+    for UniverseRefHandoutStackNode<'_, I, T, P>
 {
     type Child<'b>
-        = RefHandoutStackNode<'b, I, T, Self>
+        = UniverseRefHandoutStackNode<'b, I, T, Self>
     where
         Self: 'b;
 
@@ -100,7 +101,7 @@ unsafe impl<I: IndexingType, T, P: RefHandoutStack<I, T>> RefHandoutStack<I, T>
             panic!("attempted to claim vacant universe entry")
         };
 
-        let child = RefHandoutStackNode {
+        let child = UniverseRefHandoutStackNode {
             base: self,
             id,
             _phantom: PhantomData,
@@ -143,8 +144,10 @@ impl<I: IndexingType, T> Universe<I, T> {
     ) -> UniverseMultiRefMutHandout<I, T, CAP> {
         UniverseMultiRefMutHandout::new(self)
     }
-    pub fn ref_mut_handout_stack(&mut self) -> RefHandoutStackBase<I, T> {
-        RefHandoutStackBase {
+    pub fn ref_mut_handout_stack(
+        &mut self,
+    ) -> UniverseRefHandoutStackBase<I, T> {
+        UniverseRefHandoutStackBase {
             len: self.data.len(),
             universe_data: NonNull::new(self.data.as_mut_ptr()).unwrap(),
             _phantom: PhantomData,

@@ -90,19 +90,21 @@ impl<I: IndexingType, T> StableUniverse<I, T> {
             base: self.data.iter(),
         }
     }
-    pub fn iter_mut(&mut self) -> UniverseIterMut<I, T> {
-        UniverseIterMut {
+    pub fn iter_mut(&mut self) -> StableUniverseIterMut<I, T> {
+        StableUniverseIterMut {
             base: self.data.iter_mut(),
         }
     }
-    pub fn iter_enumerated(&self) -> UniverseEnumeratedIter<I, T> {
-        UniverseEnumeratedIter {
+    pub fn iter_enumerated(&self) -> StableUniverseEnumeratedIter<I, T> {
+        StableUniverseEnumeratedIter {
             base: &self.data,
             idx: I::from_usize(0),
         }
     }
-    pub fn iter_enumerated_mut(&mut self) -> UniverseEnumeratedIterMut<I, T> {
-        UniverseEnumeratedIterMut {
+    pub fn iter_enumerated_mut(
+        &mut self,
+    ) -> StabaleUniverseEnumeratedIterMut<I, T> {
+        StabaleUniverseEnumeratedIterMut {
             base: &mut self.data,
             idx: I::from_usize(0),
         }
@@ -340,7 +342,7 @@ impl<I: IndexingType, T> Iterator for StableUniverseIndexIter<'_, I, T> {
     }
 }
 
-pub struct UniverseIterMut<'a, I, T> {
+pub struct StableUniverseIterMut<'a, I, T> {
     base: StableVecIterMut<
         'a,
         UnsafeCell<UniverseEntry<I, T>>,
@@ -348,7 +350,7 @@ pub struct UniverseIterMut<'a, I, T> {
     >,
 }
 
-impl<'a, I, T> Iterator for UniverseIterMut<'a, I, T> {
+impl<'a, I, T> Iterator for StableUniverseIterMut<'a, I, T> {
     type Item = &'a mut T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -377,7 +379,7 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a StableUniverse<I, T> {
 
 impl<'a, I: IndexingType, T> IntoIterator for &'a mut StableUniverse<I, T> {
     type Item = &'a mut T;
-    type IntoIter = UniverseIterMut<'a, I, T>;
+    type IntoIter = StableUniverseIterMut<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
@@ -385,12 +387,14 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a mut StableUniverse<I, T> {
 }
 
 #[derive(Clone)]
-pub struct UniverseEnumeratedIter<'a, I, T> {
+pub struct StableUniverseEnumeratedIter<'a, I, T> {
     base: &'a StableVec<UnsafeCell<UniverseEntry<I, T>>>,
     idx: I,
 }
 
-impl<'a, I: IndexingType, T> Iterator for UniverseEnumeratedIter<'a, I, T> {
+impl<'a, I: IndexingType, T> Iterator
+    for StableUniverseEnumeratedIter<'a, I, T>
+{
     type Item = (I, &'a T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -406,12 +410,14 @@ impl<'a, I: IndexingType, T> Iterator for UniverseEnumeratedIter<'a, I, T> {
     }
 }
 
-pub struct UniverseEnumeratedIterMut<'a, I, T> {
+pub struct StabaleUniverseEnumeratedIterMut<'a, I, T> {
     base: &'a mut StableVec<UnsafeCell<UniverseEntry<I, T>>>,
     idx: I,
 }
 
-impl<'a, I: IndexingType, T> Iterator for UniverseEnumeratedIterMut<'a, I, T> {
+impl<'a, I: IndexingType, T> Iterator
+    for StabaleUniverseEnumeratedIterMut<'a, I, T>
+{
     type Item = (I, &'a mut T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -476,13 +482,15 @@ impl<I: IndexingType, T> CountedStableUniverse<I, T> {
     pub fn iter(&self) -> StableUniverseIter<I, T> {
         self.universe.iter()
     }
-    pub fn iter_mut(&mut self) -> UniverseIterMut<I, T> {
+    pub fn iter_mut(&mut self) -> StableUniverseIterMut<I, T> {
         self.universe.iter_mut()
     }
-    pub fn iter_enumerated(&self) -> UniverseEnumeratedIter<I, T> {
+    pub fn iter_enumerated(&self) -> StableUniverseEnumeratedIter<I, T> {
         self.universe.iter_enumerated()
     }
-    pub fn iter_enumerated_mut(&mut self) -> UniverseEnumeratedIterMut<I, T> {
+    pub fn iter_enumerated_mut(
+        &mut self,
+    ) -> StabaleUniverseEnumeratedIterMut<I, T> {
         self.universe.iter_enumerated_mut()
     }
     pub fn any_used(&mut self) -> Option<&mut T> {
@@ -573,7 +581,7 @@ impl<'a, I: IndexingType, T> IntoIterator
     for &'a mut CountedStableUniverse<I, T>
 {
     type Item = &'a mut T;
-    type IntoIter = UniverseIterMut<'a, I, T>;
+    type IntoIter = StableUniverseIterMut<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()

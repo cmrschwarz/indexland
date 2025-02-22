@@ -1,3 +1,39 @@
+//! [![github]](https://github.com/cmrschwarz/typeline/tree/main/crates/indexland)&ensp;
+//! [![github-build]](https://github.com/cmrschwarz/typeline/actions/workflows/ci.yml)&ensp;
+//! [![crates-io]](https://crates.io/crates/typeline)&ensp;
+//! [![msrv]](https://crates.io/crates/typeline)&ensp;
+//! [![docs-rs]](https://docs.rs/typeline)&ensp;
+//!
+//! [github]: https://img.shields.io/badge/cmrschwarz/typeline-8da0cb?&labelColor=555555&logo=github
+//! [github-build]: https://github.com/cmrschwarz/typeline/actions/workflows/ci.yml/badge.svg
+//! [crates-io]: https://img.shields.io/crates/v/typeline.svg?logo=rust
+//! [msrv]: https://img.shields.io/crates/msrv/typeline?logo=rust
+//! [docs-rs]: https://img.shields.io/badge/docs.rs-typeline-66c2a5?logo=docs.rs
+//!
+//! Collections based on newtype indices for increased type safety and self
+//! documenting code.
+//!
+//! Part of the [Typeline](https://github.com/cmrschwarz/typeline) project,
+//! not ready for public use yet.
+//!
+//!
+//! # Usage Examles
+//! ```
+//! use indexland::{index_newtype, IndexVec};
+//! index_newtype!{
+//!     struct FooIndex(u32);
+//!     struct BarIndex(u32);
+//! }
+//! struct Foo; //...
+//! struct Bar; //...
+//! struct Baz{
+//!     foos: IndexVec<FooIndex, Foo>,
+//!     bars: IndexVec<FooIndex, Foo>,
+//!     foo_offset: FooIndex,
+//!     // ...
+//! }
+//! ```
+
 #![warn(clippy::pedantic)]
 #![allow(clippy::missing_safety_doc)]
 #![allow(clippy::missing_errors_doc)]
@@ -18,7 +54,18 @@ pub mod stable_vec;
 pub mod temp_vec;
 pub mod universe;
 
+pub use debuggable_nonmax::*;
+pub use index_slice::*;
+pub use index_vec::*;
 pub use indexing_type::*;
+pub use multi_ref_mut_handout::*;
+pub use offset_vec_deque::*;
+pub use phantom_slot::*;
+pub use random_access_container::*;
+pub use stable_universe::*;
+pub use stable_vec::*;
+pub use temp_vec::*;
+pub use universe::*;
 
 use std::ops::{Range, RangeBounds};
 
