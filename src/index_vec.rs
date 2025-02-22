@@ -84,16 +84,16 @@ impl<I: IndexingType, T> IndexVec<I, T> {
         }
     }
     pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
-        self.data.extend(iter)
+        self.data.extend(iter);
     }
     pub fn push(&mut self, v: T) {
-        self.data.push(v)
+        self.data.push(v);
     }
     pub fn pop(&mut self) -> Option<T> {
         self.data.pop()
     }
     pub fn resize_with(&mut self, new_len: usize, f: impl FnMut() -> T) {
-        self.data.resize_with(new_len, f)
+        self.data.resize_with(new_len, f);
     }
 
     pub fn truncate_len(&mut self, len: usize) {

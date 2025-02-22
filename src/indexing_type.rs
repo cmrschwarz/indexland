@@ -136,6 +136,8 @@ impl IndexingType for u8 {
     }
     #[inline(always)]
     fn from_usize(v: usize) -> Self {
+        // TODO: maybe add features where we assert this?
+        #![allow(clippy::cast_possible_truncation)]
         v as Self
     }
     fn wrapping_add(self, other: Self) -> Self {
@@ -157,6 +159,8 @@ impl IndexingType for u16 {
     }
     #[inline(always)]
     fn from_usize(v: usize) -> Self {
+        // TODO: maybe add features where we assert this?
+        #![allow(clippy::cast_possible_truncation)]
         v as Self
     }
     fn wrapping_add(self, other: Self) -> Self {
@@ -178,6 +182,8 @@ impl IndexingType for u32 {
     }
     #[inline(always)]
     fn from_usize(v: usize) -> Self {
+        // TODO: maybe add features where we assert this?
+        #![allow(clippy::cast_possible_truncation)]
         v as Self
     }
     fn wrapping_add(self, other: Self) -> Self {
@@ -196,6 +202,8 @@ impl IndexingType for u64 {
 
     #[inline(always)]
     fn into_usize(self) -> usize {
+        // TODO: maybe add features where we assert this?
+        #![allow(clippy::cast_possible_truncation)]
         self as usize
     }
     #[inline(always)]
@@ -220,10 +228,14 @@ macro_rules! indexing_type_for_nonmax {
 
             #[inline(always)]
             fn into_usize(self) -> usize {
+                // TODO: maybe add features where we assert this?
+                #![allow(clippy::cast_possible_truncation)]
                 self.get() as usize
             }
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
+                // TODO: maybe add features where we assert this?
+                #![allow(clippy::cast_possible_truncation)]
                 $nonmax::new(v as $primitive).unwrap()
             }
             fn wrapping_add(self, other: Self) -> Self {

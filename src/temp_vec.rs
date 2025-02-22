@@ -107,7 +107,7 @@ impl<'a, T, C: TransmutableContainer> BorrowedContainer<'a, T, C> {
     }
 }
 
-impl<'a, T, C: TransmutableContainer> Drop for BorrowedContainer<'a, T, C> {
+impl<T, C: TransmutableContainer> Drop for BorrowedContainer<'_, T, C> {
     #[inline]
     fn drop(&mut self) {
         self.source.reclaim_temp::<T>(std::mem::take(&mut self.vec));

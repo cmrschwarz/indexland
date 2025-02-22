@@ -29,7 +29,7 @@ impl<I: IndexingType, T> RandomAccessContainer<I, T> for IndexVec<I, T> {
         <IndexSlice<I, T>>::last_mut(self)
     }
     fn push(&mut self, v: T) {
-        <IndexVec<I, T>>::push(self, v)
+        <IndexVec<I, T>>::push(self, v);
     }
     fn len(&self) -> usize {
         <IndexSlice<I, T>>::len(self)
@@ -43,7 +43,7 @@ impl<T> RandomAccessContainer<usize, T> for Vec<T> {
         <[T]>::last_mut(self)
     }
     fn push(&mut self, v: T) {
-        <Vec<_>>::push(self, v)
+        <Vec<_>>::push(self, v);
     }
     fn len(&self) -> usize {
         <[T]>::len(self)
@@ -57,7 +57,7 @@ impl<T> RandomAccessContainer<usize, T> for VecDeque<T> {
         self.back_mut()
     }
     fn push(&mut self, v: T) {
-        <VecDeque<_>>::push_back(self, v)
+        <VecDeque<_>>::push_back(self, v);
     }
     fn len(&self) -> usize {
         <VecDeque<_>>::len(self)

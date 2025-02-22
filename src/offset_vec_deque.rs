@@ -111,14 +111,14 @@ impl<I: IndexingType, T> OffsetVecDeque<I, T> {
         self.data.drain(0..count);
     }
     pub fn truncate(&mut self, len: usize) {
-        self.data.truncate(len)
+        self.data.truncate(len);
     }
 
     pub fn drop_front_until(&mut self, id: I) {
         self.drop_front(self.index_to_phys(id));
     }
     pub fn drop_back_until(&mut self, id: I) {
-        self.truncate(self.index_to_phys(id))
+        self.truncate(self.index_to_phys(id));
     }
 
     pub fn get_phys(&self, idx: usize) -> &T {

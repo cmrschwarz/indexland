@@ -146,7 +146,7 @@ impl<T, const CHUNK_SIZE: usize> StableVec<T, CHUNK_SIZE> {
         let chunk_index = self.len.get() / CHUNK_SIZE;
         let offset = self.len.get() % CHUNK_SIZE;
         if chunk_index == self.chunk_capacity.get() {
-            self.reserve(1)
+            self.reserve(1);
         }
         unsafe {
             self.get_chunk_ptr_unchecked(chunk_index)
@@ -207,7 +207,7 @@ impl<T, const CHUNK_SIZE: usize> StableVec<T, CHUNK_SIZE> {
     pub fn extend(&self, iter: impl IntoIterator<Item = T>) {
         // PERF: optimize this
         for elem in iter {
-            self.push(elem)
+            self.push(elem);
         }
     }
 
@@ -288,9 +288,7 @@ pub struct StableVecIter<'a, T, const CHUNK_SIZE: usize> {
     pos: usize,
 }
 
-impl<'a, T, const CHUNK_SIZE: usize> Clone
-    for StableVecIter<'a, T, CHUNK_SIZE>
-{
+impl<T, const CHUNK_SIZE: usize> Clone for StableVecIter<'_, T, CHUNK_SIZE> {
     fn clone(&self) -> Self {
         Self {
             vec: self.vec,

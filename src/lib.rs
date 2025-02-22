@@ -1,5 +1,9 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::missing_safety_doc)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_panics_doc)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::return_self_not_must_use)]
 
 pub mod debuggable_nonmax;
 pub mod index_slice;

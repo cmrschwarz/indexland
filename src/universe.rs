@@ -1,3 +1,5 @@
+#![allow(clippy::match_on_vec_items)]
+
 use std::{
     marker::PhantomData,
     ops::{Index, IndexMut},
@@ -53,15 +55,15 @@ pub struct RefHandoutStackBase<'a, I, T> {
     _phantom: PhantomData<&'a mut Universe<I, T>>,
 }
 
-unsafe impl<'a, I: IndexingType, T> RefHandoutStack<I, T>
-    for RefHandoutStackBase<'a, I, T>
+unsafe impl<I: IndexingType, T> RefHandoutStack<I, T>
+    for RefHandoutStackBase<'_, I, T>
 {
     type Child<'b>
         = RefHandoutStackNode<'b, I, T, Self>
     where
         Self: 'b;
 
-    fn claim<'b>(&'b mut self, id: I) -> (Self::Child<'b>, &'b mut T) {
+    fn claim(&mut self, id: I) -> (Self::Child<'_>, &mut T) {
         let idx = id.into_usize();
         assert!(idx < self.len);
         let elem = unsafe { &mut *self.universe_data.as_ptr().add(idx) };
@@ -82,15 +84,15 @@ unsafe impl<'a, I: IndexingType, T> RefHandoutStack<I, T>
     }
 }
 
-unsafe impl<'a, I: IndexingType, T, P: RefHandoutStack<I, T>>
-    RefHandoutStack<I, T> for RefHandoutStackNode<'a, I, T, P>
+unsafe impl<I: IndexingType, T, P: RefHandoutStack<I, T>> RefHandoutStack<I, T>
+    for RefHandoutStackNode<'_, I, T, P>
 {
     type Child<'b>
         = RefHandoutStackNode<'b, I, T, Self>
     where
         Self: 'b;
 
-    fn claim<'b>(&'b mut self, id: I) -> (Self::Child<'b>, &'b mut T) {
+    fn claim(&mut self, id: I) -> (Self::Child<'_>, &mut T) {
         let idx = id.into_usize();
         let universe_data = self.assert_unused(id);
         let elem = unsafe { &mut *universe_data.as_ptr().add(idx) };
@@ -295,6 +297,7 @@ impl<I: IndexingType, T> Universe<I, T> {
         };
         let range = self.data.as_ptr_range();
         assert!(range.contains(&ptr));
+        #[allow(clippy::cast_sign_loss)]
         I::from_usize(unsafe { ptr.offset_from(range.start) } as usize)
     }
     pub fn get(&self, id: I) -> Option<&T> {
@@ -314,10 +317,10 @@ impl<I: IndexingType, T> Universe<I, T> {
         id1: I,
         id2: I,
     ) -> (Option<&mut T>, Option<&mut T>) {
-        let idx1 = id1.into_usize();
-        let idx2 = id2.into_usize();
+        let id1 = id1.into_usize();
+        let id2 = id2.into_usize();
 
-        let (a, b) = get_two_distinct_mut(&mut self.data, idx1, idx2);
+        let (a, b) = get_two_distinct_mut(&mut self.data, id1, id2);
         (a.as_option_mut(), b.as_option_mut())
     }
     pub fn get_three_distinct_mut(
@@ -326,12 +329,11 @@ impl<I: IndexingType, T> Universe<I, T> {
         id2: I,
         id3: I,
     ) -> (Option<&mut T>, Option<&mut T>, Option<&mut T>) {
-        let idx1 = id1.into_usize();
-        let idx2 = id2.into_usize();
-        let idx3 = id3.into_usize();
+        let id1 = id1.into_usize();
+        let id2 = id2.into_usize();
+        let id3 = id3.into_usize();
 
-        let (a, b, c) =
-            get_three_distinct_mut(&mut self.data, idx1, idx2, idx3);
+        let (a, b, c) = get_three_distinct_mut(&mut self.data, id1, id2, id3);
         (a.as_option_mut(), b.as_option_mut(), c.as_option_mut())
     }
     pub fn two_distinct_mut(&mut self, id1: I, id2: I) -> (&mut T, &mut T) {
@@ -463,7 +465,7 @@ impl<'a, I, T> Iterator for UniverseIter<'a, I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> Iterator for UniverseIndexIter<'a, I, T> {
+impl<I: IndexingType, T> Iterator for UniverseIndexIter<'_, I, T> {
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -581,7 +583,7 @@ impl<I: IndexingType, T> CountedUniverse<I, T> {
     }
     pub fn release(&mut self, id: I) {
         self.occupied_entries -= 1;
-        self.universe.release(id)
+        self.universe.release(id);
     }
     pub fn used_capacity(&mut self) -> usize {
         self.universe.used_capacity()

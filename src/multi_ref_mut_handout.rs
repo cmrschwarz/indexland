@@ -54,8 +54,8 @@ impl<'a, I, T> RefHandoutStackBase<'a, I, T> {
     }
 }
 
-unsafe impl<'a, I: IndexingType, T> RefHandoutStack<I, T>
-    for RefHandoutStackBase<'a, I, T>
+unsafe impl<I: IndexingType, T> RefHandoutStack<I, T>
+    for RefHandoutStackBase<'_, I, T>
 {
     type Child<'b>
         = RefHandoutStackNode<'b, I, T, Self>
@@ -79,8 +79,8 @@ unsafe impl<'a, I: IndexingType, T> RefHandoutStack<I, T>
     }
 }
 
-unsafe impl<'a, I: IndexingType, T, P: RefHandoutStack<I, T>>
-    RefHandoutStack<I, T> for RefHandoutStackNode<'a, I, T, P>
+unsafe impl<I: IndexingType, T, P: RefHandoutStack<I, T>> RefHandoutStack<I, T>
+    for RefHandoutStackNode<'_, I, T, P>
 {
     type Child<'b>
         = RefHandoutStackNode<'b, I, T, Self>

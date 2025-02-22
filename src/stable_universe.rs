@@ -151,7 +151,7 @@ impl<I: IndexingType, T> StableUniverse<I, T> {
                     if next_idx == idx {
                         unsafe {
                             *self.data[vacant_index].get() =
-                                UniverseEntry::Vacant(next_next)
+                                UniverseEntry::Vacant(next_next);
                         };
                         break;
                     }
@@ -177,7 +177,7 @@ impl<I: IndexingType, T> StableUniverse<I, T> {
             let index = id.into_usize();
             match unsafe { &*self.data[index].get() } {
                 UniverseEntry::Vacant(next) => {
-                    self.first_vacant_entry.set(*next)
+                    self.first_vacant_entry.set(*next);
                 }
                 UniverseEntry::Occupied(_) => unreachable!(),
             }
@@ -210,11 +210,11 @@ impl<I: IndexingType, T> StableUniverse<I, T> {
         id1: I,
         id2: I,
     ) -> (Option<&mut T>, Option<&mut T>) {
-        let idx1 = id1.into_usize();
-        let idx2 = id2.into_usize();
+        let id1 = id1.into_usize();
+        let id2 = id2.into_usize();
         let (a, b) = unsafe {
-            let a_ptr = self.data.get_element_pointer_unchecked(idx1);
-            let b_ptr = self.data.get_element_pointer_unchecked(idx2);
+            let a_ptr = self.data.get_element_pointer_unchecked(id1);
+            let b_ptr = self.data.get_element_pointer_unchecked(id2);
             ((*a_ptr).get_mut(), (*b_ptr).get_mut())
         };
         (a.as_option_mut(), b.as_option_mut())
@@ -225,14 +225,14 @@ impl<I: IndexingType, T> StableUniverse<I, T> {
         id2: I,
         id3: I,
     ) -> (Option<&mut T>, Option<&mut T>, Option<&mut T>) {
-        let idx1 = id1.into_usize();
-        let idx2 = id2.into_usize();
-        let idx3 = id3.into_usize();
+        let id1 = id1.into_usize();
+        let id2 = id2.into_usize();
+        let id3 = id3.into_usize();
 
         let (a, b, c) = unsafe {
-            let a_ptr = self.data.get_element_pointer_unchecked(idx1);
-            let b_ptr = self.data.get_element_pointer_unchecked(idx2);
-            let c_ptr = self.data.get_element_pointer_unchecked(idx3);
+            let a_ptr = self.data.get_element_pointer_unchecked(id1);
+            let b_ptr = self.data.get_element_pointer_unchecked(id2);
+            let c_ptr = self.data.get_element_pointer_unchecked(id3);
             ((*a_ptr).get_mut(), (*b_ptr).get_mut(), (*c_ptr).get_mut())
         };
         (a.as_option_mut(), b.as_option_mut(), c.as_option_mut())
@@ -324,7 +324,7 @@ impl<'a, I, T> Iterator for StableUniverseIter<'a, I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> Iterator for StableUniverseIndexIter<'a, I, T> {
+impl<I: IndexingType, T> Iterator for StableUniverseIndexIter<'_, I, T> {
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -489,7 +489,7 @@ impl<I: IndexingType, T> CountedStableUniverse<I, T> {
         self.universe.any_used()
     }
     pub fn reserve_id_with(&self, id: I, func: impl FnOnce() -> T) {
-        self.universe.reserve_id_with(id, func)
+        self.universe.reserve_id_with(id, func);
     }
     pub fn peek_claim_id(&self) -> I {
         self.universe.peek_claim_id()
