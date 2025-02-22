@@ -1,0 +1,20 @@
+[package]
+name = "indexland"
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+description = "collections based on newtype indices"
+
+[lib]
+name = "indexland"
+
+[dependencies]
+ref-cast = "1.0.23"
+arrayvec = "0.7.6"
+derive_more = { version = "2.0.1", features = ["full"] }
