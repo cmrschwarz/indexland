@@ -133,7 +133,7 @@ impl<I: IndexingType, T> IndexVec<I, T> {
         IndexIterEnumerated::new(I::ZERO, self.data.into_iter())
     }
     pub fn indices(&self) -> IndexingTypeRange<I> {
-        IndexingTypeRange::new(I::zero()..self.next_idx())
+        IndexingTypeRange::new(I::ZERO..self.next_idx())
     }
     pub fn capacity(&self) -> usize {
         self.data.capacity()

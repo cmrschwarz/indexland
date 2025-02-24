@@ -175,7 +175,7 @@ impl<I: IndexingType, T> Universe<I, T> {
     }
     pub fn indices(&self) -> UniverseIndexIter<I, T> {
         UniverseIndexIter {
-            index: I::zero(),
+            index: I::ZERO,
             base: self.data.iter(),
         }
     }

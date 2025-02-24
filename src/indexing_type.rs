@@ -36,20 +36,11 @@ pub trait IndexingType:
     fn into_usize(self) -> usize;
     fn wrapping_add(self, other: Self) -> Self;
     fn wrapping_sub(self, other: Self) -> Self;
-    fn zero() -> Self {
-        <Self as IndexingType>::from_usize(0)
-    }
-    fn one() -> Self {
-        <Self as IndexingType>::from_usize(1)
-    }
     fn range_to(&self, end: Self) -> IndexingTypeRange<Self> {
         IndexingTypeRange::new(*self..end)
     }
     fn range_from(&self, start: Self) -> IndexingTypeRange<Self> {
         IndexingTypeRange::new(start..*self)
-    }
-    fn range_from_zero(&self) -> IndexingTypeRange<Self> {
-        self.range_from(Self::zero())
     }
 }
 

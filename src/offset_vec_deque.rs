@@ -48,7 +48,7 @@ impl<I: IndexingType, T> OffsetVecDeque<I, T> {
         index.wrapping_sub(self.offset).into_usize()
     }
     pub fn last_used_index(&self) -> I {
-        self.next_free_index().wrapping_sub(I::one())
+        self.next_free_index().wrapping_sub(I::ONE)
     }
     pub fn next_free_index(&self) -> I {
         self.index_from_phys(self.len())
@@ -99,7 +99,7 @@ impl<I: IndexingType, T> OffsetVecDeque<I, T> {
     }
 
     pub fn pop_front(&mut self) -> Option<T> {
-        self.offset = self.offset.wrapping_add(I::one());
+        self.offset = self.offset.wrapping_add(I::ONE);
         self.data.pop_front()
     }
     pub fn pop_back(&mut self) -> Option<T> {

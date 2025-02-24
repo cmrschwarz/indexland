@@ -81,7 +81,7 @@ impl<I: IndexingType, T> StableUniverse<I, T> {
     }
     pub fn indices(&self) -> StableUniverseIndexIter<I, T> {
         StableUniverseIndexIter {
-            index: I::zero(),
+            index: I::ZERO,
             base: self.data.iter(),
         }
     }

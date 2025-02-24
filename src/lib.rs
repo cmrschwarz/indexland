@@ -154,11 +154,11 @@ pub fn range_bounds_to_range_wrapping<I: IndexingType>(
 ) -> Range<I> {
     let start = match rb.start_bound() {
         std::ops::Bound::Included(i) => *i,
-        std::ops::Bound::Excluded(i) => i.wrapping_add(I::one()),
+        std::ops::Bound::Excluded(i) => i.wrapping_add(I::ONE),
         std::ops::Bound::Unbounded => I::ZERO,
     };
     let end = match rb.end_bound() {
-        std::ops::Bound::Included(i) => i.wrapping_add(I::one()),
+        std::ops::Bound::Included(i) => i.wrapping_add(I::ONE),
         std::ops::Bound::Excluded(i) => *i,
         std::ops::Bound::Unbounded => len,
     };
