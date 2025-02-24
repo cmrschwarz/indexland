@@ -93,7 +93,7 @@ impl<I: Idx, T> IndexSlice<I, T> {
             Box::from_raw(index_box_raw)
         }
     }
-    pub fn next_idx(&self) -> I {
+    pub fn len_idx(&self) -> I {
         I::from_usize(self.data.len())
     }
     pub fn last_idx(&self) -> Option<I> {

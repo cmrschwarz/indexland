@@ -6,10 +6,10 @@ use std::ops::{Index, IndexMut};
 use crate::{
     idx::Idx,
     stable_universe::{
-        StableUniverse, StableUniverseIter, StableUniverseIterMut,
+        StableUniverse, StableUniverseEnumeratedIter,
+        StableUniverseEnumeratedIterMut, StableUniverseIndexIter,
+        StableUniverseIter, StableUniverseIterMut,
     },
-    StableUniverseEnumeratedIter, StableUniverseEnumeratedIterMut,
-    StableUniverseIndexIter,
 };
 
 pub struct CountedStableUniverse<I, T> {

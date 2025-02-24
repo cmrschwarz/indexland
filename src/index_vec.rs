@@ -110,7 +110,7 @@ impl<I: Idx, T> IndexVec<I, T> {
         IndexSlice::from_boxed_slice(self.data.into_boxed_slice())
     }
     pub fn push_get_id(&mut self, v: T) -> I {
-        let id = self.next_idx();
+        let id = self.len_idx();
         self.data.push(v);
         id
     }
@@ -133,7 +133,7 @@ impl<I: Idx, T> IndexVec<I, T> {
         IndexIterEnumerated::new(I::ZERO, self.data.into_iter())
     }
     pub fn indices(&self) -> IdxRange<I> {
-        IdxRange::new(I::ZERO..self.next_idx())
+        IdxRange::new(I::ZERO..self.len_idx())
     }
     pub fn capacity(&self) -> usize {
         self.data.capacity()

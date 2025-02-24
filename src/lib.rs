@@ -45,6 +45,7 @@
 pub mod counted_stable_universe;
 pub mod counted_universe;
 pub mod idx;
+pub mod index_array;
 pub mod index_slice;
 pub mod index_vec;
 pub mod multi_ref_mut_handout;
@@ -57,20 +58,20 @@ pub mod stable_vec;
 pub mod temp_vec;
 pub mod universe;
 
-pub use counted_stable_universe::*;
-pub use counted_universe::*;
-pub use idx::*;
-pub use index_slice::*;
-pub use index_vec::*;
-pub use multi_ref_mut_handout::*;
-pub use nonmax::*;
-pub use offset_vec_deque::*;
-pub use phantom_slot::*;
-pub use random_access_container::*;
-pub use stable_universe::*;
-pub use stable_vec::*;
-pub use temp_vec::*;
-pub use universe::*;
+pub use idx::Idx;
+pub use index_vec::IndexVec;
+
+pub use counted_stable_universe::CountedStableUniverse;
+pub use counted_universe::CountedUniverse;
+
+pub use index_slice::IndexSlice;
+pub use offset_vec_deque::OffsetVecDeque;
+pub use phantom_slot::PhantomSlot;
+pub use random_access_container::RandomAccessContainer;
+pub use stable_universe::StableUniverse;
+pub use stable_vec::StableVec;
+pub use temp_vec::{TempVec, TransmutableContainer};
+pub use universe::Universe;
 
 use std::ops::{Range, RangeBounds};
 
