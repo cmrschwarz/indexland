@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use arrayvec::ArrayVec;
 
-use super::{idx::Idx, index_slice::IndexSlice};
+use super::{Idx, index_slice::IndexSlice};
 
 pub struct MultiRefMutHandout<'a, I, T, const CAP: usize = 2> {
     data: &'a mut IndexSlice<I, T>,

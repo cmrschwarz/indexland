@@ -19,18 +19,13 @@
 //!
 //! # Usage Examles
 //! ```
-//! use indexland::{index_newtype, IndexVec};
+//! use indexland::{index_newtype, index_vec::IndexVec};
 //! index_newtype!{
-//!     struct FooIndex(u32);
-//!     struct BarIndex(u32);
+//!     struct NodeId(u32);
 //! }
-//! struct Foo; //...
-//! struct Bar; //...
-//! struct Baz{
-//!     foos: IndexVec<FooIndex, Foo>,
-//!     bars: IndexVec<FooIndex, Foo>,
-//!     foo_offset: FooIndex,
-//!     // ...
+//! struct Graph<T>{
+//!     nodes: IndexVec<NodeId, T>,
+//!     edge: IndexVec<NodeId, Vec<NodeId>>,
 //! }
 //! ```
 
@@ -58,20 +53,7 @@ pub mod stable_vec;
 pub mod temp_vec;
 pub mod universe;
 
-pub use idx::Idx;
-pub use index_vec::IndexVec;
-
-pub use counted_stable_universe::CountedStableUniverse;
-pub use counted_universe::CountedUniverse;
-
-pub use index_slice::IndexSlice;
-pub use offset_vec_deque::OffsetVecDeque;
-pub use phantom_slot::PhantomSlot;
-pub use random_access_container::RandomAccessContainer;
-pub use stable_universe::StableUniverse;
-pub use stable_vec::StableVec;
-pub use temp_vec::{TempVec, TransmutableContainer};
-pub use universe::Universe;
+pub use crate::idx::*;
 
 use std::ops::{Range, RangeBounds};
 

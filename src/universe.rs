@@ -8,9 +8,7 @@ use std::{
 
 use arrayvec::ArrayVec;
 
-use super::{
-    get_three_distinct_mut, idx::Idx, temp_vec::TransmutableContainer,
-};
+use super::{get_three_distinct_mut, temp_vec::TransmutableContainer, Idx};
 
 use super::get_two_distinct_mut;
 

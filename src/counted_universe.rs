@@ -1,7 +1,7 @@
 use std::ops::{Index, IndexMut};
 
 use crate::{
-    idx::Idx,
+    Idx,
     universe::{
         Universe, UniverseEnumeratedIter, UniverseEnumeratedIterMut,
         UniverseIndexIter, UniverseIter, UniverseIterMut,

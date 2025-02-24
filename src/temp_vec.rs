@@ -1,7 +1,7 @@
 use std::mem::{align_of, size_of, ManuallyDrop};
 
 use super::{
-    index_vec::IndexVec, idx::Idx,
+    index_vec::IndexVec, Idx,
     phantom_slot::PhantomSlot,
 };
 

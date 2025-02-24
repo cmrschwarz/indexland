@@ -3,7 +3,7 @@ use std::{
     ops::{Index, IndexMut, RangeBounds},
 };
 
-use super::{idx::Idx, range_bounds_to_range_wrapping};
+use super::{range_bounds_to_range_wrapping, Idx};
 
 pub struct OffsetVecDeque<I, T> {
     data: VecDeque<T>,

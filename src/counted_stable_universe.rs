@@ -4,7 +4,7 @@
 use std::ops::{Index, IndexMut};
 
 use crate::{
-    idx::Idx,
+    Idx,
     stable_universe::{
         StableUniverse, StableUniverseEnumeratedIter,
         StableUniverseEnumeratedIterMut, StableUniverseIndexIter,

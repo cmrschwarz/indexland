@@ -1,8 +1,8 @@
 use ref_cast::RefCast;
 
-use crate::IndexSlice;
+use crate::index_slice::IndexSlice;
 
-use super::idx::Idx;
+use super::Idx;
 use std::{
     fmt::Debug,
     marker::PhantomData,

@@ -4,7 +4,7 @@ use std::{
 };
 
 use super::{
-    index_slice::IndexSlice, index_vec::IndexVec, idx::Idx,
+    index_slice::IndexSlice, index_vec::IndexVec, Idx,
 };
 
 /// Very crude generalization over `Vec<T>` and `VecDeque<T>`,

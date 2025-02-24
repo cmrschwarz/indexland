@@ -21,18 +21,13 @@ not ready for public use yet.
 
 ## Usage Examles
 ```rust
-use indexland::{index_newtype, IndexVec};
+use indexland::{index_newtype, index_vec::IndexVec};
 index_newtype!{
-    struct FooIndex(u32);
-    struct BarIndex(u32);
+    struct NodeId(u32);
 }
-struct Foo; //...
-struct Bar; //...
-struct Baz{
-    foos: IndexVec<FooIndex, Foo>,
-    bars: IndexVec<FooIndex, Foo>,
-    foo_offset: FooIndex,
-    // ...
+struct Graph<T>{
+    nodes: IndexVec<NodeId, T>,
+    edge: IndexVec<NodeId, Vec<NodeId>>,
 }
 ```
 

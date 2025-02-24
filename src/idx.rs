@@ -240,23 +240,23 @@ macro_rules! index_newtype {
         #[repr(transparent)]
         $type_vis struct $name ($base_vis $base_type);
 
-        impl $crate::idx::Idx for $name {
-            const ZERO: Self = $name(<$base_type as $crate::idx::Idx>::ZERO);
-            const ONE: Self = $name(<$base_type as $crate::idx::Idx>::ONE);
-            const MAX: Self = $name(<$base_type as $crate::idx::Idx>::MAX);
+        impl $crate::Idx for $name {
+            const ZERO: Self = $name(<$base_type as $crate::Idx>::ZERO);
+            const ONE: Self = $name(<$base_type as $crate::Idx>::ONE);
+            const MAX: Self = $name(<$base_type as $crate::Idx>::MAX);
             #[inline(always)]
             fn into_usize(self) -> usize {
-                <$base_type as $crate::idx::Idx>::into_usize(self.0)
+                <$base_type as $crate::Idx>::into_usize(self.0)
             }
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
-                $name(<$base_type as $crate::idx::Idx>::from_usize(v))
+                $name(<$base_type as $crate::Idx>::from_usize(v))
             }
             fn wrapping_add(self, other: Self) -> Self {
-               $name(<$base_type as  $crate::idx::Idx>::wrapping_add(self.0, other.0))
+               $name(<$base_type as  $crate::Idx>::wrapping_add(self.0, other.0))
             }
             fn wrapping_sub(self, other: Self) -> Self {
-                $name(<$base_type as $crate::idx::Idx>::wrapping_sub(self.0, other.0))
+                $name(<$base_type as $crate::Idx>::wrapping_sub(self.0, other.0))
             }
         }
 
@@ -273,13 +273,13 @@ macro_rules! index_newtype {
         impl From<usize> for $name {
             #[inline(always)]
             fn from(v: usize) -> $name {
-                $name(<$base_type as $crate::idx::Idx>::from_usize(v))
+                $name(<$base_type as $crate::Idx>::from_usize(v))
             }
         }
         impl From<$name> for usize {
             #[inline(always)]
             fn from(v: $name) -> usize {
-                <$base_type as $crate::idx::Idx>::into_usize(v.0)
+                <$base_type as $crate::Idx>::into_usize(v.0)
             }
         }
 

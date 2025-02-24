@@ -5,10 +5,10 @@ use std::{
 };
 
 use super::{
-    idx::Idx,
     stable_vec::{self, StableVec, StableVecIter, StableVecIterMut},
     temp_vec::TransmutableContainer,
     universe::UniverseEntry,
+    Idx,
 };
 
 pub struct StableUniverse<I, T> {

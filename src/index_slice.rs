@@ -1,6 +1,6 @@
 use super::{
     get_two_distinct_mut,
-    idx::Idx,
+    Idx,
     multi_ref_mut_handout::{MultiRefMutHandout, RefHandoutStackBase},
 };
 use ref_cast::RefCast;
