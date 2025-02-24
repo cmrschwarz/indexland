@@ -92,7 +92,9 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn pop(&mut self) -> Option<T> {
         self.data.pop()
     }
-
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }

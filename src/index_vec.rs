@@ -92,6 +92,9 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn pop(&mut self) -> Option<T> {
         self.data.pop()
     }
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
     pub fn resize_with(&mut self, new_len: usize, f: impl FnMut() -> T) {
         self.data.resize_with(new_len, f);
     }
