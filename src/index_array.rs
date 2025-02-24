@@ -204,7 +204,6 @@ where
     }
 }
 
-#[cfg(feature = "serde")]
 impl<'de, I: Idx, T, const SIZE: usize> Deserialize<'de>
     for IndexArray<I, T, SIZE>
 where
