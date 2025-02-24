@@ -1,28 +1,36 @@
 // This is similar to the nonmax crate, but makes debugging much less painful
-// through the "debuggable_nonmax" feature of this crate with removes the
-// optimization in debug mode to allow debuggers to report the correct integer
-// values.
+// by removing the optimization in debug mode to allow debuggers to report the
+// correct integer values.
 
 use std::{
     cmp::Ordering,
     fmt::{Debug, Display},
 };
 
-use crate::Idx;
+#[cfg(any(not(debug_assertions), feature = "disable_debuggable_nonmax"))]
+use std::num::{
+    NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU16,
+    NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+};
 
-#[cfg(not(all(feature = "debuggable_nonmax", debug_assertions)))]
-use std::num::{NonZeroU32, NonZeroU64, NonZeroUsize};
+use crate::Idx;
 
 #[derive(Debug)]
 pub struct NonMaxOutOfRangeError;
 
 macro_rules! nonmax_impl {
     ($nonmax: ident, $nonzero: ident, $primitive: ident) => {
-        #[cfg(all(feature = "debuggable_nonmax", debug_assertions))]
+        #[cfg(all(
+            debug_assertions,
+            not(feature = "disable_debuggable_nonmax")
+        ))]
         #[derive(Copy, Clone, PartialEq, Eq, Hash)]
         pub struct $nonmax($primitive);
 
-        #[cfg(not(all(feature = "debuggable_nonmax", debug_assertions)))]
+        #[cfg(any(
+            not(debug_assertions),
+            feature = "disable_debuggable_nonmax"
+        ))]
         #[derive(Copy, Clone, PartialEq, Eq, Hash)]
         pub struct $nonmax($nonzero);
 
@@ -40,7 +48,10 @@ macro_rules! nonmax_impl {
             }
         }
 
-        #[cfg(all(feature = "debuggable_nonmax", debug_assertions))]
+        #[cfg(all(
+            debug_assertions,
+            not(feature = "disable_debuggable_nonmax"),
+        ))]
         impl $nonmax {
             #[inline]
             pub const fn get(self) -> $primitive {
@@ -52,7 +63,10 @@ macro_rules! nonmax_impl {
             }
         }
 
-        #[cfg(not(all(feature = "debuggable_nonmax", debug_assertions)))]
+        #[cfg(any(
+            not(debug_assertions),
+            feature = "disable_debuggable_nonmax",
+        ))]
         impl $nonmax {
             #[inline]
             pub const fn get(self) -> $primitive {
