@@ -1,7 +1,7 @@
 use super::{
     get_two_distinct_mut,
-    Idx,
     multi_ref_mut_handout::{MultiRefMutHandout, RefHandoutStackBase},
+    Idx,
 };
 use ref_cast::RefCast;
 use std::{
@@ -43,6 +43,14 @@ impl<I: Idx, IT: Iterator> Iterator for IndexIterEnumerated<I, IT> {
 }
 
 impl<I: Idx, T> IndexSlice<I, T> {
+    #[inline]
+    pub fn from_slice(s: &[T]) -> &Self {
+        Self::ref_cast(s)
+    }
+    #[inline]
+    pub fn from_slice_mut(s: &mut [T]) -> &mut Self {
+        Self::ref_cast_mut(s)
+    }
     pub fn iter_enumerated(
         &self,
         initial_offset: I,
@@ -217,6 +225,28 @@ impl<I: Idx, T: PartialEq> PartialEq<IndexSlice<I, T>> for [T] {
 impl<I: Idx, T: PartialEq> PartialEq<[T]> for IndexSlice<I, T> {
     fn eq(&self, other: &[T]) -> bool {
         &self.data == other
+    }
+}
+
+impl<'a, I: Idx, T> From<&'a IndexSlice<I, T>> for &'a [T] {
+    fn from(value: &'a IndexSlice<I, T>) -> Self {
+        value.as_slice()
+    }
+}
+impl<'a, I: Idx, T> From<&'a mut IndexSlice<I, T>> for &'a mut [T] {
+    fn from(value: &'a mut IndexSlice<I, T>) -> Self {
+        value.as_slice_mut()
+    }
+}
+
+impl<'a, I: Idx, T> From<&'a [T]> for &'a IndexSlice<I, T> {
+    fn from(value: &'a [T]) -> Self {
+        IndexSlice::from_slice(value)
+    }
+}
+impl<'a, I: Idx, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
+    fn from(value: &'a mut [T]) -> Self {
+        IndexSlice::from_slice_mut(value)
     }
 }
 

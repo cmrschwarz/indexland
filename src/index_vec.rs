@@ -27,16 +27,16 @@ pub struct IndexVec<I, T> {
     _phantom: PhantomData<fn(I) -> T>,
 }
 
-impl<I, T> Deref for IndexVec<I, T> {
+impl<I: Idx, T> Deref for IndexVec<I, T> {
     type Target = IndexSlice<I, T>;
 
     fn deref(&self) -> &Self::Target {
-        IndexSlice::ref_cast(&*self.data)
+        IndexSlice::from_slice(&self.data)
     }
 }
-impl<I, T> DerefMut for IndexVec<I, T> {
+impl<I: Idx, T> DerefMut for IndexVec<I, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        IndexSlice::ref_cast_mut(&mut *self.data)
+        IndexSlice::from_slice_mut(&mut self.data)
     }
 }
 
@@ -137,6 +137,12 @@ impl<I: Idx, T> IndexVec<I, T> {
     }
     pub fn capacity(&self) -> usize {
         self.data.capacity()
+    }
+    pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
+        IndexSlice::from_slice(&self.data)
+    }
+    pub fn as_index_slice_mut(&mut self) -> &IndexSlice<I, T> {
+        IndexSlice::from_slice_mut(&mut self.data)
     }
 }
 
