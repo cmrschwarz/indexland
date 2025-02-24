@@ -2,7 +2,7 @@
 
 use std::{
     hash::Hash,
-    ops::{Add, AddAssign, Range, Sub, SubAssign},
+    ops::{Add, AddAssign, Range, RangeInclusive, Sub, SubAssign},
 };
 
 pub trait Idx:
@@ -34,8 +34,8 @@ pub trait Idx:
     fn range_to(&self, end: Self) -> IdxRange<Self> {
         IdxRange::new(*self..end)
     }
-    fn range_from(&self, start: Self) -> IdxRange<Self> {
-        IdxRange::new(start..*self)
+    fn range_through(&self, end: Self) -> IdxRangeInclusive<Self> {
+        IdxRangeInclusive::new(*self..=end)
     }
 }
 
@@ -79,6 +79,45 @@ impl<I: Idx> DoubleEndedIterator for IdxRange<I> {
 impl<I: Idx> From<Range<I>> for IdxRange<I> {
     fn from(r: Range<I>) -> Self {
         IdxRange::new(r)
+    }
+}
+
+pub struct IdxRangeInclusive<I> {
+    pub start: I,
+    pub end: I,
+    pub exhausted: bool,
+}
+
+impl<I: Idx> IdxRangeInclusive<I> {
+    pub fn new(r: RangeInclusive<I>) -> Self {
+        Self {
+            start: *r.start(),
+            end: *r.end(),
+            exhausted: false,
+        }
+    }
+}
+
+impl<I: Idx> Iterator for IdxRangeInclusive<I> {
+    type Item = I;
+
+    fn next(&mut self) -> Option<I> {
+        if self.exhausted {
+            return None;
+        }
+        let curr = self.start;
+        if curr == self.end {
+            self.exhausted = true;
+        } else {
+            self.start = I::from_usize(curr.into_usize() + 1);
+        }
+        Some(curr)
+    }
+}
+
+impl<I: Idx> From<RangeInclusive<I>> for IdxRangeInclusive<I> {
+    fn from(r: RangeInclusive<I>) -> Self {
+        IdxRangeInclusive::new(r)
     }
 }
 
