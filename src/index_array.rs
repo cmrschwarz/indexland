@@ -187,3 +187,33 @@ impl<I: Idx, T: PartialEq, const SIZE: usize> PartialEq<[T]>
         self.data == other
     }
 }
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+#[cfg(feature = "serde")]
+impl<I: Idx, T, const SIZE: usize> Serialize for IndexArray<I, T, SIZE>
+where
+    [T; SIZE]: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.data.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, I: Idx, T, const SIZE: usize> Deserialize<'de>
+    for IndexArray<I, T, SIZE>
+where
+    [T; SIZE]: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::new(<[T; SIZE]>::deserialize(deserializer)?))
+    }
+}

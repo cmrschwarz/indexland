@@ -496,3 +496,67 @@ impl<T> TransmutableContainer for StableVec<T> {
         transmute_stable_vec(src)
     }
 }
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+#[cfg(feature = "serde")]
+impl<T: Serialize, const CHUNK_SIZE: usize> Serialize
+    for StableVec<T, CHUNK_SIZE>
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_seq(self)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T: Deserialize<'de>, const CHUNK_SIZE: usize> Deserialize<'de>
+    for StableVec<T, CHUNK_SIZE>
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::{SeqAccess, Visitor};
+        use std::marker::PhantomData;
+
+        struct StableVecVisitor<'de, T: Deserialize<'de>, const CHUNK_SIZE: usize>(
+            PhantomData<(&'de (), [T; CHUNK_SIZE])>,
+        );
+
+        impl<'de, T: Deserialize<'de>, const CHUNK_SIZE: usize> Visitor<'de>
+            for StableVecVisitor<'de, T, CHUNK_SIZE>
+        {
+            type Value = StableVec<T, CHUNK_SIZE>;
+
+            fn expecting(
+                &self,
+                formatter: &mut std::fmt::Formatter,
+            ) -> std::fmt::Result {
+                write!(formatter, "a sequence")
+            }
+
+            fn visit_seq<SA>(
+                self,
+                mut seq: SA,
+            ) -> Result<Self::Value, SA::Error>
+            where
+                SA: SeqAccess<'de>,
+            {
+                let values = StableVec::<T, CHUNK_SIZE>::new();
+
+                while let Some(value) = seq.next_element()? {
+                    values.push(value);
+                }
+
+                Ok(values)
+            }
+        }
+
+        deserializer
+            .deserialize_seq(StableVecVisitor::<T, CHUNK_SIZE>(PhantomData))
+    }
+}

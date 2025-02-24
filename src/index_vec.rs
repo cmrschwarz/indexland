@@ -279,3 +279,32 @@ macro_rules! slice_index_impl {
 }
 
 slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+#[cfg(feature = "serde")]
+impl<I: Idx, T> Serialize for IndexVec<I, T>
+where
+    Vec<T>: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.data.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, I: Idx, T> Deserialize<'de> for IndexVec<I, T>
+where
+    Vec<T>: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from(Vec::deserialize(deserializer)?))
+    }
+}
