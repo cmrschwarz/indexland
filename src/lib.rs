@@ -42,6 +42,8 @@
 #![allow(clippy::return_self_not_must_use)]
 #![allow(clippy::module_name_repetitions)]
 
+pub mod counted_stable_universe;
+pub mod counted_universe;
 pub mod idx;
 pub mod index_slice;
 pub mod index_vec;
@@ -55,6 +57,8 @@ pub mod stable_vec;
 pub mod temp_vec;
 pub mod universe;
 
+pub use counted_stable_universe::*;
+pub use counted_universe::*;
 pub use idx::*;
 pub use index_slice::*;
 pub use index_vec::*;

@@ -62,6 +62,9 @@ impl<I: Idx, T> OffsetVecDeque<I, T> {
     pub fn offset(&self) -> I {
         self.offset
     }
+    pub fn set_offset(&mut self, offset: I) {
+        self.offset = offset;
+    }
     pub fn push_back(&mut self, v: T) {
         self.data.push_back(v);
     }
@@ -126,5 +129,8 @@ impl<I: Idx, T> OffsetVecDeque<I, T> {
     }
     pub fn get_phys_mut(&mut self, idx: usize) -> &mut T {
         &mut self.data[idx]
+    }
+    pub fn as_vec_deque(&mut self) -> &mut VecDeque<T> {
+        &mut self.data
     }
 }
