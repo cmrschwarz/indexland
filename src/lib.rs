@@ -41,6 +41,7 @@ pub mod counted_stable_universe;
 pub mod counted_universe;
 pub mod idx;
 pub mod index_array;
+pub mod index_array_vec;
 pub mod index_slice;
 pub mod index_vec;
 pub mod multi_ref_mut_handout;
