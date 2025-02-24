@@ -1,6 +1,6 @@
 use super::{
     get_two_distinct_mut,
-    indexing_type::IndexingType,
+    idx::Idx,
     multi_ref_mut_handout::{MultiRefMutHandout, RefHandoutStackBase},
 };
 use ref_cast::RefCast;
@@ -25,13 +25,13 @@ pub struct IndexIterEnumerated<I, IT> {
     base_iter: IT,
 }
 
-impl<I: IndexingType, IT: Iterator> IndexIterEnumerated<I, IT> {
+impl<I: Idx, IT: Iterator> IndexIterEnumerated<I, IT> {
     pub fn new(pos: I, base_iter: IT) -> Self {
         Self { pos, base_iter }
     }
 }
 
-impl<I: IndexingType, IT: Iterator> Iterator for IndexIterEnumerated<I, IT> {
+impl<I: Idx, IT: Iterator> Iterator for IndexIterEnumerated<I, IT> {
     type Item = (I, IT::Item);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -42,7 +42,7 @@ impl<I: IndexingType, IT: Iterator> Iterator for IndexIterEnumerated<I, IT> {
     }
 }
 
-impl<I: IndexingType, T> IndexSlice<I, T> {
+impl<I: Idx, T> IndexSlice<I, T> {
     pub fn iter_enumerated(
         &self,
         initial_offset: I,
@@ -133,13 +133,13 @@ impl<I: IndexingType, T> IndexSlice<I, T> {
     }
 }
 
-impl<I: IndexingType, T: Debug> Debug for IndexSlice<I, T> {
+impl<I: Idx, T: Debug> Debug for IndexSlice<I, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
 
-impl<I: IndexingType, T> Index<I> for IndexSlice<I, T> {
+impl<I: Idx, T> Index<I> for IndexSlice<I, T> {
     type Output = T;
     #[inline]
     fn index(&self, index: I) -> &Self::Output {
@@ -147,14 +147,14 @@ impl<I: IndexingType, T> Index<I> for IndexSlice<I, T> {
     }
 }
 
-impl<I: IndexingType, T> IndexMut<I> for IndexSlice<I, T> {
+impl<I: Idx, T> IndexMut<I> for IndexSlice<I, T> {
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.data[index.into_usize()]
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a IndexSlice<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a IndexSlice<I, T> {
     type Item = &'a T;
 
     type IntoIter = std::slice::Iter<'a, T>;
@@ -164,7 +164,7 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a IndexSlice<I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a mut IndexSlice<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a mut IndexSlice<I, T> {
     type Item = &'a mut T;
 
     type IntoIter = std::slice::IterMut<'a, T>;
@@ -174,7 +174,7 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a mut IndexSlice<I, T> {
     }
 }
 
-impl<I: IndexingType, T> Index<Range<I>> for IndexSlice<I, T> {
+impl<I: Idx, T> Index<Range<I>> for IndexSlice<I, T> {
     type Output = IndexSlice<I, T>;
 
     fn index(&self, index: Range<I>) -> &Self::Output {
@@ -184,7 +184,7 @@ impl<I: IndexingType, T> Index<Range<I>> for IndexSlice<I, T> {
     }
 }
 
-impl<I: IndexingType, T> IndexMut<Range<I>> for IndexSlice<I, T> {
+impl<I: Idx, T> IndexMut<Range<I>> for IndexSlice<I, T> {
     fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
         IndexSlice::ref_cast_mut(
             &mut self.data[index.start.into_usize()..index.end.into_usize()],
@@ -192,7 +192,7 @@ impl<I: IndexingType, T> IndexMut<Range<I>> for IndexSlice<I, T> {
     }
 }
 
-impl<I: IndexingType, T: PartialEq, const N: usize> PartialEq<IndexSlice<I, T>>
+impl<I: Idx, T: PartialEq, const N: usize> PartialEq<IndexSlice<I, T>>
     for [T; N]
 {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
@@ -200,7 +200,7 @@ impl<I: IndexingType, T: PartialEq, const N: usize> PartialEq<IndexSlice<I, T>>
     }
 }
 
-impl<I: IndexingType, T: PartialEq, const N: usize> PartialEq<[T; N]>
+impl<I: Idx, T: PartialEq, const N: usize> PartialEq<[T; N]>
     for IndexSlice<I, T>
 {
     fn eq(&self, other: &[T; N]) -> bool {
@@ -208,13 +208,13 @@ impl<I: IndexingType, T: PartialEq, const N: usize> PartialEq<[T; N]>
     }
 }
 
-impl<I: IndexingType, T: PartialEq> PartialEq<IndexSlice<I, T>> for [T] {
+impl<I: Idx, T: PartialEq> PartialEq<IndexSlice<I, T>> for [T] {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
         self == &other.data
     }
 }
 
-impl<I: IndexingType, T: PartialEq> PartialEq<[T]> for IndexSlice<I, T> {
+impl<I: Idx, T: PartialEq> PartialEq<[T]> for IndexSlice<I, T> {
     fn eq(&self, other: &[T]) -> bool {
         &self.data == other
     }
@@ -222,7 +222,7 @@ impl<I: IndexingType, T: PartialEq> PartialEq<[T]> for IndexSlice<I, T> {
 
 macro_rules! slice_index_impl {
     ($range_type: ident) => {
-        impl<I: IndexingType, T> Index<$range_type<I>> for IndexSlice<I, T> {
+        impl<I: Idx, T> Index<$range_type<I>> for IndexSlice<I, T> {
             type Output = IndexSlice<I, T>;
             #[inline]
             fn index(&self, rb: $range_type<I>) -> &Self::Output {
@@ -230,7 +230,7 @@ macro_rules! slice_index_impl {
             }
         }
 
-        impl<I: IndexingType, T> IndexMut<$range_type<I>> for IndexSlice<I, T> {
+        impl<I: Idx, T> IndexMut<$range_type<I>> for IndexSlice<I, T> {
             #[inline]
             fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
                 let range = $crate::range_bounds_to_range_usize(rb, self.len());

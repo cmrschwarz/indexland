@@ -42,11 +42,11 @@
 #![allow(clippy::return_self_not_must_use)]
 #![allow(clippy::module_name_repetitions)]
 
-pub mod debuggable_nonmax;
+pub mod idx;
 pub mod index_slice;
 pub mod index_vec;
-pub mod indexing_type;
 pub mod multi_ref_mut_handout;
+pub mod nonmax;
 pub mod offset_vec_deque;
 pub mod phantom_slot;
 pub mod random_access_container;
@@ -55,11 +55,11 @@ pub mod stable_vec;
 pub mod temp_vec;
 pub mod universe;
 
-pub use debuggable_nonmax::*;
+pub use idx::*;
 pub use index_slice::*;
 pub use index_vec::*;
-pub use indexing_type::*;
 pub use multi_ref_mut_handout::*;
+pub use nonmax::*;
 pub use offset_vec_deque::*;
 pub use phantom_slot::*;
 pub use random_access_container::*;
@@ -148,7 +148,7 @@ pub fn subslice_slice_pair_mut<'a, T>(
     }
 }
 
-pub fn range_bounds_to_range_wrapping<I: IndexingType>(
+pub fn range_bounds_to_range_wrapping<I: Idx>(
     rb: impl RangeBounds<I>,
     len: I,
 ) -> Range<I> {
@@ -165,7 +165,7 @@ pub fn range_bounds_to_range_wrapping<I: IndexingType>(
     start..end
 }
 
-pub fn range_bounds_to_range_usize<I: IndexingType>(
+pub fn range_bounds_to_range_usize<I: Idx>(
     rb: impl RangeBounds<I>,
     len: usize,
 ) -> Range<usize> {

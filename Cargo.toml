@@ -21,3 +21,7 @@ name = "indexland"
 ref-cast = "1.0.23"
 arrayvec = "0.7.6"
 derive_more = { version = "2.0.1", features = ["full"] }
+
+
+[features]
+debuggable_nonmax = []

@@ -1,21 +1,28 @@
+// This is similar to the nonmax crate, but makes debugging much less painful
+// through the "debuggable_nonmax" feature of this crate with removes the
+// optimization in debug mode to allow debuggers to report the correct integer
+// values.
+
 use std::{
     cmp::Ordering,
     fmt::{Debug, Display},
 };
 
-#[cfg(not(debug_assertions))]
+use crate::Idx;
+
+#[cfg(not(all(feature = "debuggable_nonmax", debug_assertions)))]
 use std::num::{NonZeroU32, NonZeroU64, NonZeroUsize};
 
 #[derive(Debug)]
 pub struct NonMaxOutOfRangeError;
 
-macro_rules! debuggable_nonmax {
+macro_rules! nonmax_impl {
     ($nonmax: ident, $nonzero: ident, $primitive: ident) => {
-        #[cfg(debug_assertions)]
+        #[cfg(all(feature = "debuggable_nonmax", debug_assertions))]
         #[derive(Copy, Clone, PartialEq, Eq, Hash)]
         pub struct $nonmax($primitive);
 
-        #[cfg(not(debug_assertions))]
+        #[cfg(not(all(feature = "debuggable_nonmax", debug_assertions)))]
         #[derive(Copy, Clone, PartialEq, Eq, Hash)]
         pub struct $nonmax($nonzero);
 
@@ -33,7 +40,7 @@ macro_rules! debuggable_nonmax {
             }
         }
 
-        #[cfg(debug_assertions)]
+        #[cfg(all(feature = "debuggable_nonmax", debug_assertions))]
         impl $nonmax {
             #[inline]
             pub const fn get(self) -> $primitive {
@@ -45,7 +52,7 @@ macro_rules! debuggable_nonmax {
             }
         }
 
-        #[cfg(not(debug_assertions))]
+        #[cfg(not(all(feature = "debuggable_nonmax", debug_assertions)))]
         impl $nonmax {
             #[inline]
             pub const fn get(self) -> $primitive {
@@ -205,6 +212,50 @@ macro_rules! debuggable_nonmax {
     };
 }
 
-debuggable_nonmax!(DebuggableNonMaxUsize, NonZeroUsize, usize);
-debuggable_nonmax!(DebuggableNonMaxU32, NonZeroU32, u32);
-debuggable_nonmax!(DebuggableNonMaxU64, NonZeroU64, u64);
+macro_rules! nonmax_idx_impl {
+    ($nonmax: ident, $primitive: ident) => {
+        impl Idx for $nonmax {
+            const MAX: Self = $nonmax::MAX;
+            const ZERO: Self = $nonmax::ZERO;
+            const ONE: Self = $nonmax::ONE;
+
+            #[inline(always)]
+            fn into_usize(self) -> usize {
+                // TODO: maybe add features where we assert this?
+                #![allow(clippy::cast_possible_truncation)]
+                self.get() as usize
+            }
+            #[inline(always)]
+            fn from_usize(v: usize) -> Self {
+                // TODO: maybe add features where we assert this?
+                #![allow(clippy::cast_possible_truncation)]
+                $nonmax::new(v as $primitive).unwrap()
+            }
+            fn wrapping_add(self, other: Self) -> Self {
+                $nonmax::wrapping_add(&self, other)
+            }
+            fn wrapping_sub(self, other: Self) -> Self {
+                $nonmax::wrapping_add(&self, other)
+            }
+        }
+    };
+}
+
+nonmax_impl!(NonMaxUsize, NonZeroUsize, usize);
+nonmax_impl!(NonMaxIsize, NonZeroIsize, isize);
+
+nonmax_impl!(NonMaxI8, NonZeroI8, i8);
+nonmax_impl!(NonMaxI16, NonZeroI16, i16);
+nonmax_impl!(NonMaxI32, NonZeroI32, i32);
+nonmax_impl!(NonMaxI64, NonZeroI64, i64);
+
+nonmax_impl!(NonMaxU8, NonZeroU8, u8);
+nonmax_impl!(NonMaxU16, NonZeroU16, u16);
+nonmax_impl!(NonMaxU32, NonZeroU32, u32);
+nonmax_impl!(NonMaxU64, NonZeroU64, u64);
+
+nonmax_idx_impl!(NonMaxUsize, usize);
+nonmax_idx_impl!(NonMaxU8, u8);
+nonmax_idx_impl!(NonMaxU16, u16);
+nonmax_idx_impl!(NonMaxU32, u32);
+nonmax_idx_impl!(NonMaxU64, u64);

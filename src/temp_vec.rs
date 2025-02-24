@@ -1,7 +1,7 @@
 use std::mem::{align_of, size_of, ManuallyDrop};
 
 use super::{
-    index_vec::IndexVec, indexing_type::IndexingType,
+    index_vec::IndexVec, idx::Idx,
     phantom_slot::PhantomSlot,
 };
 
@@ -180,7 +180,7 @@ impl<I, T> Default for TempIndexVec<I, T> {
     }
 }
 
-impl<I: IndexingType, T> TransmutableContainer for TempIndexVec<I, T> {
+impl<I: Idx, T> TransmutableContainer for TempIndexVec<I, T> {
     type ElementType = T;
 
     type ContainerType<Q> = IndexVec<I, Q>;

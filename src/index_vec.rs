@@ -10,8 +10,8 @@ use std::{
 use ref_cast::RefCast;
 
 use super::{
+    idx::{Idx, IdxRange},
     index_slice::{IndexIterEnumerated, IndexSlice},
-    indexing_type::{IndexingType, IndexingTypeRange},
 };
 
 #[macro_export]
@@ -64,13 +64,13 @@ impl<I, T> Default for IndexVec<I, T> {
     }
 }
 
-impl<I: IndexingType, T: Debug> Debug for IndexVec<I, T> {
+impl<I: Idx, T: Debug> Debug for IndexVec<I, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
 
-impl<I: IndexingType, T> IndexVec<I, T> {
+impl<I: Idx, T> IndexVec<I, T> {
     pub const fn new() -> Self {
         Self {
             data: Vec::new(),
@@ -132,15 +132,15 @@ impl<I: IndexingType, T> IndexVec<I, T> {
     ) -> IndexIterEnumerated<I, std::vec::IntoIter<T>> {
         IndexIterEnumerated::new(I::ZERO, self.data.into_iter())
     }
-    pub fn indices(&self) -> IndexingTypeRange<I> {
-        IndexingTypeRange::new(I::ZERO..self.next_idx())
+    pub fn indices(&self) -> IdxRange<I> {
+        IdxRange::new(I::ZERO..self.next_idx())
     }
     pub fn capacity(&self) -> usize {
         self.data.capacity()
     }
 }
 
-impl<I: IndexingType, T> IntoIterator for IndexVec<I, T> {
+impl<I: Idx, T> IntoIterator for IndexVec<I, T> {
     type Item = T;
 
     type IntoIter = std::vec::IntoIter<T>;
@@ -150,7 +150,7 @@ impl<I: IndexingType, T> IntoIterator for IndexVec<I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a IndexVec<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
     type Item = &'a T;
 
     type IntoIter = std::slice::Iter<'a, T>;
@@ -160,7 +160,7 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a IndexVec<I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a mut IndexVec<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a mut IndexVec<I, T> {
     type Item = &'a mut T;
 
     type IntoIter = std::slice::IterMut<'a, T>;
@@ -176,7 +176,7 @@ impl<I, T> FromIterator<T> for IndexVec<I, T> {
     }
 }
 
-impl<I: IndexingType, T: PartialEq, const N: usize> PartialEq<IndexVec<I, T>>
+impl<I: Idx, T: PartialEq, const N: usize> PartialEq<IndexVec<I, T>>
     for [T; N]
 {
     fn eq(&self, other: &IndexVec<I, T>) -> bool {
@@ -184,7 +184,7 @@ impl<I: IndexingType, T: PartialEq, const N: usize> PartialEq<IndexVec<I, T>>
     }
 }
 
-impl<I: IndexingType, T: PartialEq, const N: usize> PartialEq<[T; N]>
+impl<I: Idx, T: PartialEq, const N: usize> PartialEq<[T; N]>
     for IndexVec<I, T>
 {
     fn eq(&self, other: &[T; N]) -> bool {
@@ -192,35 +192,31 @@ impl<I: IndexingType, T: PartialEq, const N: usize> PartialEq<[T; N]>
     }
 }
 
-impl<I: IndexingType, T: PartialEq> PartialEq<IndexSlice<I, T>>
-    for IndexVec<I, T>
-{
+impl<I: Idx, T: PartialEq> PartialEq<IndexSlice<I, T>> for IndexVec<I, T> {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<I: IndexingType, T: PartialEq> PartialEq<IndexVec<I, T>>
-    for IndexSlice<I, T>
-{
+impl<I: Idx, T: PartialEq> PartialEq<IndexVec<I, T>> for IndexSlice<I, T> {
     fn eq(&self, other: &IndexVec<I, T>) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<I: IndexingType, T: PartialEq> PartialEq<IndexVec<I, T>> for [T] {
+impl<I: Idx, T: PartialEq> PartialEq<IndexVec<I, T>> for [T] {
     fn eq(&self, other: &IndexVec<I, T>) -> bool {
         self == other.as_slice()
     }
 }
 
-impl<I: IndexingType, T: PartialEq> PartialEq<[T]> for IndexVec<I, T> {
+impl<I: Idx, T: PartialEq> PartialEq<[T]> for IndexVec<I, T> {
     fn eq(&self, other: &[T]) -> bool {
         self.as_slice() == other
     }
 }
 
-impl<I: IndexingType, T> Index<I> for IndexVec<I, T> {
+impl<I: Idx, T> Index<I> for IndexVec<I, T> {
     type Output = T;
     #[inline]
     fn index(&self, index: I) -> &Self::Output {
@@ -228,14 +224,14 @@ impl<I: IndexingType, T> Index<I> for IndexVec<I, T> {
     }
 }
 
-impl<I: IndexingType, T> IndexMut<I> for IndexVec<I, T> {
+impl<I: Idx, T> IndexMut<I> for IndexVec<I, T> {
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.data[index.into_usize()]
     }
 }
 
-impl<I: IndexingType, T> Index<Range<I>> for IndexVec<I, T> {
+impl<I: Idx, T> Index<Range<I>> for IndexVec<I, T> {
     type Output = IndexSlice<I, T>;
 
     fn index(&self, index: Range<I>) -> &Self::Output {
@@ -245,7 +241,7 @@ impl<I: IndexingType, T> Index<Range<I>> for IndexVec<I, T> {
     }
 }
 
-impl<I: IndexingType, T> IndexMut<Range<I>> for IndexVec<I, T> {
+impl<I: Idx, T> IndexMut<Range<I>> for IndexVec<I, T> {
     fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
         IndexSlice::ref_cast_mut(
             &mut self.data[index.start.into_usize()..index.end.into_usize()],
@@ -255,7 +251,7 @@ impl<I: IndexingType, T> IndexMut<Range<I>> for IndexVec<I, T> {
 
 macro_rules! slice_index_impl {
     ($range_type: ident) => {
-        impl<I: IndexingType, T> Index<$range_type<I>> for IndexVec<I, T> {
+        impl<I: Idx, T> Index<$range_type<I>> for IndexVec<I, T> {
             type Output = IndexSlice<I, T>;
             #[inline]
             fn index(&self, rb: $range_type<I>) -> &Self::Output {
@@ -263,7 +259,7 @@ macro_rules! slice_index_impl {
             }
         }
 
-        impl<I: IndexingType, T> IndexMut<$range_type<I>> for IndexVec<I, T> {
+        impl<I: Idx, T> IndexMut<$range_type<I>> for IndexVec<I, T> {
             #[inline]
             fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
                 let range = $crate::range_bounds_to_range_usize(rb, self.len());

@@ -2,16 +2,14 @@ use std::marker::PhantomData;
 
 use arrayvec::ArrayVec;
 
-use super::{index_slice::IndexSlice, indexing_type::IndexingType};
+use super::{idx::Idx, index_slice::IndexSlice};
 
 pub struct MultiRefMutHandout<'a, I, T, const CAP: usize = 2> {
     data: &'a mut IndexSlice<I, T>,
     handed_out: ArrayVec<I, CAP>,
 }
 
-impl<'a, I: IndexingType, T, const CAP: usize>
-    MultiRefMutHandout<'a, I, T, CAP>
-{
+impl<'a, I: Idx, T, const CAP: usize> MultiRefMutHandout<'a, I, T, CAP> {
     pub fn new(data: &'a mut IndexSlice<I, T>) -> Self {
         Self {
             data,
@@ -54,7 +52,7 @@ impl<'a, I, T> RefHandoutStackBase<'a, I, T> {
     }
 }
 
-unsafe impl<I: IndexingType, T> RefHandoutStack<I, T>
+unsafe impl<I: Idx, T> RefHandoutStack<I, T>
     for RefHandoutStackBase<'_, I, T>
 {
     type Child<'b>
@@ -79,7 +77,7 @@ unsafe impl<I: IndexingType, T> RefHandoutStack<I, T>
     }
 }
 
-unsafe impl<I: IndexingType, T, P: RefHandoutStack<I, T>> RefHandoutStack<I, T>
+unsafe impl<I: Idx, T, P: RefHandoutStack<I, T>> RefHandoutStack<I, T>
     for RefHandoutStackNode<'_, I, T, P>
 {
     type Child<'b>

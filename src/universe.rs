@@ -9,7 +9,7 @@ use std::{
 use arrayvec::ArrayVec;
 
 use super::{
-    get_three_distinct_mut, indexing_type::IndexingType,
+    get_three_distinct_mut, idx::Idx,
     temp_vec::TransmutableContainer,
 };
 
@@ -55,7 +55,7 @@ pub struct UniverseRefHandoutStackBase<'a, I, T> {
     _phantom: PhantomData<&'a mut Universe<I, T>>,
 }
 
-unsafe impl<I: IndexingType, T> UniverseRefHandoutStack<I, T>
+unsafe impl<I: Idx, T> UniverseRefHandoutStack<I, T>
     for UniverseRefHandoutStackBase<'_, I, T>
 {
     type Child<'b>
@@ -84,7 +84,7 @@ unsafe impl<I: IndexingType, T> UniverseRefHandoutStack<I, T>
     }
 }
 
-unsafe impl<I: IndexingType, T, P: UniverseRefHandoutStack<I, T>>
+unsafe impl<I: Idx, T, P: UniverseRefHandoutStack<I, T>>
     UniverseRefHandoutStack<I, T>
     for UniverseRefHandoutStackNode<'_, I, T, P>
 {
@@ -125,13 +125,13 @@ impl<I, T> UniverseEntry<I, T> {
 }
 
 // if we autoderive this, I would have to implement Default
-impl<I: IndexingType, T> Default for Universe<I, T> {
+impl<I: Idx, T> Default for Universe<I, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<I: IndexingType, T> Universe<I, T> {
+impl<I: Idx, T> Universe<I, T> {
     pub const fn new() -> Self {
         Self {
             data: Vec::new(),
@@ -360,7 +360,7 @@ impl<I: IndexingType, T> Universe<I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T, const CAP: usize>
+impl<'a, I: Idx, T, const CAP: usize>
     UniverseMultiRefMutHandout<'a, I, T, CAP>
 {
     fn new(universe: &'a mut Universe<I, T>) -> Self {
@@ -416,13 +416,13 @@ impl<'a, I: IndexingType, T, const CAP: usize>
 }
 
 // separate impl since only available if T: Default
-impl<I: IndexingType, T: Default> Universe<I, T> {
+impl<I: Idx, T: Default> Universe<I, T> {
     pub fn claim(&mut self) -> I {
         self.claim_with(Default::default)
     }
 }
 
-impl<I: IndexingType, T> Index<I> for Universe<I, T> {
+impl<I: Idx, T> Index<I> for Universe<I, T> {
     type Output = T;
     #[inline]
     fn index(&self, index: I) -> &Self::Output {
@@ -433,7 +433,7 @@ impl<I: IndexingType, T> Index<I> for Universe<I, T> {
     }
 }
 
-impl<I: IndexingType, T> IndexMut<I> for Universe<I, T> {
+impl<I: Idx, T> IndexMut<I> for Universe<I, T> {
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         match &mut self.data[index.into_usize()] {
@@ -468,7 +468,7 @@ impl<'a, I, T> Iterator for UniverseIter<'a, I, T> {
     }
 }
 
-impl<I: IndexingType, T> Iterator for UniverseIndexIter<'_, I, T> {
+impl<I: Idx, T> Iterator for UniverseIndexIter<'_, I, T> {
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -502,7 +502,7 @@ impl<'a, I, T> Iterator for UniverseIterMut<'a, I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a Universe<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a Universe<I, T> {
     type Item = &'a T;
     type IntoIter = UniverseIter<'a, I, T>;
 
@@ -511,7 +511,7 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a Universe<I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a mut Universe<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a mut Universe<I, T> {
     type Item = &'a mut T;
     type IntoIter = UniverseIterMut<'a, I, T>;
 
@@ -526,7 +526,7 @@ pub struct UniverseEnumeratedIter<'a, I, T> {
     idx: I,
 }
 
-impl<'a, I: IndexingType, T> Iterator for UniverseEnumeratedIter<'a, I, T> {
+impl<'a, I: Idx, T> Iterator for UniverseEnumeratedIter<'a, I, T> {
     type Item = (I, &'a T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -547,7 +547,7 @@ pub struct UniverseEnumeratedIterMut<'a, I, T> {
     idx: I,
 }
 
-impl<'a, I: IndexingType, T> Iterator for UniverseEnumeratedIterMut<'a, I, T> {
+impl<'a, I: Idx, T> Iterator for UniverseEnumeratedIterMut<'a, I, T> {
     type Item = (I, &'a mut T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -577,7 +577,7 @@ pub struct CountedUniverse<I, T> {
     occupied_entries: usize,
 }
 
-impl<I: IndexingType, T> CountedUniverse<I, T> {
+impl<I: Idx, T> CountedUniverse<I, T> {
     pub const fn new() -> Self {
         Self {
             universe: Universe::new(),
@@ -661,14 +661,14 @@ impl<I: IndexingType, T> CountedUniverse<I, T> {
 }
 
 // autoderiving this currently fails on stable
-impl<I: IndexingType, T> Default for CountedUniverse<I, T> {
+impl<I: Idx, T> Default for CountedUniverse<I, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
 // separate impl since only available if T: Default
-impl<I: IndexingType, T: Default> CountedUniverse<I, T> {
+impl<I: Idx, T: Default> CountedUniverse<I, T> {
     pub fn claim(&mut self) -> I {
         self.claim_with(Default::default)
     }
@@ -677,7 +677,7 @@ impl<I: IndexingType, T: Default> CountedUniverse<I, T> {
     }
 }
 
-impl<I: IndexingType, T> Index<I> for CountedUniverse<I, T> {
+impl<I: Idx, T> Index<I> for CountedUniverse<I, T> {
     type Output = T;
     #[inline]
     fn index(&self, index: I) -> &Self::Output {
@@ -685,14 +685,14 @@ impl<I: IndexingType, T> Index<I> for CountedUniverse<I, T> {
     }
 }
 
-impl<I: IndexingType, T> IndexMut<I> for CountedUniverse<I, T> {
+impl<I: Idx, T> IndexMut<I> for CountedUniverse<I, T> {
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.universe.index_mut(index)
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a CountedUniverse<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a CountedUniverse<I, T> {
     type Item = &'a T;
     type IntoIter = UniverseIter<'a, I, T>;
 
@@ -701,7 +701,7 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a CountedUniverse<I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a mut CountedUniverse<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a mut CountedUniverse<I, T> {
     type Item = &'a mut T;
     type IntoIter = UniverseIterMut<'a, I, T>;
 
@@ -710,7 +710,7 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a mut CountedUniverse<I, T> {
     }
 }
 
-impl<I: IndexingType, T, II: IntoIterator<Item = T>> From<II>
+impl<I: Idx, T, II: IntoIterator<Item = T>> From<II>
     for Universe<I, T>
 {
     fn from(ii: II) -> Self {
@@ -722,7 +722,7 @@ impl<I: IndexingType, T, II: IntoIterator<Item = T>> From<II>
     }
 }
 
-impl<I: IndexingType, T> TransmutableContainer for Universe<I, T> {
+impl<I: Idx, T> TransmutableContainer for Universe<I, T> {
     type ElementType = T;
 
     type ContainerType<Q> = Universe<I, Q>;

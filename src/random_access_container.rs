@@ -4,13 +4,13 @@ use std::{
 };
 
 use super::{
-    index_slice::IndexSlice, index_vec::IndexVec, indexing_type::IndexingType,
+    index_slice::IndexSlice, index_vec::IndexVec, idx::Idx,
 };
 
 /// Very crude generalization over `Vec<T>` and `VecDeque<T>`,
 /// used for cases where algorithms need to work on both, like
 /// `merge_action_lists`
-pub trait RandomAccessContainer<I: IndexingType, T>:
+pub trait RandomAccessContainer<I: Idx, T>:
     Index<I, Output = T> + IndexMut<I, Output = T>
 {
     fn get(&self, index: I) -> Option<&T>;
@@ -21,7 +21,7 @@ pub trait RandomAccessContainer<I: IndexingType, T>:
         self.len() == 0
     }
 }
-impl<I: IndexingType, T> RandomAccessContainer<I, T> for IndexVec<I, T> {
+impl<I: Idx, T> RandomAccessContainer<I, T> for IndexVec<I, T> {
     fn get(&self, index: I) -> Option<&T> {
         <IndexSlice<I, T>>::get(self, index)
     }

@@ -3,27 +3,27 @@ use std::{
     ops::{Index, IndexMut, RangeBounds},
 };
 
-use super::{indexing_type::IndexingType, range_bounds_to_range_wrapping};
+use super::{idx::Idx, range_bounds_to_range_wrapping};
 
 pub struct OffsetVecDeque<I, T> {
     data: VecDeque<T>,
     offset: I,
 }
 
-impl<I: IndexingType, T> Index<I> for OffsetVecDeque<I, T> {
+impl<I: Idx, T> Index<I> for OffsetVecDeque<I, T> {
     type Output = T;
 
     fn index(&self, index: I) -> &Self::Output {
         &self.data[index.into_usize().wrapping_sub(self.offset.into_usize())]
     }
 }
-impl<I: IndexingType, T> IndexMut<I> for OffsetVecDeque<I, T> {
+impl<I: Idx, T> IndexMut<I> for OffsetVecDeque<I, T> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.data
             [index.into_usize().wrapping_sub(self.offset.into_usize())]
     }
 }
-impl<I: IndexingType, T> Default for OffsetVecDeque<I, T> {
+impl<I: Idx, T> Default for OffsetVecDeque<I, T> {
     fn default() -> Self {
         Self {
             data: VecDeque::default(),
@@ -31,7 +31,7 @@ impl<I: IndexingType, T> Default for OffsetVecDeque<I, T> {
         }
     }
 }
-impl<I: IndexingType, T: Clone> Clone for OffsetVecDeque<I, T> {
+impl<I: Idx, T: Clone> Clone for OffsetVecDeque<I, T> {
     fn clone(&self) -> Self {
         Self {
             data: self.data.clone(),
@@ -40,7 +40,7 @@ impl<I: IndexingType, T: Clone> Clone for OffsetVecDeque<I, T> {
     }
 }
 
-impl<I: IndexingType, T> OffsetVecDeque<I, T> {
+impl<I: Idx, T> OffsetVecDeque<I, T> {
     pub fn index_from_phys(&self, phys_idx: usize) -> I {
         I::from_usize(phys_idx).wrapping_add(self.offset)
     }

@@ -5,7 +5,7 @@ use std::{
 };
 
 use super::{
-    indexing_type::IndexingType,
+    idx::Idx,
     stable_vec::{self, StableVec, StableVecIter, StableVecIterMut},
     temp_vec::TransmutableContainer,
     universe::UniverseEntry,
@@ -17,7 +17,7 @@ pub struct StableUniverse<I, T> {
     _phantom_data: PhantomData<I>,
 }
 
-impl<I: IndexingType, T: Clone> Clone for StableUniverse<I, T> {
+impl<I: Idx, T: Clone> Clone for StableUniverse<I, T> {
     fn clone(&self) -> Self {
         Self {
             data: self
@@ -40,13 +40,13 @@ impl<I: IndexingType, T: Clone> Clone for StableUniverse<I, T> {
 }
 
 // if we autoderive this, I would have to implement Default
-impl<I: IndexingType, T> Default for StableUniverse<I, T> {
+impl<I: Idx, T> Default for StableUniverse<I, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<I: IndexingType, T> StableUniverse<I, T> {
+impl<I: Idx, T> StableUniverse<I, T> {
     pub const fn new() -> Self {
         Self {
             data: StableVec::new(),
@@ -267,13 +267,13 @@ impl<I: IndexingType, T> StableUniverse<I, T> {
 }
 
 // separate impl since only available if T: Default
-impl<I: IndexingType, T: Default> StableUniverse<I, T> {
+impl<I: Idx, T: Default> StableUniverse<I, T> {
     pub fn claim(&self) -> I {
         self.claim_with(Default::default)
     }
 }
 
-impl<I: IndexingType, T> Index<I> for StableUniverse<I, T> {
+impl<I: Idx, T> Index<I> for StableUniverse<I, T> {
     type Output = T;
     #[inline]
     fn index(&self, index: I) -> &Self::Output {
@@ -284,7 +284,7 @@ impl<I: IndexingType, T> Index<I> for StableUniverse<I, T> {
     }
 }
 
-impl<I: IndexingType, T> IndexMut<I> for StableUniverse<I, T> {
+impl<I: Idx, T> IndexMut<I> for StableUniverse<I, T> {
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         match self.data[index.into_usize()].get_mut() {
@@ -326,7 +326,7 @@ impl<'a, I, T> Iterator for StableUniverseIter<'a, I, T> {
     }
 }
 
-impl<I: IndexingType, T> Iterator for StableUniverseIndexIter<'_, I, T> {
+impl<I: Idx, T> Iterator for StableUniverseIndexIter<'_, I, T> {
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -368,7 +368,7 @@ impl<'a, I, T> Iterator for StableUniverseIterMut<'a, I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a StableUniverse<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a StableUniverse<I, T> {
     type Item = &'a T;
     type IntoIter = StableUniverseIter<'a, I, T>;
 
@@ -377,7 +377,7 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a StableUniverse<I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a mut StableUniverse<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a mut StableUniverse<I, T> {
     type Item = &'a mut T;
     type IntoIter = StableUniverseIterMut<'a, I, T>;
 
@@ -392,7 +392,7 @@ pub struct StableUniverseEnumeratedIter<'a, I, T> {
     idx: I,
 }
 
-impl<'a, I: IndexingType, T> Iterator
+impl<'a, I: Idx, T> Iterator
     for StableUniverseEnumeratedIter<'a, I, T>
 {
     type Item = (I, &'a T);
@@ -415,7 +415,7 @@ pub struct StabaleUniverseEnumeratedIterMut<'a, I, T> {
     idx: I,
 }
 
-impl<'a, I: IndexingType, T> Iterator
+impl<'a, I: Idx, T> Iterator
     for StabaleUniverseEnumeratedIterMut<'a, I, T>
 {
     type Item = (I, &'a mut T);
@@ -449,7 +449,7 @@ pub struct CountedStableUniverse<I, T> {
     occupied_entries: usize,
 }
 
-impl<I: IndexingType, T: Clone> Clone for CountedStableUniverse<I, T> {
+impl<I: Idx, T: Clone> Clone for CountedStableUniverse<I, T> {
     fn clone(&self) -> Self {
         Self {
             universe: self.universe.clone(),
@@ -458,7 +458,7 @@ impl<I: IndexingType, T: Clone> Clone for CountedStableUniverse<I, T> {
     }
 }
 
-impl<I: IndexingType, T> CountedStableUniverse<I, T> {
+impl<I: Idx, T> CountedStableUniverse<I, T> {
     pub const fn new() -> Self {
         Self {
             universe: StableUniverse::new(),
@@ -537,14 +537,14 @@ impl<I: IndexingType, T> CountedStableUniverse<I, T> {
 }
 
 // autoderiving this currently fails on stable
-impl<I: IndexingType, T> Default for CountedStableUniverse<I, T> {
+impl<I: Idx, T> Default for CountedStableUniverse<I, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
 // separate impl since only available if T: Default
-impl<I: IndexingType, T: Default> CountedStableUniverse<I, T> {
+impl<I: Idx, T: Default> CountedStableUniverse<I, T> {
     pub fn claim(&mut self) -> I {
         self.claim_with(Default::default)
     }
@@ -553,7 +553,7 @@ impl<I: IndexingType, T: Default> CountedStableUniverse<I, T> {
     }
 }
 
-impl<I: IndexingType, T> Index<I> for CountedStableUniverse<I, T> {
+impl<I: Idx, T> Index<I> for CountedStableUniverse<I, T> {
     type Output = T;
     #[inline]
     fn index(&self, index: I) -> &Self::Output {
@@ -561,14 +561,14 @@ impl<I: IndexingType, T> Index<I> for CountedStableUniverse<I, T> {
     }
 }
 
-impl<I: IndexingType, T> IndexMut<I> for CountedStableUniverse<I, T> {
+impl<I: Idx, T> IndexMut<I> for CountedStableUniverse<I, T> {
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.universe.index_mut(index)
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator for &'a CountedStableUniverse<I, T> {
+impl<'a, I: Idx, T> IntoIterator for &'a CountedStableUniverse<I, T> {
     type Item = &'a T;
     type IntoIter = StableUniverseIter<'a, I, T>;
 
@@ -577,7 +577,7 @@ impl<'a, I: IndexingType, T> IntoIterator for &'a CountedStableUniverse<I, T> {
     }
 }
 
-impl<'a, I: IndexingType, T> IntoIterator
+impl<'a, I: Idx, T> IntoIterator
     for &'a mut CountedStableUniverse<I, T>
 {
     type Item = &'a mut T;
@@ -588,7 +588,7 @@ impl<'a, I: IndexingType, T> IntoIterator
     }
 }
 
-impl<I: IndexingType, T, II: IntoIterator<Item = T>> From<II>
+impl<I: Idx, T, II: IntoIterator<Item = T>> From<II>
     for StableUniverse<I, T>
 {
     fn from(ii: II) -> Self {
@@ -598,7 +598,7 @@ impl<I: IndexingType, T, II: IntoIterator<Item = T>> From<II>
     }
 }
 
-impl<I: IndexingType, T> TransmutableContainer for StableUniverse<I, T> {
+impl<I: Idx, T> TransmutableContainer for StableUniverse<I, T> {
     type ElementType = T;
 
     type ContainerType<Q> = StableUniverse<I, Q>;
