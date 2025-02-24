@@ -29,8 +29,18 @@ pub trait Idx:
     // again).
     fn from_usize(v: usize) -> Self;
     fn into_usize(self) -> usize;
-    fn wrapping_add(self, other: Self) -> Self;
-    fn wrapping_sub(self, other: Self) -> Self;
+    fn wrapping_add(self, other: Self) -> Self {
+        Self::from_usize(
+            self.into_usize().wrapping_add(other.into_usize())
+                % Self::MAX.into_usize(),
+        )
+    }
+    fn wrapping_sub(self, other: Self) -> Self {
+        Self::from_usize(
+            self.into_usize().wrapping_sub(other.into_usize())
+                % Self::MAX.into_usize(),
+        )
+    }
     fn range_to(&self, end: Self) -> IdxRange<Self> {
         IdxRange::new(*self..end)
     }
