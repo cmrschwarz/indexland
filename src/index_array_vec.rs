@@ -9,9 +9,11 @@ use std::{
 
 use arrayvec::ArrayVec;
 
+use crate::enumerated_index_iter::EnumeratedIndexIter;
+
 use super::{
     idx::{Idx, IdxRange},
-    index_slice::{IndexIterEnumerated, IndexSlice},
+    index_slice::IndexSlice,
 };
 
 #[macro_export]
@@ -114,18 +116,18 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     }
     pub fn iter_enumerated(
         &self,
-    ) -> IndexIterEnumerated<I, std::slice::Iter<T>> {
-        IndexIterEnumerated::new(I::ZERO, self.data.iter())
+    ) -> EnumeratedIndexIter<I, std::slice::Iter<T>> {
+        EnumeratedIndexIter::new(I::ZERO, self.data.iter())
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IndexIterEnumerated<I, std::slice::IterMut<T>> {
-        IndexIterEnumerated::new(I::ZERO, self.data.iter_mut())
+    ) -> EnumeratedIndexIter<I, std::slice::IterMut<T>> {
+        EnumeratedIndexIter::new(I::ZERO, self.data.iter_mut())
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IndexIterEnumerated<I, arrayvec::IntoIter<T, CAP>> {
-        IndexIterEnumerated::new(I::ZERO, self.data.into_iter())
+    ) -> EnumeratedIndexIter<I, arrayvec::IntoIter<T, CAP>> {
+        EnumeratedIndexIter::new(I::ZERO, self.data.into_iter())
     }
     pub fn indices(&self) -> IdxRange<I> {
         IdxRange::new(I::ZERO..self.len_idx())

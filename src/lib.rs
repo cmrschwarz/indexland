@@ -39,12 +39,11 @@
 
 pub mod counted_stable_universe;
 pub mod counted_universe;
+pub mod enumerated_index_iter;
 pub mod idx;
 pub mod index_array;
-pub mod index_array_vec;
 pub mod index_slice;
 pub mod index_vec;
-pub mod multi_ref_mut_handout;
 pub mod nonmax;
 pub mod offset_vec_deque;
 pub mod phantom_slot;
@@ -53,6 +52,18 @@ pub mod stable_universe;
 pub mod stable_vec;
 pub mod temp_vec;
 pub mod universe;
+
+#[cfg(feature = "arrayvec")]
+pub mod index_array_vec;
+
+#[cfg(feature = "smallvec")]
+pub mod index_small_vec;
+
+#[cfg(feature = "multi_ref_mut_handout")]
+pub mod multi_ref_mut_handout;
+
+#[cfg(feature = "multi_ref_mut_handout")]
+pub mod universe_multi_ref_mut_handout;
 
 pub use crate::idx::*;
 

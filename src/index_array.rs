@@ -1,5 +1,3 @@
-use ref_cast::RefCast;
-
 use crate::index_slice::IndexSlice;
 
 use super::Idx;
@@ -9,7 +7,7 @@ use std::{
     ops::{Deref, DerefMut, Index, IndexMut, Range},
 };
 
-#[derive(ref_cast::RefCast, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct IndexArray<I, T, const SIZE: usize> {
     data: [T; SIZE],
@@ -48,10 +46,10 @@ impl<I: Idx, T, const SIZE: usize> IndexArray<I, T, SIZE> {
         &mut self.data
     }
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
-        IndexSlice::ref_cast(&self.data)
+        IndexSlice::from_slice(&self.data)
     }
     pub fn as_index_slice_mut(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::ref_cast_mut(&mut self.data)
+        IndexSlice::from_slice_mut(&mut self.data)
     }
     pub fn into_array(self) -> [T; SIZE] {
         self.data
@@ -142,7 +140,7 @@ impl<I: Idx, T, const SIZE: usize> Index<Range<I>> for IndexArray<I, T, SIZE> {
     type Output = IndexSlice<I, T>;
 
     fn index(&self, index: Range<I>) -> &Self::Output {
-        IndexSlice::ref_cast(
+        IndexSlice::from_slice(
             &self.data[index.start.into_usize()..index.end.into_usize()],
         )
     }
@@ -152,7 +150,7 @@ impl<I: Idx, T, const SIZE: usize> IndexMut<Range<I>>
     for IndexArray<I, T, SIZE>
 {
     fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
-        IndexSlice::ref_cast_mut(
+        IndexSlice::from_slice_mut(
             &mut self.data[index.start.into_usize()..index.end.into_usize()],
         )
     }

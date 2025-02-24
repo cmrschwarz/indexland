@@ -1,9 +1,9 @@
-use std::mem::{align_of, size_of, ManuallyDrop};
-
-use super::{
-    index_vec::IndexVec, Idx,
-    phantom_slot::PhantomSlot,
+use std::{
+    mem::{align_of, size_of, ManuallyDrop},
+    ops::{Deref, DerefMut},
 };
+
+use super::{index_vec::IndexVec, phantom_slot::PhantomSlot, Idx};
 
 pub struct LayoutCompatible<T, U>(std::marker::PhantomData<(T, U)>);
 impl<T, U> LayoutCompatible<T, U> {
@@ -50,12 +50,23 @@ pub trait TransmutableContainer: Default {
     }
 }
 
-#[derive(derive_more::Deref, derive_more::DerefMut)]
 pub struct BorrowedContainer<'a, T, C: TransmutableContainer> {
     source: &'a mut C,
-    #[deref]
-    #[deref_mut]
     vec: <C as TransmutableContainer>::ContainerType<T>,
+}
+
+impl<T, C: TransmutableContainer> Deref for BorrowedContainer<'_, T, C> {
+    type Target = <C as TransmutableContainer>::ContainerType<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.vec
+    }
+}
+
+impl<T, C: TransmutableContainer> DerefMut for BorrowedContainer<'_, T, C> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.vec
+    }
 }
 
 #[derive(Clone)]

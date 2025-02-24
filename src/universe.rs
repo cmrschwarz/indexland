@@ -3,10 +3,12 @@
 use std::{
     marker::PhantomData,
     ops::{Index, IndexMut},
-    ptr::NonNull,
 };
 
-use arrayvec::ArrayVec;
+#[cfg(feature = "multi_ref_mut_handout")]
+use crate::universe_multi_ref_mut_handout::{
+    UniverseMultiRefMutHandout, UniverseRefHandoutStackBase,
+};
 
 use super::{get_three_distinct_mut, temp_vec::TransmutableContainer, Idx};
 
@@ -20,96 +22,9 @@ pub enum UniverseEntry<I, T> {
 
 #[derive(Clone)]
 pub struct Universe<I, T> {
-    data: Vec<UniverseEntry<I, T>>,
-    first_vacant_entry: Option<I>,
-    _phantom_data: PhantomData<I>,
-}
-
-pub struct UniverseMultiRefMutHandout<'a, I, T, const CAP: usize> {
-    universe_data: NonNull<UniverseEntry<I, T>>,
-    first_vacant_entry: &'a mut Option<I>,
-    len: usize,
-    handed_out: ArrayVec<I, CAP>,
-}
-
-pub unsafe trait UniverseRefHandoutStack<I, T> {
-    type Child<'b>: UniverseRefHandoutStack<I, T>
-    where
-        Self: 'b;
-    fn claim(&mut self, idx: I) -> (Self::Child<'_>, &mut T);
-    fn assert_unused(&mut self, idx: I) -> NonNull<UniverseEntry<I, T>>;
-}
-
-pub struct UniverseRefHandoutStackNode<'a, I, T, P> {
-    base: &'a mut P,
-    id: I,
-    _phantom: PhantomData<fn() -> T>,
-}
-
-pub struct UniverseRefHandoutStackBase<'a, I, T> {
-    universe_data: NonNull<UniverseEntry<I, T>>,
-    len: usize,
-    _phantom: PhantomData<&'a mut Universe<I, T>>,
-}
-
-unsafe impl<I: Idx, T> UniverseRefHandoutStack<I, T>
-    for UniverseRefHandoutStackBase<'_, I, T>
-{
-    type Child<'b>
-        = UniverseRefHandoutStackNode<'b, I, T, Self>
-    where
-        Self: 'b;
-
-    fn claim(&mut self, id: I) -> (Self::Child<'_>, &mut T) {
-        let idx = id.into_usize();
-        assert!(idx < self.len);
-        let elem = unsafe { &mut *self.universe_data.as_ptr().add(idx) };
-        let UniverseEntry::Occupied(elem) = elem else {
-            panic!("attempted to claim vacant universe entry")
-        };
-        let child = UniverseRefHandoutStackNode {
-            base: self,
-            id,
-            _phantom: PhantomData,
-        };
-        (child, elem)
-    }
-
-    fn assert_unused(&mut self, id: I) -> NonNull<UniverseEntry<I, T>> {
-        assert!(id.into_usize() < self.len);
-        self.universe_data
-    }
-}
-
-unsafe impl<I: Idx, T, P: UniverseRefHandoutStack<I, T>>
-    UniverseRefHandoutStack<I, T>
-    for UniverseRefHandoutStackNode<'_, I, T, P>
-{
-    type Child<'b>
-        = UniverseRefHandoutStackNode<'b, I, T, Self>
-    where
-        Self: 'b;
-
-    fn claim(&mut self, id: I) -> (Self::Child<'_>, &mut T) {
-        let idx = id.into_usize();
-        let universe_data = self.assert_unused(id);
-        let elem = unsafe { &mut *universe_data.as_ptr().add(idx) };
-        let UniverseEntry::Occupied(elem) = elem else {
-            panic!("attempted to claim vacant universe entry")
-        };
-
-        let child = UniverseRefHandoutStackNode {
-            base: self,
-            id,
-            _phantom: PhantomData,
-        };
-        (child, elem)
-    }
-
-    fn assert_unused(&mut self, idx: I) -> NonNull<UniverseEntry<I, T>> {
-        assert!(idx != self.id);
-        self.base.assert_unused(idx)
-    }
+    pub(crate) data: Vec<UniverseEntry<I, T>>,
+    pub(crate) first_vacant_entry: Option<I>,
+    pub(crate) _phantom_data: PhantomData<I>,
 }
 
 impl<I, T> UniverseEntry<I, T> {
@@ -136,19 +51,19 @@ impl<I: Idx, T> Universe<I, T> {
             _phantom_data: PhantomData,
         }
     }
+
+    #[cfg(feature = "multi_ref_mut_handout")]
     pub fn multi_ref_mut_handout<const CAP: usize>(
         &mut self,
     ) -> UniverseMultiRefMutHandout<I, T, CAP> {
         UniverseMultiRefMutHandout::new(self)
     }
+
+    #[cfg(feature = "multi_ref_mut_handout")]
     pub fn ref_mut_handout_stack(
         &mut self,
     ) -> UniverseRefHandoutStackBase<I, T> {
-        UniverseRefHandoutStackBase {
-            len: self.data.len(),
-            universe_data: NonNull::new(self.data.as_mut_ptr()).unwrap(),
-            _phantom: PhantomData,
-        }
+        UniverseRefHandoutStackBase::new(self)
     }
     fn build_vacant_entry(&mut self, index: usize) -> UniverseEntry<I, T> {
         let res = UniverseEntry::Vacant(self.first_vacant_entry);
@@ -354,61 +269,6 @@ impl<I: Idx, T> Universe<I, T> {
     }
     pub fn next_index_phys(&self) -> I {
         I::from_usize(self.data.len())
-    }
-}
-
-impl<'a, I: Idx, T, const CAP: usize>
-    UniverseMultiRefMutHandout<'a, I, T, CAP>
-{
-    fn new(universe: &'a mut Universe<I, T>) -> Self {
-        // SAFETY: `UniverseMultiRefMutHandout` supports claiming additional
-        // elements using claim_new. We have to ensure that this is possible
-        // without reallocation as that would invalidate the previously handed
-        // out refs.
-        universe.reserve(CAP.into_usize());
-        Self {
-            len: universe.data.len(),
-            universe_data: NonNull::new(universe.data.as_mut_ptr()).unwrap(),
-            first_vacant_entry: &mut universe.first_vacant_entry,
-            handed_out: ArrayVec::new(),
-        }
-    }
-    pub fn claim(&mut self, i: I) -> &'a mut T {
-        let idx = i.into_usize();
-        assert!(self.len > idx);
-
-        assert!(!self.handed_out.contains(&i));
-        self.handed_out.push(i);
-
-        // SAFETY: this type dynamically ensures that each index is handed out
-        // exactly once through the assert above
-        let v = unsafe { &mut *self.universe_data.as_ptr().add(idx) };
-
-        let UniverseEntry::Occupied(v) = v else {
-            panic!("attempted to claim vacant universe entry");
-        };
-        v
-    }
-
-    pub fn claim_new(&mut self, value: T) -> (I, &'a mut T) {
-        // first_vacant_entry is guaranteed to be valid because
-        // we called `Universe::reserve(CAP)` before creating this type
-        let idx = self.first_vacant_entry.unwrap().into_usize();
-        let id = I::from_usize(idx);
-        self.handed_out.push(id);
-        let entry = unsafe { &mut *self.universe_data.as_ptr().add(idx) };
-
-        let UniverseEntry::Vacant(next) = *entry else {
-            unreachable!()
-        };
-        *self.first_vacant_entry = next;
-
-        *entry = UniverseEntry::Occupied(value);
-
-        let UniverseEntry::Occupied(v) = entry else {
-            unreachable!()
-        };
-        (id, v)
     }
 }
 
