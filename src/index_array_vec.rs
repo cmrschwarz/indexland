@@ -7,7 +7,7 @@ use std::{
     },
 };
 
-use arrayvec::ArrayVec;
+use arrayvec::{ArrayVec, CapacityError};
 
 use crate::enumerated_index_iter::EnumeratedIndexIter;
 
@@ -86,6 +86,33 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
         self.data.extend(iter);
     }
+
+    pub fn try_extend_from_slice(
+        &mut self,
+        slice: &[T],
+    ) -> Result<(), arrayvec::CapacityError>
+    where
+        T: Clone,
+    {
+        if self.data.remaining_capacity() < slice.len() {
+            return Err(CapacityError::new(()));
+        }
+
+        let mut ptr = unsafe { self.data.as_mut_ptr().add(self.data.len()) };
+
+        // the compiler should replace this with `memcopy` if `T: Copy`
+        for v in slice {
+            unsafe {
+                *ptr = v.clone();
+                ptr = ptr.add(1);
+                // to avoid leaks in case of panic unwinding
+                self.data.set_len(self.data.len() + 1);
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn push(&mut self, v: T) {
         self.data.push(v);
     }

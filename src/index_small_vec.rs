@@ -86,6 +86,27 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
         self.data.extend(iter);
     }
+    pub fn reserve(&mut self, additional: usize) {
+        self.data.reserve(additional);
+    }
+    pub fn extend_from_slice(&mut self, slice: &[T])
+    where
+        T: Clone,
+    {
+        self.data.reserve(slice.len());
+
+        let mut ptr = unsafe { self.data.as_mut_ptr().add(self.data.len()) };
+
+        // the compiler should replace this with `memcopy` if `T: Copy`
+        for v in slice {
+            unsafe {
+                *ptr = v.clone();
+                ptr = ptr.add(1);
+                // to avoid leaks in case of panic unwinding
+                self.data.set_len(self.data.len() + 1);
+            }
+        }
+    }
     pub fn push(&mut self, v: T) {
         self.data.push(v);
     }

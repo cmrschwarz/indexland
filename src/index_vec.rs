@@ -86,6 +86,16 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
         self.data.extend(iter);
     }
+
+    pub fn extend_from_slice(&mut self, slice: &[T])
+    where
+        T: Clone,
+    {
+        self.data.extend_from_slice(slice);
+    }
+    pub fn reserve(&mut self, additional: usize) {
+        self.data.reserve(additional);
+    }
     pub fn push(&mut self, v: T) {
         self.data.push(v);
     }
