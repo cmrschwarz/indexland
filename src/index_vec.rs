@@ -113,6 +113,10 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.data.truncate(len);
     }
 
+    pub fn swap_remove(&mut self, idx: I) -> T {
+        self.data.swap_remove(idx.into_usize())
+    }
+
     pub fn as_vec(&self) -> &Vec<T> {
         &self.data
     }

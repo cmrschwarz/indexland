@@ -86,6 +86,9 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
         self.data.extend(iter);
     }
+    pub fn swap_remove(&mut self, idx: I) -> T {
+        self.data.swap_remove(idx.into_usize())
+    }
     pub fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }

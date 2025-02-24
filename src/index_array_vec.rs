@@ -119,6 +119,9 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn pop(&mut self) -> Option<T> {
         self.data.pop()
     }
+    pub fn swap_remove(&mut self, idx: I) -> T {
+        self.data.swap_remove(idx.into_usize())
+    }
     pub fn clear(&mut self) {
         self.data.clear();
     }
