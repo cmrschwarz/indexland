@@ -65,8 +65,8 @@ fn make_enum_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
             PartialOrd, Ord,
             PartialEq, Eq,
             Hash,
-            ::indexland_derive::Idx,
-            ::indexland_derive::EnumIdx
+            ::indexland::Idx,
+            ::indexland::EnumIdx
         )]
         #ast
 
