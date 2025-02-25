@@ -66,7 +66,7 @@ pub mod multi_ref_mut_handout;
 pub mod universe_multi_ref_mut_handout;
 
 #[cfg(feature = "derive")]
-pub use indexland_derive::{make_enum_idx, EnumIdx, Idx};
+pub use indexland_derive::{Idx, IdxEnum, IdxNewtype};
 
 pub use crate::idx::*;
 

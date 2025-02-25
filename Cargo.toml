@@ -27,7 +27,7 @@ indexland_derive = { path = "./derive", optional = true, default-features = fals
 
 [dev-dependencies]
 indexland_derive = { path = "./derive" }
-
+derive_more = { version = "2.0.1", features = ["full"] }
 
 [features]
 default = ["arrayvec", "multi_ref_mut_handout"]

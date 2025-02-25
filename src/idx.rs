@@ -243,7 +243,7 @@ impl Idx for u64 {
 }
 
 #[macro_export]
-macro_rules! index_newtype {
+macro_rules! idx_newtype {
     { $( $(#[$attrs: meta])* $type_vis: vis struct $name: ident ($base_vis: vis $base_type: path); )* } => {$(
         $(#[$attrs])*
         #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -332,7 +332,7 @@ macro_rules! index_newtype {
     )*};
 }
 
-pub trait EnumIdx: Idx + 'static {
+pub trait IdxEnum: Sized + 'static {
     const COUNT: usize;
     const VARIANTS: &'static [Self];
 
@@ -344,4 +344,10 @@ pub trait EnumIdx: Idx + 'static {
     fn iter() -> std::slice::Iter<'static, Self> {
         Self::VARIANTS.iter()
     }
+}
+
+pub trait IdxNewtype {
+    type Base: Idx;
+    fn new(inner: Self::Base) -> Self;
+    fn into_inner(self) -> Self::Base;
 }

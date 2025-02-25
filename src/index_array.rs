@@ -1,4 +1,4 @@
-use crate::{index_slice::IndexSlice, EnumIdx};
+use crate::{index_slice::IndexSlice, IdxEnum};
 
 use super::Idx;
 use std::{
@@ -25,7 +25,7 @@ pub struct IndexArray<I, T, const SIZE: usize> {
 /// enum Foo { A, B, C }
 /// const FOO_MAPPING: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2, 3]);
 /// ```
-pub type EnumIndexArray<E, T> = <E as EnumIdx>::EnumIndexArray<T>;
+pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 
 impl<I, T, const SIZE: usize> Default for IndexArray<I, T, SIZE>
 where
