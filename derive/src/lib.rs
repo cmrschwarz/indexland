@@ -22,7 +22,7 @@
 //! };
 //! ```
 
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{Data, DataEnum, DataStruct, DeriveInput, Fields};
 
@@ -160,60 +160,6 @@ pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         .into()
 }
 
-fn derive_slop(name: &Ident) -> TokenStream {
-    quote! {
-        impl core::default::Default for #name {
-            fn default() -> Self {
-                ::indexland::Idx::ZERO
-            }
-        }
-        impl core::ops::Add for #name {
-            type Output = Self;
-            fn add(self, rhs: Self) -> Self::Output {
-                ::indexland::Idx::from_usize(
-                    ::indexland::Idx::into_usize(self) + ::indexland::Idx::into_usize(rhs),
-                )
-            }
-        }
-        impl core::ops::Sub for #name {
-            type Output = Self;
-            fn sub(self, rhs: Self) -> Self::Output {
-                ::indexland::Idx::from_usize(
-                    ::indexland::Idx::into_usize(self) - ::indexland::Idx::into_usize(rhs),
-                )
-            }
-        }
-        impl core::ops::AddAssign for #name {
-            fn add_assign(&mut self, rhs: Self) {
-                *self = *self + rhs;
-            }
-        }
-        impl core::ops::SubAssign for #name {
-            fn sub_assign(&mut self, rhs: Self) {
-                *self = *self - rhs;
-            }
-        }
-        impl core::cmp::PartialOrd for #name {
-            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-                ::indexland::Idx::into_usize(*self)
-                    .partial_cmp(&::indexland::Idx::into_usize(*other))
-            }
-        }
-        impl core::cmp::Ord for #name {
-            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-                ::indexland::Idx::into_usize(*self)
-                    .cmp(&::indexland::Idx::into_usize(*other))
-            }
-        }
-        impl core::cmp::PartialEq for #name {
-            fn eq(&self, other: &Self) -> bool {
-                core::mem::discriminant(self) == core::mem::discriminant(other)
-            }
-        }
-        impl core::cmp::Eq for #name {}
-    }
-}
-
 fn derive_idx_newtype_inner(
     ast: DeriveInput,
 ) -> Result<TokenStream, syn::Error> {
@@ -234,18 +180,11 @@ fn derive_idx_newtype_inner(
     let name = &ast.ident;
 
     let idx_derivation = derive_idx_for_struct(&ast, struct_data)?;
-    let slop_derivation = derive_slop(name);
 
     let output = quote! {
-        impl #impl_generics ::indexland::IdxNewtype for #name #ty_generics #where_clause {
-            type Base = #base_type;
-            #[inline]
-            fn new(v: #base_type) -> Self {
-                #name(v)
-            }
-            #[inline]
-            fn into_inner(self) -> #base_type {
-                self.0
+        impl core::default::Default for #name {
+            fn default() -> Self {
+                ::indexland::Idx::ZERO
             }
         }
         impl Clone for #name {
@@ -278,8 +217,56 @@ fn derive_idx_newtype_inner(
                 core::fmt::Display::fmt(&self.0, f)
             }
         }
+        impl core::ops::Add for #name {
+            type Output = Self;
+            fn add(self, rhs: Self) -> Self::Output {
+                #name(self.0 + rhs.0)
+            }
+        }
+        impl core::ops::Sub for #name {
+            type Output = Self;
+            fn sub(self, rhs: Self) -> Self::Output {
+                #name(self.0 - rhs.0)
+            }
+        }
+        impl core::ops::AddAssign for #name {
+            fn add_assign(&mut self, rhs: Self) {
+                *self = *self + rhs;
+            }
+        }
+        impl core::ops::SubAssign for #name {
+            fn sub_assign(&mut self, rhs: Self) {
+                *self = *self - rhs;
+            }
+        }
+        impl core::cmp::PartialOrd for #name {
+            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                core::cmp::PartialOrd::partial_cmp(&self.0, &other.0)
+            }
+        }
+        impl core::cmp::Ord for #name {
+            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+                core::cmp::Ord::cmp(&self.0, &other.0)
+            }
+        }
+        impl core::cmp::PartialEq for #name {
+            fn eq(&self, other: &Self) -> bool {
+                self.0 == other.0
+            }
+        }
+        impl core::cmp::Eq for #name {}
+        impl #impl_generics ::indexland::IdxNewtype for #name #ty_generics #where_clause {
+            type Base = #base_type;
+            #[inline]
+            fn new(v: #base_type) -> Self {
+                #name(v)
+            }
+            #[inline]
+            fn into_inner(self) -> #base_type {
+                self.0
+            }
+        }
         #idx_derivation
-        #slop_derivation
     };
     Ok(output)
     // Err(syn::Error::new(Span::call_site(), output.to_string()))
@@ -326,17 +313,11 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     let count = idents.len();
 
     let idx_derivation = derive_idx_for_enum(&ast, enum_data)?;
-    let slop_derivation = derive_slop(name);
 
     let output = quote! {
-        impl #impl_generics ::indexland::IdxEnum for #name #ty_generics #where_clause {
-            const COUNT: usize = #count;
-            type EnumIndexArray<T> = ::indexland::index_array::IndexArray<Self, T, #count>;
-            const VARIANTS: &'static [Self] = &[ #(#name::#idents),* ];
-        }
-        impl core::hash::Hash for #name {
-            fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-                core::mem::discriminant(self).hash(state);
+        impl core::default::Default for #name {
+            fn default() -> Self {
+                ::indexland::Idx::ZERO
             }
         }
         impl Clone for #name {
@@ -345,8 +326,61 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
             }
         }
         impl Copy for #name {}
+        impl core::hash::Hash for #name {
+            fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+                core::mem::discriminant(self).hash(state);
+            }
+        }
+        impl core::ops::Add for #name {
+            type Output = Self;
+            fn add(self, rhs: Self) -> Self::Output {
+                ::indexland::Idx::from_usize(
+                    ::indexland::Idx::into_usize(self) + ::indexland::Idx::into_usize(rhs),
+                )
+            }
+        }
+        impl core::ops::Sub for #name {
+            type Output = Self;
+            fn sub(self, rhs: Self) -> Self::Output {
+                ::indexland::Idx::from_usize(
+                    ::indexland::Idx::into_usize(self) - ::indexland::Idx::into_usize(rhs),
+                )
+            }
+        }
+        impl core::ops::AddAssign for #name {
+            fn add_assign(&mut self, rhs: Self) {
+                *self = *self + rhs;
+            }
+        }
+        impl core::ops::SubAssign for #name {
+            fn sub_assign(&mut self, rhs: Self) {
+                *self = *self - rhs;
+            }
+        }
+        impl core::cmp::PartialOrd for #name {
+            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                ::indexland::Idx::into_usize(*self)
+                    .partial_cmp(&::indexland::Idx::into_usize(*other))
+            }
+        }
+        impl core::cmp::Ord for #name {
+            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+                ::indexland::Idx::into_usize(*self)
+                    .cmp(&::indexland::Idx::into_usize(*other))
+            }
+        }
+        impl core::cmp::PartialEq for #name {
+            fn eq(&self, other: &Self) -> bool {
+                core::mem::discriminant(self) == core::mem::discriminant(other)
+            }
+        }
+        impl core::cmp::Eq for #name {}
+        impl #impl_generics ::indexland::IdxEnum for #name #ty_generics #where_clause {
+            const COUNT: usize = #count;
+            type EnumIndexArray<T> = ::indexland::index_array::IndexArray<Self, T, #count>;
+            const VARIANTS: &'static [Self] = &[ #(#name::#idents),* ];
+        }
         #idx_derivation
-        #slop_derivation
     };
     Ok(output)
     // Err(syn::Error::new(Span::call_site(), output.to_string()))

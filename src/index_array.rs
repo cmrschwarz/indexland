@@ -19,9 +19,9 @@ pub struct IndexArray<I, T, const SIZE: usize> {
 ///
 /// Example Usage:
 /// ```
-/// use indexland::{make_enum_idx, index_array::{IndexArray, EnumIndexArray}};
+/// use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
 ///
-/// #[make_enum_idx]
+/// #[derive(IdxEnum)]
 /// enum Foo { A, B, C }
 /// const FOO_MAPPING: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2, 3]);
 /// ```

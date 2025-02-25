@@ -49,6 +49,26 @@ pub trait Idx:
     }
 }
 
+pub trait IdxEnum: Sized + 'static {
+    const COUNT: usize;
+    const VARIANTS: &'static [Self];
+
+    /// Helper type to construct `IndexArray<Self, T, Self::COUNT>`
+    /// on stable Rust without const generics.
+    /// See [`indexland::index_array::EnumIndexArray`]
+    type EnumIndexArray<T>;
+
+    fn iter() -> std::slice::Iter<'static, Self> {
+        Self::VARIANTS.iter()
+    }
+}
+
+pub trait IdxNewtype {
+    type Base: Idx;
+    fn new(inner: Self::Base) -> Self;
+    fn into_inner(self) -> Self::Base;
+}
+
 pub struct IdxRange<I> {
     pub start: I,
     pub end: I,
@@ -242,6 +262,8 @@ impl Idx for u64 {
     }
 }
 
+/// Declarative alternative to `#[derive(IdxNewtype)]` that allows generating
+/// multiple indices at once and does not require proc-macros.
 #[macro_export]
 macro_rules! idx_newtype {
     { $( $(#[$attrs: meta])* $type_vis: vis struct $name: ident ($base_vis: vis $base_type: path); )* } => {$(
@@ -269,17 +291,15 @@ macro_rules! idx_newtype {
                 $name(<$base_type as $crate::Idx>::wrapping_sub(self.0, other.0))
             }
         }
-
-        #[allow(unused)]
-        impl $name {
-            pub const fn new(v: $base_type) -> Self {
+        impl $crate::IdxNewtype for $name {
+            type Base = $base_type;
+            fn new(v: $base_type) -> Self {
                 $name(v)
             }
-            pub fn into_inner(self) -> $base_type {
+            fn into_inner(self) -> $base_type {
                 self.0
             }
         }
-
         impl From<usize> for $name {
             #[inline(always)]
             fn from(v: usize) -> $name {
@@ -292,62 +312,39 @@ macro_rules! idx_newtype {
                 <$base_type as $crate::Idx>::into_usize(v.0)
             }
         }
-
-        impl std::fmt::Debug for $name {
+        impl core::fmt::Debug for $name {
             #[inline]
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 std::fmt::Debug::fmt(&self.0, f)
             }
         }
-
-        impl std::fmt::Display for $name {
+        impl core::fmt::Display for $name {
             #[inline]
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 std::fmt::Display::fmt(&self.0, f)
             }
         }
-
-        impl std::ops::Add for $name {
+        impl core::ops::Add for $name {
             type Output = Self;
             fn add(self, other: Self) -> Self {
                 $name(self.0 + other.0)
             }
         }
-        impl std::ops::Sub for $name {
+        impl core::ops::Sub for $name {
             type Output = Self;
             fn sub(self, other: Self) -> Self {
                 $name(self.0 - other.0)
             }
         }
-        impl std::ops::AddAssign for $name {
+        impl core::ops::AddAssign for $name {
             fn add_assign(&mut self, other: Self) {
                 self.0 += other.0;
             }
         }
-        impl std::ops::SubAssign for $name {
+        impl core::ops::SubAssign for $name {
             fn sub_assign(&mut self, other: Self) {
                 self.0 -= other.0;
             }
         }
     )*};
-}
-
-pub trait IdxEnum: Sized + 'static {
-    const COUNT: usize;
-    const VARIANTS: &'static [Self];
-
-    /// Helper type to construct `IndexArray<Self, T, Self::COUNT>`
-    /// on stable Rust without const generics.
-    /// See [`indexland::index_array::EnumIndexArray`]
-    type EnumIndexArray<T>;
-
-    fn iter() -> std::slice::Iter<'static, Self> {
-        Self::VARIANTS.iter()
-    }
-}
-
-pub trait IdxNewtype {
-    type Base: Idx;
-    fn new(inner: Self::Base) -> Self;
-    fn into_inner(self) -> Self::Base;
 }

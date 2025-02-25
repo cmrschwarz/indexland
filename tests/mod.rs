@@ -13,9 +13,9 @@ fn derive_idx_enum() {
         B,
     }
 
-    const FOO: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2]);
+    const FOO: EnumIndexArray<Foo, i32> = IndexArray::new([0, 1]);
 
-    assert_eq!(FOO[Foo::A], 1);
+    assert_eq!(FOO[Foo::B], 1);
 }
 
 #[test]
@@ -23,7 +23,7 @@ fn derive_idx_newtype() {
     #[derive(IdxNewtype)]
     pub struct FooIdx(u32);
 
-    let foo = IndexVec::<FooIdx, i32>::from_iter([1, 2, 3]);
+    let foo = IndexVec::<FooIdx, i32>::from_iter([0, 1, 2]);
     assert_eq!(foo[FooIdx::ONE], 1);
 }
 
@@ -46,7 +46,7 @@ fn derive_idx_newtype_manual() {
     )]
     pub struct FooIdx(u32);
 
-    let foo = IndexVec::<FooIdx, i32>::from_iter([1, 2, 3]);
+    let foo = IndexVec::<FooIdx, i32>::from_iter([0, 1, 2]);
     assert_eq!(foo[FooIdx::ONE], 1);
 }
 
@@ -89,7 +89,7 @@ fn derive_idx_enum_manual() {
         const VARIANTS: &'static [Self] = &[Foo::A, Foo::B];
         type EnumIndexArray<T> = IndexArray<Self, T, 2>;
     }
-    const FOO: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2]);
+    const FOO: EnumIndexArray<Foo, i32> = IndexArray::new([0, 1]);
 
-    assert_eq!(FOO[Foo::A], 1);
+    assert_eq!(FOO[Foo::B], 1);
 }

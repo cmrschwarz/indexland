@@ -19,10 +19,11 @@
 //!
 //! # Usage Examles
 //! ```
-//! use indexland::{index_newtype, index_vec::IndexVec};
-//! index_newtype!{
-//!     struct NodeId(u32);
-//! }
+//! use indexland::{IdxNewtype, index_vec::IndexVec};
+//!
+//! #[derive(IdxNewtype)]
+//! struct NodeId(u32);
+//!
 //! struct Graph<T>{
 //!     nodes: IndexVec<NodeId, T>,
 //!     edge: IndexVec<NodeId, Vec<NodeId>>,
