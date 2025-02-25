@@ -19,6 +19,10 @@
 //! let BAR_MAPPING: EnumIndexArray<Bar, i32> = IndexArray::new([1, 2, 3]);
 //! ```
 
+// TODO: add macro to supporess specific implementations to be able to
+// customize them for IdxEnum and IdxNewtype. Then also add default Display
+// implementation to IdxEnum.
+
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{Data, DataEnum, DataStruct, DeriveInput, Fields};
@@ -56,7 +60,7 @@ fn derive_idx_for_enum(
 
     let mut idents = Vec::new();
 
-    for variant in enum_data.variants.iter().cloned() {
+    for variant in &enum_data.variants {
         let Fields::Unit = variant.fields else {
             return Err(syn::Error::new(
                 Span::call_site(),
@@ -64,7 +68,7 @@ fn derive_idx_for_enum(
             ));
         };
 
-        idents.push(variant.ident);
+        idents.push(&variant.ident);
     }
 
     let count = idents.len();
@@ -211,8 +215,12 @@ fn derive_idx_newtype_inner(
                 <#base_type as ::indexland::Idx>::into_usize(v.0)
             }
         }
+        impl core::fmt::Debug for #name {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                core::fmt::Debug::fmt(&self.0, f)
+            }
+        }
         impl core::fmt::Display for #name {
-            #[inline]
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 core::fmt::Display::fmt(&self.0, f)
             }
@@ -305,9 +313,11 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     };
 
     let mut idents = Vec::new();
+    let mut ident_strings = Vec::new();
 
-    for variant in enum_data.variants.iter().cloned() {
-        idents.push(variant.ident);
+    for variant in &enum_data.variants {
+        idents.push(&variant.ident);
+        ident_strings.push(variant.ident.to_string());
     }
 
     let count = idents.len();
@@ -329,6 +339,13 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
         impl core::hash::Hash for #name {
             fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
                 core::mem::discriminant(self).hash(state);
+            }
+        }
+        impl core::fmt::Debug for #name {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                match self {
+                    #(#name::#idents => f.write_str(#ident_strings)),*
+                }
             }
         }
         impl core::ops::Add for #name {
@@ -389,7 +406,7 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 /// Implements the following traits:
 /// - `EnumIdx` + `Idx`
 /// - `Default` (uses first variant)
-/// - `Debug`
+/// - `Debug` + (`Display` intentionally omitted, implement as desired)
 /// - `Clone + Copy`
 /// - `PartialOrd + Ord`
 /// - `PartialEq + Eq`
