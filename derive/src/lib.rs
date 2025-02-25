@@ -141,7 +141,7 @@ fn derive_enum_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     let output = quote! {
         impl #impl_generics ::indexland::EnumIdx for #name #ty_generics #where_clause {
             const COUNT: usize = #count;
-            type EnumArray<T> = ::indexland::index_array::IndexArray<Self, T, #count>;
+            type EnumIndexArray<T> = ::indexland::index_array::IndexArray<Self, T, #count>;
             const VARIANTS: &'static [Self] = &[ #(#name::#idents),* ];
         }
     };

@@ -1,4 +1,4 @@
-use indexland::{index_array::IndexArray, EnumIdx};
+use indexland::index_array::{EnumIndexArray, IndexArray};
 use indexland_derive::make_enum_idx;
 
 #[make_enum_idx]
@@ -7,7 +7,7 @@ enum Foo {
     B,
 }
 
-const FOO: IndexArray<Foo, i32, { Foo::COUNT }> = IndexArray::new([1, 2]);
+const FOO: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2]);
 
 #[test]
 fn asdf() {

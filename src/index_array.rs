@@ -14,7 +14,18 @@ pub struct IndexArray<I, T, const SIZE: usize> {
     _phantom: PhantomData<fn(I) -> T>,
 }
 
-pub type EnumArray<E, T> = <E as EnumIdx>::EnumArray<T>;
+/// Helper to construct `IndexArray<E, T, { <E as EnumIdx>::COUNT } >`
+/// on stable Rust without const generics.
+///
+/// Example Usage:
+/// ```
+/// use indexland::{make_enum_idx, index_array::{IndexArray, EnumIndexArray}};
+///
+/// #[make_enum_idx]
+/// enum Foo { A, B, C }
+/// const FOO_MAPPING: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2, 3]);
+/// ```
+pub type EnumIndexArray<E, T> = <E as EnumIdx>::EnumIndexArray<T>;
 
 impl<I, T, const SIZE: usize> Default for IndexArray<I, T, SIZE>
 where
