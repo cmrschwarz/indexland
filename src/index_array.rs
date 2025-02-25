@@ -1,4 +1,4 @@
-use crate::index_slice::IndexSlice;
+use crate::{index_slice::IndexSlice, EnumIdx};
 
 use super::Idx;
 use std::{
@@ -13,6 +13,8 @@ pub struct IndexArray<I, T, const SIZE: usize> {
     data: [T; SIZE],
     _phantom: PhantomData<fn(I) -> T>,
 }
+
+pub type EnumArray<E, T> = <E as EnumIdx>::EnumArray<T>;
 
 impl<I, T, const SIZE: usize> Default for IndexArray<I, T, SIZE>
 where

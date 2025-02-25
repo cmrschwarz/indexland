@@ -25,6 +25,10 @@ smallvec = { version = "1.14.0", optional = true, default-features = false, feat
 serde = { version = "1.0.218", optional = true, default-features = false }
 
 
+[dev-dependencies]
+indexland_derive = { path = "./derive" }
+
+
 [features]
 default = ["arrayvec", "multi_ref_mut_handout"]
 

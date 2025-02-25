@@ -1,0 +1,26 @@
+[package]
+name = "indexland_derive"
+
+version = "0.1.0"
+license = "MIT"
+
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+categories = ["data-structures", "memory-management", "rust-patterns"]
+keywords = ["index", "collection", "container", "vec", "slice"]
+
+description = "collections based on newtype indices"
+
+[lib]
+name = "indexland_derive"
+proc-macro = true
+
+[dependencies]
+proc-macro2 = { version = "1.0.93" }
+syn = { version = "2.0.98", features = ["parsing"] }
+quote = "1.0.38"
+
+[features]

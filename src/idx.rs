@@ -331,3 +331,16 @@ macro_rules! index_newtype {
         }
     )*};
 }
+
+pub trait EnumIdx: Idx + 'static {
+    const COUNT: usize;
+    const VARIANTS: &'static [Self];
+
+    // helper to construct IndexArray<Self, T, Self::COUNT>
+    // on stable rust without const generics
+    type EnumArray<T>;
+
+    fn iter() -> std::slice::Iter<'static, Self> {
+        Self::VARIANTS.iter()
+    }
+}
