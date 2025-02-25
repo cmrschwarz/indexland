@@ -1,25 +1,22 @@
-//! This crate provides Indexland's derive and attribute macros
-
+//! Provides derive macros for `indexland`. For better ergonomics add the
+//! `"derive"` feature to `indexland` instead of depending on this directly.
 //! ```rust
-//! use indexland_derive::{EnumIdx, enum_idx};
+//! use indexland::{IdxNewtype, index_vec::IndexVec};
+//! #[derive(IdxNewtype)]
+//! struct FooId(u32);
+//! struct Foo{ /*...*/ };
+//! struct FooContainer {
+//!     foos: IndexVec<FooId, Foo>,
+//! }
 //!
-//! // implements the indexland::EnumIdx trait
-//! // expects all neccessary impls to be present
-//! #[derive(EnumIdx)]
-//! enum Direction{
-//!     West,
-//!     North,
-//!     East,
-//!     South,
+//! use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
+//! #[derive(IdxEnum)]
+//! enum Bar{
+//!     A,
+//!     B,
+//!     C
 //! };
-//!
-//! // implicitly adds all neccessary derives
-//! #[enum_idx]
-//! enum Color{
-//!     Red,
-//!     Green,
-//!     Blue
-//! };
+//! let BAR_MAPPING: EnumIndexArray<Bar, i32> = IndexArray::new([1, 2, 3]);
 //! ```
 
 use proc_macro2::{Span, TokenStream};
@@ -153,6 +150,9 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     }
 }
 
+/// Only derives the `Idx` trait, not it's requireed super traits.
+/// For more oppinionionated defaults use
+/// `#[derive(IdxNewtype)]` or `#[derive(IdxEnum)]` instead.
 #[proc_macro_derive(Idx)]
 pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_idx_inner(syn::parse_macro_input!(input as DeriveInput))

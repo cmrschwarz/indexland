@@ -21,14 +21,22 @@ not ready for public use yet.
 
 ## Usage Examles
 ```rust
-use indexland::{index_newtype, index_vec::IndexVec};
-index_newtype!{
-    struct NodeId(u32);
+use indexland::{IdxNewtype, index_vec::IndexVec};
+#[derive(IdxNewtype)]
+struct FooId(u32);
+struct Foo{ /*...*/ };
+struct FooContainer {
+    foos: IndexVec<FooId, Foo>,
 }
-struct Graph<T>{
-    nodes: IndexVec<NodeId, T>,
-    edge: IndexVec<NodeId, Vec<NodeId>>,
-}
+
+use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
+#[derive(IdxEnum)]
+enum Bar{
+    A,
+    B,
+    C
+};
+let BAR_MAPPING: EnumIndexArray<Bar, i32> = IndexArray::new([1, 2, 3]);
 ```
 
 ## License

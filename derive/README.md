@@ -1,26 +1,24 @@
 # `indexland_derive`
 
-This crate provides Indexland's derive and attribute macros
+Provides derive macros for `indexland`. For better ergonomics add the
+`"derive"` feature to `indexland` instead of depending on this directly.
 ```rust
-use indexland_derive::{EnumIdx, make_enum_idx};
+use indexland::{IdxNewtype, index_vec::IndexVec};
+#[derive(IdxNewtype)]
+struct FooId(u32);
+struct Foo{ /*...*/ };
+struct FooContainer {
+    foos: IndexVec<FooId, Foo>,
+}
 
-// implements the indexland::EnumIdx trait
-// expects all neccessary impls to be present
-#[derive(EnumIdx)]
-enum Direction{
-    West,
-    North,
-    East,
-    South,
+use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
+#[derive(IdxEnum)]
+enum Bar{
+    A,
+    B,
+    C
 };
-
-// implements the indexland::EnumIdx trait and adds all neccessary derives
-#[make_enum_idx]
-enum Color{
-    Red,
-    Green,
-    Blue
-};
+let BAR_MAPPING: EnumIndexArray<Bar, i32> = IndexArray::new([1, 2, 3]);
 ```
 
 ## License
