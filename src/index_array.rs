@@ -43,6 +43,7 @@ pub type EnumIndexArray<E, T> = <E as EnumIdx>::EnumIndexArray<T>;
 #[macro_export]
 macro_rules! enum_index_array {
     ($($key:expr => $value:expr),* $(,)?) => {{
+        use core::mem::MaybeUninit;
         const COUNT: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
         let keys = [ $($key),* ];
         let values = [ $($value),* ];
