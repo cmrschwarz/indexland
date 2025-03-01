@@ -52,12 +52,12 @@ macro_rules! index_array {
         ];
         let mut i = 0;
         while i < COUNT {
-            data[keys[i] as usize] = MaybeUninit::new(values[i].take().unwrap());
+            data[keys[i] as usize] = MaybeUninit::new(
+                values[i].take().unwrap()
+            );
             i += 1;
         }
-        let data = unsafe {
-            std::mem::transmute::<[MaybeUninit<_>; COUNT], [_; COUNT]>(data)
-        };
+        let data = unsafe { $crate::transpose_maybe_uninit(data) };
         IndexArray::new(data)
     }};
 }

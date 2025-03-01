@@ -78,7 +78,10 @@ pub use indexland_derive::{EnumIdx, Idx, NewtypeIdx};
 
 pub use crate::idx::*;
 
-use std::ops::{Range, RangeBounds};
+use std::{
+    mem::MaybeUninit,
+    ops::{Range, RangeBounds},
+};
 
 pub enum GetManyMutError {
     IndexOutOfBounds,
@@ -197,4 +200,25 @@ pub fn range_contains<I: PartialOrd>(
     subrange: Range<I>,
 ) -> bool {
     range.start <= subrange.start && range.end >= subrange.end
+}
+
+/// [`std::mem::MaybeUninit::transpose`] implementation in stable Rust. Replace
+/// once [maybe_uninit_uninit_array_transpose](https://github.com/rust-lang/rust/issues/96097)
+/// is stabilized.
+#[allow(clippy::needless_pass_by_value)]
+pub const unsafe fn transpose_maybe_uninit<T, const N: usize>(
+    v: [MaybeUninit<T>; N],
+) -> [T; N] {
+    let mut res = MaybeUninit::<[T; N]>::uninit();
+    let mut i = 0;
+    while i < v.len() {
+        unsafe {
+            res.as_mut_ptr()
+                .cast::<T>()
+                .add(i)
+                .write(v.as_ptr().add(i).read().assume_init());
+        };
+        i += 1;
+    }
+    unsafe { res.assume_init() }
 }
