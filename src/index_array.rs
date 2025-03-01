@@ -15,17 +15,54 @@ pub struct IndexArray<I, T, const SIZE: usize> {
 }
 
 /// Helper to construct `IndexArray<E, T, { <E as EnumIdx>::COUNT } >`
-/// on stable Rust without const generics.
+/// without const generics.
 ///
-/// Example Usage:
+/// ### Example:
 /// ```
-/// use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
-///
+/// # use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
 /// #[derive(IdxEnum)]
 /// enum Foo { A, B, C }
-/// const FOO_MAPPING: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2, 3]);
+/// const FOOS: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2, 3]);
 /// ```
 pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
+
+/// Ergonomic way to construct an [`EnumIndexArray`]
+///
+/// ### Example:
+/// ```
+/// # use indexland::{IdxEnum, index_array::EnumIndexArray};
+/// #[derive(IdxEnum)]
+/// enum Foo { A, B, C }
+///
+/// const FOOS: EnumIndexArray<Foo, i32> = enum_index_array![
+///     Foo::A => 1,
+///     Foo::B => 2,
+///     Foo::C => 3,
+/// ];
+/// ```
+#[macro_export]
+macro_rules! enum_index_array {
+    ($($key:expr => $value:expr),* $(,)?) => {{
+        const COUNT: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
+        let keys = [ $($key),* ];
+        let values = [ $($value),* ];
+
+        let mut found = [false; COUNT];
+        let mut data: [MaybeUninit<_>; COUNT] = [MaybeUninit::uninit(); COUNT];
+        let mut i = 0;
+        while i < COUNT {
+            let enum_idx = keys[i] as usize;
+            assert!(!found[enum_idx]);
+            found[enum_idx] = true;
+            data[enum_idx] = MaybeUninit::new(values[i]);
+            i += 1;
+        }
+        let data = unsafe {
+            std::mem::transmute::<[MaybeUninit<_>; COUNT], [_; COUNT]>(data)
+        };
+        IndexArray::new(data)
+    }};
+}
 
 impl<I, T, const SIZE: usize> Default for IndexArray<I, T, SIZE>
 where
