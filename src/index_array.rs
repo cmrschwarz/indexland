@@ -1,4 +1,4 @@
-use crate::{index_slice::IndexSlice, IdxEnum};
+use crate::{index_slice::IndexSlice, EnumIdx};
 
 use super::Idx;
 use std::{
@@ -19,19 +19,19 @@ pub struct IndexArray<I, T, const SIZE: usize> {
 ///
 /// ### Example:
 /// ```
-/// # use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
-/// #[derive(IdxEnum)]
+/// # use indexland::{EnumIdx, index_array::{IndexArray, EnumIndexArray}};
+/// #[derive(EnumIdx)]
 /// enum Foo { A, B, C }
 /// const FOOS: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2, 3]);
 /// ```
-pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
+pub type EnumIndexArray<E, T> = <E as EnumIdx>::EnumIndexArray<T>;
 
 /// Ergonomic way to construct an [`EnumIndexArray`]
 ///
 /// ### Example:
 /// ```
-/// # use indexland::{IdxEnum, index_array::EnumIndexArray};
-/// #[derive(IdxEnum)]
+/// # use indexland::{EnumIdx, index_array::EnumIndexArray};
+/// #[derive(EnumIdx)]
 /// enum Foo { A, B, C }
 ///
 /// const FOOS: EnumIndexArray<Foo, i32> = enum_index_array![

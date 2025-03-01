@@ -19,16 +19,16 @@
 //!
 //! # Usage Examles
 //! ```rust
-//! use indexland::{IdxNewtype, index_vec::IndexVec};
-//! #[derive(IdxNewtype)]
+//! use indexland::{NewtypeIdx, index_vec::IndexVec};
+//! #[derive(NewtypeIdx)]
 //! struct FooId(u32);
 //! struct Foo{ /*...*/ };
 //! struct FooContainer {
 //!     foos: IndexVec<FooId, Foo>,
 //! }
 //!
-//! use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
-//! #[derive(IdxEnum)]
+//! use indexland::{EnumIdx, index_array::{IndexArray, EnumIndexArray}};
+//! #[derive(EnumIdx)]
 //! enum Bar{
 //!     A,
 //!     B,
@@ -74,7 +74,7 @@ pub mod multi_ref_mut_handout;
 pub mod universe_multi_ref_mut_handout;
 
 #[cfg(feature = "derive")]
-pub use indexland_derive::{Idx, IdxEnum, IdxNewtype};
+pub use indexland_derive::{EnumIdx, Idx, NewtypeIdx};
 
 pub use crate::idx::*;
 

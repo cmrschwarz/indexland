@@ -1,16 +1,16 @@
 //! Provides derive macros for `indexland`. For better ergonomics add the
 //! `"derive"` feature to `indexland` instead of depending on this directly.
 //! ```rust
-//! use indexland::{IdxNewtype, index_vec::IndexVec};
-//! #[derive(IdxNewtype)]
+//! use indexland::{NewtypeIdx, index_vec::IndexVec};
+//! #[derive(NewtypeIdx)]
 //! struct FooId(u32);
 //! struct Foo{ /*...*/ };
 //! struct FooContainer {
 //!     foos: IndexVec<FooId, Foo>,
 //! }
 //!
-//! use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
-//! #[derive(IdxEnum)]
+//! use indexland::{EnumIdx, index_array::{IndexArray, EnumIndexArray}};
+//! #[derive(EnumIdx)]
 //! enum Bar{
 //!     A,
 //!     B,
@@ -20,8 +20,8 @@
 //! ```
 
 // TODO: add macro to supporess specific implementations to be able to
-// customize them for IdxEnum and IdxNewtype. Then also add default Display
-// implementation to IdxEnum.
+// customize them for EnumIdx and NewtypeIdx. Then also add default Display
+// implementation to EnumIdx.
 
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
@@ -156,7 +156,7 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 
 /// Only derives the `Idx` trait, not it's requireed super traits.
 /// For more oppinionionated defaults use
-/// `#[derive(IdxNewtype)]` or `#[derive(IdxEnum)]` instead.
+/// `#[derive(NewtypeIdx)]` or `#[derive(EnumIdx)]` instead.
 #[proc_macro_derive(Idx)]
 pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_idx_inner(syn::parse_macro_input!(input as DeriveInput))
@@ -263,7 +263,7 @@ fn derive_idx_newtype_inner(
             }
         }
         impl core::cmp::Eq for #name {}
-        impl #impl_generics ::indexland::IdxNewtype for #name #ty_generics #where_clause {
+        impl #impl_generics ::indexland::NewtypeIdx for #name #ty_generics #where_clause {
             type Base = #base_type;
             #[inline]
             fn new(v: #base_type) -> Self {
@@ -281,7 +281,7 @@ fn derive_idx_newtype_inner(
 }
 
 /// Implements the following traits:
-/// - `IdxNewtype` + `Idx`
+/// - `NewtypeIdx` + `Idx`
 /// - `Default`
 /// - `Debug` + `Display`
 /// - `Clone` + `Copy`
@@ -291,7 +291,7 @@ fn derive_idx_newtype_inner(
 /// - `Add` + `AddAssign`
 /// - `Sub` + `SubAssign`
 /// - `From<usize>` + `From<Self> for usize`
-#[proc_macro_derive(IdxNewtype)]
+#[proc_macro_derive(NewtypeIdx)]
 pub fn derive_idx_newtype(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
@@ -392,7 +392,7 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
             }
         }
         impl core::cmp::Eq for #name {}
-        impl #impl_generics ::indexland::IdxEnum for #name #ty_generics #where_clause {
+        impl #impl_generics ::indexland::EnumIdx for #name #ty_generics #where_clause {
             const COUNT: usize = #count;
             type EnumIndexArray<T> = ::indexland::index_array::IndexArray<Self, T, #count>;
             const VARIANTS: &'static [Self] = &[ #(#name::#idents),* ];
@@ -414,7 +414,7 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 /// - `Add + AddAssign`
 /// - `Sub + SubAssign`
 /// - `From<usize>` + `From<Self> for usize`
-#[proc_macro_derive(IdxEnum)]
+#[proc_macro_derive(EnumIdx)]
 pub fn derive_idx_enum(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {

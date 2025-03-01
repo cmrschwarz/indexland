@@ -4,12 +4,12 @@ use derive_more::{Add, AddAssign, Sub, SubAssign};
 use indexland::{
     index_array::{EnumIndexArray, IndexArray},
     index_vec::IndexVec,
-    Idx, IdxEnum, IdxNewtype,
+    EnumIdx, Idx, NewtypeIdx,
 };
 
 #[test]
 fn derive_idx_enum() {
-    #[derive(IdxEnum)]
+    #[derive(EnumIdx)]
     enum Foo {
         A,
         B,
@@ -22,7 +22,7 @@ fn derive_idx_enum() {
 
 #[test]
 fn derive_idx_newtype() {
-    #[derive(IdxNewtype)]
+    #[derive(NewtypeIdx)]
     pub struct FooIdx(u32);
 
     let foo = IndexVec::<FooIdx, i32>::from_iter([0, 1, 2]);
@@ -86,7 +86,7 @@ fn derive_idx_enum_manual() {
             *self = *self - rhs;
         }
     }
-    impl IdxEnum for Foo {
+    impl EnumIdx for Foo {
         const COUNT: usize = 2;
         const VARIANTS: &'static [Self] = &[Foo::A, Foo::B];
         type EnumIndexArray<T> = IndexArray<Self, T, 2>;
@@ -98,7 +98,7 @@ fn derive_idx_enum_manual() {
 
 #[test]
 fn enum_idx_array_macro() {
-    #[derive(IdxEnum)]
+    #[derive(EnumIdx)]
     enum Foo {
         A,
         B,

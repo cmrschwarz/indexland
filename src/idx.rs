@@ -49,7 +49,7 @@ pub trait Idx:
     }
 }
 
-pub trait IdxEnum: Sized + 'static {
+pub trait EnumIdx: Sized + 'static {
     const COUNT: usize;
     const VARIANTS: &'static [Self];
 
@@ -63,7 +63,7 @@ pub trait IdxEnum: Sized + 'static {
     }
 }
 
-pub trait IdxNewtype {
+pub trait NewtypeIdx {
     type Base: Idx;
     fn new(inner: Self::Base) -> Self;
     fn into_inner(self) -> Self::Base;
@@ -262,7 +262,7 @@ impl Idx for u64 {
     }
 }
 
-/// Declarative alternative to `#[derive(IdxNewtype)]` that allows generating
+/// Declarative alternative to `#[derive(NewtypeIdx)]` that allows generating
 /// multiple indices at once and does not require proc-macros.
 #[macro_export]
 macro_rules! idx_newtype {
@@ -291,7 +291,7 @@ macro_rules! idx_newtype {
                 $name(<$base_type as $crate::Idx>::wrapping_sub(self.0, other.0))
             }
         }
-        impl $crate::IdxNewtype for $name {
+        impl $crate::NewtypeIdx for $name {
             type Base = $base_type;
             fn new(v: $base_type) -> Self {
                 $name(v)
