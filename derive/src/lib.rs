@@ -1,22 +1,18 @@
 //! Provides derive macros for `indexland`. For better ergonomics add the
 //! `"derive"` feature to `indexland` instead of depending on this directly.
 //! ```rust
-//! use indexland::{NewtypeIdx, index_vec::IndexVec};
-//! #[derive(NewtypeIdx)]
-//! struct FooId(u32);
-//! struct Foo{ /*...*/ };
-//! struct FooContainer {
-//!     foos: IndexVec<FooId, Foo>,
-//! }
+//! // re-exported by indexland aswell
+//! use indexland_derive::{NewtypeIdx, EnumIdx};
 //!
-//! use indexland::{EnumIdx, index_array::{IndexArray, EnumIndexArray}};
+//! #[derive(NewtypeIdx)]
+//! struct NodeId(u32);
+//!
 //! #[derive(EnumIdx)]
-//! enum Bar{
-//!     A,
-//!     B,
-//!     C
+//! enum PrimaryColor{
+//!     Red,
+//!     Green,
+//!     Blue
 //! };
-//! let BAR_MAPPING: EnumIndexArray<Bar, i32> = IndexArray::new([1, 2, 3]);
 //! ```
 
 // TODO: add macro to supporess specific implementations to be able to

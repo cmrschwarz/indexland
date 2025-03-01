@@ -10,32 +10,54 @@
 //! [msrv]: https://img.shields.io/crates/msrv/indexland?logo=rust
 //! [docs-rs]: https://img.shields.io/badge/docs.rs-indexland-66c2a5?logo=docs.rs
 //!
-//! Collections based on newtype indices for increased type safety and self
-//! documenting code.
+//! Wrappers for common collection types based on newtype indices.
+//! Increased type safety and code readability without runtime overhead.
 //!
 //! Part of the [Typeline](https://github.com/cmrschwarz/typeline) project,
 //! not ready for public use yet.
 //!
 //!
-//! # Usage Examles
+//! # Newtype Indices
 //! ```rust
-//! use indexland::{NewtypeIdx, index_vec::IndexVec};
-//! #[derive(NewtypeIdx)]
-//! struct FooId(u32);
-//! struct Foo{ /*...*/ };
-//! struct FooContainer {
-//!     foos: IndexVec<FooId, Foo>,
-//! }
+//! use indexland::{NewtypeIdx, IndexVec};
 //!
-//! use indexland::{EnumIdx, index_array::{IndexArray, EnumIndexArray}};
-//! #[derive(EnumIdx)]
-//! enum Bar{
-//!     A,
-//!     B,
-//!     C
+//! #[derive(NewtypeIdx)]
+//! struct NodeId(u32);
+//!
+//! struct Node<T> {
+//!     prev: NodeId,
+//!     next: NodeId,
+//!     data: T,
 //! };
-//! let BAR_MAPPING: EnumIndexArray<Bar, i32> = IndexArray::new([1, 2, 3]);
+//! struct DoublyLinkedList<T> {
+//!     nodes: IndexVec<NodeId, Node>,
+//! }
 //! ```
+//!
+//! # Enums as Indices
+//! ```rust
+//! use indexland::{EnumIdx, IndexArray, EnumIndexArray};
+//!
+//! #[derive(EnumIdx)]
+//! enum PrimaryColor{
+//!     Red,
+//!     Green,
+//!     Blue
+//! };
+//!
+//! const COLOR_MAPPING: EnumIndexArray<PrimaryColor, u32> = index_array![
+//!     PrimaryColor::Red => 0xFF0000,
+//!     PrimaryColor::Green => 0x00FF00,
+//!     PrimaryColor::Blue => 0x0000FF,
+//! ];
+//!
+//! let my_color = COLOR_MAPPING[PrimaryColor::Red];
+//! ```
+//!
+//! # Optional Integration with Popular Crates
+//! - `IndexSmallVec` based on [SmallVec](https://docs.rs/smallvec/latest/smallvec)
+//! - `IndexArrayVec` based on [ArrayVec](https://docs.rs/arrayvec/latest/arrayvec/)
+//! - [Serde](https://docs.rs/serde/latest/serde/) support for all Collections
 
 #![warn(clippy::pedantic)]
 #![allow(clippy::missing_safety_doc)]
@@ -77,6 +99,15 @@ pub mod universe_multi_ref_mut_handout;
 pub use indexland_derive::{EnumIdx, Idx, NewtypeIdx};
 
 pub use crate::idx::*;
+pub use index_array::{EnumIndexArray, IndexArray};
+pub use index_slice::IndexSlice;
+pub use index_vec::IndexVec;
+
+#[cfg(feature = "arrayvec")]
+pub use index_array_vec::IndexArrayVec;
+
+#[cfg(feature = "smallvec")]
+pub use index_small_vec::IndexSmallVec;
 
 use std::{
     mem::MaybeUninit,
