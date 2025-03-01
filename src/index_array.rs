@@ -36,7 +36,7 @@ pub type EnumIndexArray<E, T> = <E as EnumIdx>::EnumIndexArray<T>;
 ///
 /// ### Example:
 /// ```
-/// # use indexland::{EnumIdx, index_array::EnumIndexArray};
+/// # use indexland::{EnumIdx, EnumIndexArray, index_array};
 /// #[derive(EnumIdx)]
 /// enum Foo { A, B, C }
 ///
@@ -64,7 +64,7 @@ macro_rules! index_array {
             i += 1;
         }
         let data = unsafe { $crate::transpose_maybe_uninit(data) };
-        IndexArray::new(data)
+        $crate::IndexArray::new(data)
     }};
 }
 

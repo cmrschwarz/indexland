@@ -34,13 +34,13 @@ impl<I: Idx, T> IndexSlice<I, T> {
         &self,
         initial_offset: I,
     ) -> EnumeratedIndexIter<I, std::slice::Iter<T>> {
-        EnumeratedIndexIter::new(initial_offset, self.data.iter())
+        EnumeratedIndexIter::new(initial_offset, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
         initial_offset: I,
     ) -> EnumeratedIndexIter<I, std::slice::IterMut<T>> {
-        EnumeratedIndexIter::new(initial_offset, self.data.iter_mut())
+        EnumeratedIndexIter::new(initial_offset, &mut self.data)
     }
     pub fn len(&self) -> usize {
         self.data.len()

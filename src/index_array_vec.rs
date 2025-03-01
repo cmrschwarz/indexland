@@ -149,17 +149,17 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn iter_enumerated(
         &self,
     ) -> EnumeratedIndexIter<I, std::slice::Iter<T>> {
-        EnumeratedIndexIter::new(I::ZERO, self.data.iter())
+        EnumeratedIndexIter::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
     ) -> EnumeratedIndexIter<I, std::slice::IterMut<T>> {
-        EnumeratedIndexIter::new(I::ZERO, self.data.iter_mut())
+        EnumeratedIndexIter::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
     ) -> EnumeratedIndexIter<I, arrayvec::IntoIter<T, CAP>> {
-        EnumeratedIndexIter::new(I::ZERO, self.data.into_iter())
+        EnumeratedIndexIter::new(I::ZERO, self.data)
     }
     pub fn indices(&self) -> IdxRange<I> {
         IdxRange::new(I::ZERO..self.len_idx())

@@ -49,7 +49,7 @@ pub trait Idx:
     }
 }
 
-pub trait EnumIdx: Sized + 'static {
+pub trait EnumIdx: Idx + 'static {
     const COUNT: usize;
     const VARIANTS: &'static [Self];
 
@@ -58,12 +58,12 @@ pub trait EnumIdx: Sized + 'static {
     /// See [`indexland::index_array::EnumIndexArray`]
     type EnumIndexArray<T>;
 
-    fn iter() -> std::slice::Iter<'static, Self> {
-        Self::VARIANTS.iter()
+    fn iter() -> core::iter::Copied<core::slice::Iter<'static, Self>> {
+        Self::VARIANTS.iter().copied()
     }
 }
 
-pub trait NewtypeIdx {
+pub trait NewtypeIdx: Idx {
     type Base: Idx;
     fn new(inner: Self::Base) -> Self;
     fn into_inner(self) -> Self::Base;
