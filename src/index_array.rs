@@ -26,7 +26,7 @@ pub struct IndexArray<I, T, const SIZE: usize> {
 /// ```
 pub type EnumIndexArray<E, T> = <E as EnumIdx>::EnumIndexArray<T>;
 
-/// Ergonomic way to construct an [`EnumIndexArray`]
+/// Ergonomic way to construct an [`IndexArray`] from it's keys
 ///
 /// ### Example:
 /// ```
@@ -34,28 +34,25 @@ pub type EnumIndexArray<E, T> = <E as EnumIdx>::EnumIndexArray<T>;
 /// #[derive(EnumIdx)]
 /// enum Foo { A, B, C }
 ///
-/// const FOOS: EnumIndexArray<Foo, i32> = enum_index_array![
+/// const FOOS: EnumIndexArray<Foo, i32> = index_array![
 ///     Foo::A => 1,
 ///     Foo::B => 2,
 ///     Foo::C => 3,
 /// ];
 /// ```
 #[macro_export]
-macro_rules! enum_index_array {
+macro_rules! index_array {
     ($($key:expr => $value:expr),* $(,)?) => {{
         use core::mem::MaybeUninit;
         const COUNT: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
         let keys = [ $($key),* ];
-        let values = [ $($value),* ];
-
-        let mut found = [false; COUNT];
-        let mut data: [MaybeUninit<_>; COUNT] = [MaybeUninit::uninit(); COUNT];
+        let mut values = [ $(Some($value)),* ];
+        let mut data: [MaybeUninit<_>; COUNT] = [
+            const { MaybeUninit::uninit() }; COUNT
+        ];
         let mut i = 0;
         while i < COUNT {
-            let enum_idx = keys[i] as usize;
-            assert!(!found[enum_idx]);
-            found[enum_idx] = true;
-            data[enum_idx] = MaybeUninit::new(values[i]);
+            data[keys[i] as usize] = MaybeUninit::new(values[i].take().unwrap());
             i += 1;
         }
         let data = unsafe {

@@ -103,11 +103,29 @@ fn enum_idx_array_macro() {
         C,
     }
 
-    const FOO: EnumIndexArray<Foo, i32> = indexland::enum_index_array![
+    const FOO: EnumIndexArray<Foo, i32> = indexland::index_array![
         Foo::A => 1,
         Foo::B => 2,
         Foo::C => 3,
     ];
 
     assert_eq!(FOO[Foo::B], 2);
+}
+
+#[test]
+fn enum_idx_array_macro_non_copy() {
+    #[derive(EnumIdx)]
+    enum Foo {
+        A,
+        B,
+        C,
+    }
+
+    let foo: EnumIndexArray<Foo, Box<i32>> = indexland::index_array![
+        Foo::A => Box::new(1),
+        Foo::B => Box::new(2),
+        Foo::C => Box::new(3),
+    ];
+
+    assert_eq!(*foo[Foo::B], 2);
 }
