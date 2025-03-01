@@ -191,6 +191,7 @@ fn derive_idx_newtype_inner(
                 ::indexland::Idx::ZERO
             }
         }
+        #[allow(clippy::expl_impl_clone_on_copy)]
         impl Clone for #name {
             fn clone(&self) -> Self {
                 #name(self.0)
@@ -330,6 +331,7 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
                 ::indexland::Idx::ZERO
             }
         }
+        #[allow(clippy::expl_impl_clone_on_copy)]
         impl Clone for #name {
             fn clone(&self) -> Self {
                 ::indexland::Idx::from_usize(::indexland::Idx::into_usize(*self))
