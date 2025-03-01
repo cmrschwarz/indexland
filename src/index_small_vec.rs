@@ -295,7 +295,7 @@ impl<I: Idx, T, const CAP: usize> IndexMut<Range<I>>
 }
 
 macro_rules! slice_index_impl {
-    ($range_type: ident) => {
+    ($($range_type: ident),+) => {$(
         impl<I: Idx, T, const CAP: usize> Index<$range_type<I>> for IndexSmallVec<I, T, CAP> {
             type Output = IndexSlice<I, T>;
             #[inline]
@@ -311,12 +311,8 @@ macro_rules! slice_index_impl {
                 IndexSlice::from_slice_mut(&mut self.data[range])
             }
         }
-    };
-    ($($range_types: ident),+) => {
-        $( slice_index_impl!($range_types); ) *
-    };
+    )*};
 }
-
 slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
 
 #[cfg(feature = "serde")]

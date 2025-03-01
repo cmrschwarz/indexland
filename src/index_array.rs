@@ -1,16 +1,22 @@
-use crate::{index_slice::IndexSlice, EnumIdx};
+use crate::{
+    enumerated_index_iter::EnumeratedIndexIter, index_slice::IndexSlice,
+    EnumIdx,
+};
 
 use super::Idx;
 use std::{
     fmt::Debug,
     marker::PhantomData,
-    ops::{Deref, DerefMut, Index, IndexMut, Range},
+    ops::{
+        Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeInclusive,
+        RangeTo, RangeToInclusive,
+    },
 };
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct IndexArray<I, T, const SIZE: usize> {
-    data: [T; SIZE],
+pub struct IndexArray<I, T, const LEN: usize> {
+    data: [T; LEN],
     _phantom: PhantomData<fn(I) -> T>,
 }
 
@@ -44,14 +50,14 @@ pub type EnumIndexArray<E, T> = <E as EnumIdx>::EnumIndexArray<T>;
 macro_rules! index_array {
     ($($key:expr => $value:expr),* $(,)?) => {{
         use core::mem::MaybeUninit;
-        const COUNT: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
+        const LEN: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
         let keys = [ $($key),* ];
         let mut values = [ $(Some($value)),* ];
-        let mut data: [MaybeUninit<_>; COUNT] = [
-            const { MaybeUninit::uninit() }; COUNT
+        let mut data: [MaybeUninit<_>; LEN] = [
+            const { MaybeUninit::uninit() }; LEN
         ];
         let mut i = 0;
-        while i < COUNT {
+        while i < LEN {
             data[keys[i] as usize] = MaybeUninit::new(
                 values[i].take().unwrap()
             );
@@ -62,9 +68,9 @@ macro_rules! index_array {
     }};
 }
 
-impl<I, T, const SIZE: usize> Default for IndexArray<I, T, SIZE>
+impl<I, T, const LEN: usize> Default for IndexArray<I, T, LEN>
 where
-    [T; SIZE]: Default,
+    [T; LEN]: Default,
 {
     fn default() -> Self {
         Self {
@@ -74,17 +80,17 @@ where
     }
 }
 
-impl<I: Idx, T, const SIZE: usize> IndexArray<I, T, SIZE> {
-    pub const fn new(data: [T; SIZE]) -> Self {
+impl<I: Idx, T, const LEN: usize> IndexArray<I, T, LEN> {
+    pub const fn new(data: [T; LEN]) -> Self {
         Self {
             data,
             _phantom: PhantomData,
         }
     }
-    pub fn as_array(&self) -> &[T; SIZE] {
+    pub fn as_array(&self) -> &[T; LEN] {
         &self.data
     }
-    pub fn as_array_mut(&mut self) -> &mut [T; SIZE] {
+    pub fn as_array_mut(&mut self) -> &mut [T; LEN] {
         &mut self.data
     }
     pub fn as_slice(&self) -> &[T] {
@@ -99,23 +105,38 @@ impl<I: Idx, T, const SIZE: usize> IndexArray<I, T, SIZE> {
     pub fn as_index_slice_mut(&mut self) -> &mut IndexSlice<I, T> {
         IndexSlice::from_slice_mut(&mut self.data)
     }
-    pub fn into_array(self) -> [T; SIZE] {
+    pub fn iter_enumerated(
+        &self,
+    ) -> EnumeratedIndexIter<I, std::slice::Iter<T>> {
+        EnumeratedIndexIter::new(I::ZERO, &self.data)
+    }
+    pub fn iter_enumerated_mut(
+        &mut self,
+    ) -> EnumeratedIndexIter<I, std::slice::IterMut<T>> {
+        EnumeratedIndexIter::new(I::ZERO, &mut self.data)
+    }
+    pub fn into_iter_enumerated(
+        self,
+    ) -> EnumeratedIndexIter<I, std::array::IntoIter<T, LEN>> {
+        EnumeratedIndexIter::new(I::ZERO, self.data)
+    }
+    pub fn into_array(self) -> [T; LEN] {
         self.data
     }
 }
 
-impl<I: Idx, T, const SIZE: usize> From<[T; SIZE]> for IndexArray<I, T, SIZE> {
-    fn from(value: [T; SIZE]) -> Self {
+impl<I: Idx, T, const LEN: usize> From<[T; LEN]> for IndexArray<I, T, LEN> {
+    fn from(value: [T; LEN]) -> Self {
         Self::new(value)
     }
 }
-impl<I: Idx, T, const SIZE: usize> From<IndexArray<I, T, SIZE>> for [T; SIZE] {
-    fn from(value: IndexArray<I, T, SIZE>) -> Self {
+impl<I: Idx, T, const LEN: usize> From<IndexArray<I, T, LEN>> for [T; LEN] {
+    fn from(value: IndexArray<I, T, LEN>) -> Self {
         value.data
     }
 }
 
-impl<I: Idx, T, const SIZE: usize> Deref for IndexArray<I, T, SIZE> {
+impl<I: Idx, T, const LEN: usize> Deref for IndexArray<I, T, LEN> {
     type Target = IndexSlice<I, T>;
 
     fn deref(&self) -> &Self::Target {
@@ -123,19 +144,19 @@ impl<I: Idx, T, const SIZE: usize> Deref for IndexArray<I, T, SIZE> {
     }
 }
 
-impl<I: Idx, T, const SIZE: usize> DerefMut for IndexArray<I, T, SIZE> {
+impl<I: Idx, T, const LEN: usize> DerefMut for IndexArray<I, T, LEN> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_index_slice_mut()
     }
 }
 
-impl<I: Idx, T: Debug, const SIZE: usize> Debug for IndexArray<I, T, SIZE> {
+impl<I: Idx, T: Debug, const LEN: usize> Debug for IndexArray<I, T, LEN> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
 
-impl<I: Idx, T, const SIZE: usize> Index<I> for IndexArray<I, T, SIZE> {
+impl<I: Idx, T, const LEN: usize> Index<I> for IndexArray<I, T, LEN> {
     type Output = T;
     #[inline]
     fn index(&self, index: I) -> &Self::Output {
@@ -143,25 +164,25 @@ impl<I: Idx, T, const SIZE: usize> Index<I> for IndexArray<I, T, SIZE> {
     }
 }
 
-impl<I: Idx, T, const SIZE: usize> IndexMut<I> for IndexArray<I, T, SIZE> {
+impl<I: Idx, T, const LEN: usize> IndexMut<I> for IndexArray<I, T, LEN> {
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.data[index.into_usize()]
     }
 }
 
-impl<I: Idx, T, const SIZE: usize> IntoIterator for IndexArray<I, T, SIZE> {
+impl<I: Idx, T, const LEN: usize> IntoIterator for IndexArray<I, T, LEN> {
     type Item = T;
 
-    type IntoIter = std::array::IntoIter<T, SIZE>;
+    type IntoIter = std::array::IntoIter<T, LEN>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.into_iter()
     }
 }
 
-impl<'a, I: Idx, T, const SIZE: usize> IntoIterator
-    for &'a IndexArray<I, T, SIZE>
+impl<'a, I: Idx, T, const LEN: usize> IntoIterator
+    for &'a IndexArray<I, T, LEN>
 {
     type Item = &'a T;
 
@@ -172,8 +193,8 @@ impl<'a, I: Idx, T, const SIZE: usize> IntoIterator
     }
 }
 
-impl<'a, I: Idx, T, const SIZE: usize> IntoIterator
-    for &'a mut IndexArray<I, T, SIZE>
+impl<'a, I: Idx, T, const LEN: usize> IntoIterator
+    for &'a mut IndexArray<I, T, LEN>
 {
     type Item = &'a mut T;
 
@@ -184,7 +205,7 @@ impl<'a, I: Idx, T, const SIZE: usize> IntoIterator
     }
 }
 
-impl<I: Idx, T, const SIZE: usize> Index<Range<I>> for IndexArray<I, T, SIZE> {
+impl<I: Idx, T, const LEN: usize> Index<Range<I>> for IndexArray<I, T, LEN> {
     type Output = IndexSlice<I, T>;
 
     fn index(&self, index: Range<I>) -> &Self::Output {
@@ -194,8 +215,8 @@ impl<I: Idx, T, const SIZE: usize> Index<Range<I>> for IndexArray<I, T, SIZE> {
     }
 }
 
-impl<I: Idx, T, const SIZE: usize> IndexMut<Range<I>>
-    for IndexArray<I, T, SIZE>
+impl<I: Idx, T, const LEN: usize> IndexMut<Range<I>>
+    for IndexArray<I, T, LEN>
 {
     fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
         IndexSlice::from_slice_mut(
@@ -204,45 +225,67 @@ impl<I: Idx, T, const SIZE: usize> IndexMut<Range<I>>
     }
 }
 
-impl<I: Idx, T: PartialEq, const SIZE: usize> PartialEq<IndexArray<I, T, SIZE>>
-    for [T; SIZE]
+impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
+    for [T; LEN]
 {
-    fn eq(&self, other: &IndexArray<I, T, SIZE>) -> bool {
+    fn eq(&self, other: &IndexArray<I, T, LEN>) -> bool {
         self == &other.data
     }
 }
 
-impl<I: Idx, T: PartialEq, const SIZE: usize> PartialEq<[T; SIZE]>
-    for IndexArray<I, T, SIZE>
+impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<[T; LEN]>
+    for IndexArray<I, T, LEN>
 {
-    fn eq(&self, other: &[T; SIZE]) -> bool {
+    fn eq(&self, other: &[T; LEN]) -> bool {
         &self.data == other
     }
 }
 
-impl<I: Idx, T: PartialEq, const SIZE: usize> PartialEq<IndexArray<I, T, SIZE>>
+impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
     for [T]
 {
-    fn eq(&self, other: &IndexArray<I, T, SIZE>) -> bool {
+    fn eq(&self, other: &IndexArray<I, T, LEN>) -> bool {
         self == other.data
     }
 }
 
-impl<I: Idx, T: PartialEq, const SIZE: usize> PartialEq<[T]>
-    for IndexArray<I, T, SIZE>
+impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<[T]>
+    for IndexArray<I, T, LEN>
 {
     fn eq(&self, other: &[T]) -> bool {
         self.data == other
     }
 }
 
+macro_rules! slice_index_impl {
+    ($($range_type: ident),+) => {$(
+        impl<I: Idx, T, const LEN: usize> Index<$range_type<I>> for IndexArray<I, T, LEN> {
+            type Output = IndexSlice<I, T>;
+            #[inline]
+            fn index(&self, rb: $range_type<I>) -> &Self::Output {
+                IndexSlice::from_slice(&self.data[$crate::range_bounds_to_range_usize(rb, self.len())])
+            }
+        }
+
+        impl<I: Idx, T, const LEN: usize> IndexMut<$range_type<I>> for IndexArray<I, T, LEN> {
+            #[inline]
+            fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
+                let range = $crate::range_bounds_to_range_usize(rb, self.len());
+                IndexSlice::from_slice_mut(&mut self.data[range])
+            }
+        }
+    )*};
+}
+
+slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(feature = "serde")]
-impl<I: Idx, T, const SIZE: usize> Serialize for IndexArray<I, T, SIZE>
+impl<I: Idx, T, const LEN: usize> Serialize for IndexArray<I, T, LEN>
 where
-    [T; SIZE]: Serialize,
+    [T; LEN]: Serialize,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -253,15 +296,15 @@ where
 }
 
 #[cfg(feature = "serde")]
-impl<'de, I: Idx, T, const SIZE: usize> Deserialize<'de>
-    for IndexArray<I, T, SIZE>
+impl<'de, I: Idx, T, const LEN: usize> Deserialize<'de>
+    for IndexArray<I, T, LEN>
 where
-    [T; SIZE]: Deserialize<'de>,
+    [T; LEN]: Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        Ok(Self::new(<[T; SIZE]>::deserialize(deserializer)?))
+        Ok(Self::new(<[T; LEN]>::deserialize(deserializer)?))
     }
 }

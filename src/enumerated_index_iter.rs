@@ -6,8 +6,11 @@ pub struct EnumeratedIndexIter<I, IT> {
 }
 
 impl<I: Idx, IT: Iterator> EnumeratedIndexIter<I, IT> {
-    pub fn new(pos: I, base_iter: IT) -> Self {
-        Self { pos, base_iter }
+    pub fn new(pos: I, base_iter: impl IntoIterator<IntoIter = IT>) -> Self {
+        Self {
+            pos,
+            base_iter: base_iter.into_iter(),
+        }
     }
 }
 

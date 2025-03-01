@@ -228,7 +228,7 @@ impl<'a, I: Idx, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
 }
 
 macro_rules! slice_index_impl {
-    ($range_type: ident) => {
+    ($($range_type: ident),*) => {$(
         impl<I: Idx, T> Index<$range_type<I>> for IndexSlice<I, T> {
             type Output = IndexSlice<I, T>;
             #[inline]
@@ -244,10 +244,7 @@ macro_rules! slice_index_impl {
                 IndexSlice::from_slice_mut(&mut self.data[range])
             }
         }
-    };
-    ($($range_types: ident),+) => {
-        $( slice_index_impl!($range_types); ) *
-    };
+    )*};
 }
 
 slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
