@@ -182,84 +182,84 @@ fn derive_idx_newtype_inner(
     let idx_derivation = derive_idx_for_struct(&ast, struct_data)?;
 
     let output = quote! {
-        impl core::default::Default for #name {
+        impl ::core::default::Default for #name {
             fn default() -> Self {
                 ::indexland::Idx::ZERO
             }
         }
         #[allow(clippy::expl_impl_clone_on_copy)]
-        impl Clone for #name {
+        impl ::core::clone::Clone for #name {
             fn clone(&self) -> Self {
                 #name(self.0)
             }
         }
-        impl Copy for #name {}
-        impl core::hash::Hash for #name {
+        impl ::core::marker::Copy for #name {}
+        impl ::core::hash::Hash for #name {
             #[inline]
             fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
                 self.0.hash(state);
             }
         }
-        impl From<usize> for #name {
+        impl ::core::convert::From<usize> for #name {
             #[inline]
             fn from(v: usize) -> #name {
                 #name(<#base_type as ::indexland::Idx>::from_usize(v))
             }
         }
-        impl From<#name> for usize {
+        impl ::core::convert::From<#name> for usize {
             #[inline]
             fn from(v: #name) -> usize {
                 <#base_type as ::indexland::Idx>::into_usize(v.0)
             }
         }
-        impl core::fmt::Debug for #name {
+        impl ::core::fmt::Debug for #name {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 core::fmt::Debug::fmt(&self.0, f)
             }
         }
-        impl core::fmt::Display for #name {
+        impl ::core::fmt::Display for #name {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 core::fmt::Display::fmt(&self.0, f)
             }
         }
-        impl core::ops::Add for #name {
+        impl ::core::ops::Add for #name {
             type Output = Self;
             fn add(self, rhs: Self) -> Self::Output {
                 #name(self.0 + rhs.0)
             }
         }
-        impl core::ops::Sub for #name {
+        impl ::core::ops::Sub for #name {
             type Output = Self;
             fn sub(self, rhs: Self) -> Self::Output {
                 #name(self.0 - rhs.0)
             }
         }
-        impl core::ops::AddAssign for #name {
+        impl ::core::ops::AddAssign for #name {
             fn add_assign(&mut self, rhs: Self) {
                 *self = *self + rhs;
             }
         }
-        impl core::ops::SubAssign for #name {
+        impl ::core::ops::SubAssign for #name {
             fn sub_assign(&mut self, rhs: Self) {
                 *self = *self - rhs;
             }
         }
-        impl core::cmp::PartialOrd for #name {
+        impl ::core::cmp::PartialOrd for #name {
             fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
                 core::cmp::PartialOrd::partial_cmp(&self.0, &other.0)
             }
         }
-        impl core::cmp::Ord for #name {
+        impl ::core::cmp::Ord for #name {
             fn cmp(&self, other: &Self) -> std::cmp::Ordering {
                 core::cmp::Ord::cmp(&self.0, &other.0)
             }
         }
-        impl core::cmp::PartialEq for #name {
+        impl ::core::cmp::PartialEq for #name {
             fn eq(&self, other: &Self) -> bool {
                 self.0 == other.0
             }
         }
-        impl core::cmp::Eq for #name {}
+        impl ::core::cmp::Eq for #name {}
         impl #impl_generics ::indexland::NewtypeIdx for #name #ty_generics #where_clause {
             type Base = #base_type;
             #[inline]
@@ -322,31 +322,31 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     let idx_derivation = derive_idx_for_enum(&ast, enum_data)?;
 
     let output = quote! {
-        impl core::default::Default for #name {
+        impl ::core::default::Default for #name {
             fn default() -> Self {
                 ::indexland::Idx::ZERO
             }
         }
         #[allow(clippy::expl_impl_clone_on_copy)]
-        impl Clone for #name {
+        impl ::core::clone::Clone for #name {
             fn clone(&self) -> Self {
                 ::indexland::Idx::from_usize(::indexland::Idx::into_usize(*self))
             }
         }
-        impl Copy for #name {}
+        impl ::core::marker::Copy for #name {}
         impl core::hash::Hash for #name {
             fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
                 core::mem::discriminant(self).hash(state);
             }
         }
-        impl core::fmt::Debug for #name {
+        impl ::core::fmt::Debug for #name {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 match self {
                     #(#name::#idents => f.write_str(#ident_strings)),*
                 }
             }
         }
-        impl core::ops::Add for #name {
+        impl ::core::ops::Add for #name {
             type Output = Self;
             fn add(self, rhs: Self) -> Self::Output {
                 ::indexland::Idx::from_usize(
@@ -354,7 +354,7 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
                 )
             }
         }
-        impl core::ops::Sub for #name {
+        impl ::core::ops::Sub for #name {
             type Output = Self;
             fn sub(self, rhs: Self) -> Self::Output {
                 ::indexland::Idx::from_usize(
@@ -362,34 +362,34 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
                 )
             }
         }
-        impl core::ops::AddAssign for #name {
+        impl ::core::ops::AddAssign for #name {
             fn add_assign(&mut self, rhs: Self) {
                 *self = *self + rhs;
             }
         }
-        impl core::ops::SubAssign for #name {
+        impl ::core::ops::SubAssign for #name {
             fn sub_assign(&mut self, rhs: Self) {
                 *self = *self - rhs;
             }
         }
-        impl core::cmp::PartialOrd for #name {
+        impl ::core::cmp::PartialOrd for #name {
             fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
                 ::indexland::Idx::into_usize(*self)
                     .partial_cmp(&::indexland::Idx::into_usize(*other))
             }
         }
-        impl core::cmp::Ord for #name {
+        impl ::core::cmp::Ord for #name {
             fn cmp(&self, other: &Self) -> std::cmp::Ordering {
                 ::indexland::Idx::into_usize(*self)
                     .cmp(&::indexland::Idx::into_usize(*other))
             }
         }
-        impl core::cmp::PartialEq for #name {
+        impl ::core::cmp::PartialEq for #name {
             fn eq(&self, other: &Self) -> bool {
                 core::mem::discriminant(self) == core::mem::discriminant(other)
             }
         }
-        impl core::cmp::Eq for #name {}
+        impl ::core::cmp::Eq for #name {}
         impl #impl_generics ::indexland::EnumIdx for #name #ty_generics #where_clause {
             const COUNT: usize = #count;
             type EnumIndexArray<T> = ::indexland::index_array::IndexArray<Self, T, #count>;
