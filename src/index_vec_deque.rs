@@ -7,10 +7,7 @@ use std::{
 
 use crate::enumerated_index_iter::EnumeratedIndexIter;
 
-use super::{
-    idx::{Idx, IdxRange},
-    index_slice::IndexSlice,
-};
+use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 
 #[macro_export]
 macro_rules! index_vec_deque {

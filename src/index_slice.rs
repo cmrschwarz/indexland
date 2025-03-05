@@ -1,6 +1,7 @@
-use crate::enumerated_index_iter::EnumeratedIndexIter;
-
 use super::Idx;
+use crate::{
+    enumerated_index_iter::EnumeratedIndexIter, idx_range::RangeBoundsAsRange,
+};
 
 use std::{
     fmt::Debug,
@@ -312,8 +313,6 @@ impl<'a, I: Idx, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
         IndexSlice::from_slice_mut(value)
     }
 }
-
-use crate::idx::RangeBoundsAsRange;
 
 macro_rules! slice_index_impl {
     ($($range_type: ident),*) => {$(

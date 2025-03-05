@@ -1,3 +1,6 @@
+use crate::{
+    enumerated_index_iter::EnumeratedIndexIter, idx_range::RangeBoundsAsRange,
+};
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -7,12 +10,7 @@ use std::{
     },
 };
 
-use crate::enumerated_index_iter::EnumeratedIndexIter;
-
-use super::{
-    idx::{Idx, IdxRange},
-    index_slice::IndexSlice,
-};
+use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 
 #[macro_export]
 macro_rules! index_vec {
@@ -270,7 +268,6 @@ impl<I: Idx, T> IndexMut<Range<I>> for IndexVec<I, T> {
     }
 }
 
-use crate::idx::RangeBoundsAsRange;
 macro_rules! slice_index_impl {
     ($($range_type: ident),+) => {$(
         impl<I: Idx, T> Index<$range_type<I>> for IndexVec<I, T> {

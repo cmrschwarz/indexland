@@ -78,6 +78,7 @@
 
 pub mod enumerated_index_iter;
 pub mod idx;
+pub mod idx_range;
 pub mod index_array;
 pub mod index_slice;
 pub mod index_vec;
@@ -95,9 +96,9 @@ pub mod index_small_vec;
 // convenience exports
 
 #[doc(inline)]
-pub use crate::idx::{
-    EnumIdx, Idx, IdxRange, NewtypeIdx, RangeBoundsAsRange,
-    UsizeRangeAsIdxRange,
+pub use crate::{
+    idx::{EnumIdx, Idx, NewtypeIdx},
+    idx_range::IdxRange,
 };
 
 #[doc(inline)]

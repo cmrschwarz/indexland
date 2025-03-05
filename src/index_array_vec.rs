@@ -9,12 +9,10 @@ use std::{
 
 use arrayvec::{ArrayVec, CapacityError};
 
-use crate::enumerated_index_iter::EnumeratedIndexIter;
+use crate::{enumerated_index_iter::EnumeratedIndexIter, IdxRange};
 
-use super::{
-    idx::{Idx, IdxRange},
-    index_slice::IndexSlice,
-};
+use super::{idx::Idx, index_slice::IndexSlice};
+use crate::idx_range::RangeBoundsAsRange;
 
 #[macro_export]
 macro_rules! index_array_vec {
@@ -299,8 +297,6 @@ impl<I: Idx, T, const CAP: usize> IndexMut<Range<I>>
         )
     }
 }
-
-use crate::idx::RangeBoundsAsRange;
 
 macro_rules! slice_index_impl {
     ($($range_type: ident),*) => {$(

@@ -1,6 +1,6 @@
 use crate::{
-    enumerated_index_iter::EnumeratedIndexIter, index_slice::IndexSlice,
-    EnumIdx,
+    enumerated_index_iter::EnumeratedIndexIter, idx_range::RangeBoundsAsRange,
+    index_slice::IndexSlice, EnumIdx,
 };
 
 use super::Idx;
@@ -257,8 +257,6 @@ impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<[T]>
         self.data == other
     }
 }
-
-use crate::idx::RangeBoundsAsRange;
 
 macro_rules! slice_index_impl {
     ($($range_type: ident),+) => {$(
