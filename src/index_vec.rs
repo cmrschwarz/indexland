@@ -108,15 +108,15 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn resize_with(&mut self, new_len: usize, f: impl FnMut() -> T) {
         self.data.resize_with(new_len, f);
     }
-
+    pub fn truncate(&mut self, new_end_index: I) {
+        self.data.truncate(new_end_index.into_usize());
+    }
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
-
     pub fn swap_remove(&mut self, idx: I) -> T {
         self.data.swap_remove(idx.into_usize())
     }
-
     pub fn as_vec(&self) -> &Vec<T> {
         &self.data
     }
@@ -131,9 +131,7 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.data.push(v);
         id
     }
-    pub fn truncate(&mut self, new_end_index: I) {
-        self.data.truncate(new_end_index.into_usize());
-    }
+
     pub fn iter_enumerated(
         &self,
     ) -> EnumeratedIndexIter<I, std::slice::Iter<T>> {
@@ -179,7 +177,7 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
     type IntoIter = std::slice::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.iter()
+        self.data.iter()
     }
 }
 
@@ -189,7 +187,7 @@ impl<'a, I: Idx, T> IntoIterator for &'a mut IndexVec<I, T> {
     type IntoIter = std::slice::IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.iter_mut()
+        self.data.iter_mut()
     }
 }
 

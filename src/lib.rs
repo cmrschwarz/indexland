@@ -62,6 +62,7 @@
 //! - `&IndexSlice<I, T>` wrapping `&[T]`
 //! - `IndexArray<I, T, LEN>` wrapping `[T; LEN]`
 //! - `IndexVec<I, T>` wrapping `Vec<T>`
+//! - `IndexVecDeque<I, T>` wrapping `VecDeque<T>`
 //! - `IndexSmallVec<I, T, CAP>` wrapping [`SmallVec<[T; CAP]>`](https://docs.rs/smallvec/latest/smallvec)
 //!   (Optional)
 //! - `IndexArrayVec<I, T, CAP>` based on [`ArrayVec<T, CAP>`](https://docs.rs/arrayvec/latest/arrayvec/)
@@ -81,6 +82,7 @@ pub mod idx;
 pub mod index_array;
 pub mod index_slice;
 pub mod index_vec;
+pub mod index_vec_deque;
 
 #[cfg(feature = "nonmax")]
 pub mod nonmax;
@@ -96,6 +98,7 @@ pub use crate::idx::*;
 pub use index_array::{EnumIndexArray, IndexArray};
 pub use index_slice::IndexSlice;
 pub use index_vec::IndexVec;
+pub use index_vec_deque::IndexVecDeque;
 
 #[cfg(feature = "derive")]
 pub use indexland_derive::{EnumIdx, Idx, NewtypeIdx};

@@ -47,11 +47,17 @@ impl<I: Idx, T> IndexSlice<I, T> {
     ) -> EnumeratedIndexIter<I, std::slice::IterMut<T>> {
         EnumeratedIndexIter::new(initial_offset, &mut self.data)
     }
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
     pub fn len(&self) -> usize {
         self.data.len()
     }
-    pub fn is_empty(&self) -> bool {
-        self.data.is_empty()
+    pub fn len_idx(&self) -> I {
+        I::from_usize(self.data.len())
+    }
+    pub fn last_idx(&self) -> Option<I> {
+        self.len().checked_sub(1).map(I::from_usize)
     }
     pub fn first(&self) -> Option<&T> {
         self.data.first()
@@ -71,13 +77,6 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn as_slice_mut(&mut self) -> &mut [T] {
         &mut self.data
     }
-    pub fn len_idx(&self) -> I {
-        I::from_usize(self.data.len())
-    }
-    pub fn last_idx(&self) -> Option<I> {
-        self.len().checked_sub(1).map(I::from_usize)
-    }
-
     pub fn get(&self, idx: I) -> Option<&T> {
         self.data.get(idx.into_usize())
     }
