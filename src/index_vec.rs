@@ -272,21 +272,21 @@ impl<I: Idx, T> IndexMut<Range<I>> for IndexVec<I, T> {
     }
 }
 
-use crate::idx::RangeBoundsToRange;
+use crate::idx::RangeBoundsAsRange;
 macro_rules! slice_index_impl {
     ($($range_type: ident),+) => {$(
         impl<I: Idx, T> Index<$range_type<I>> for IndexVec<I, T> {
             type Output = IndexSlice<I, T>;
             #[inline]
             fn index(&self, rb: $range_type<I>) -> &Self::Output {
-                IndexSlice::from_slice(&self.data[rb.into_usize_range(self.len())])
+                IndexSlice::from_slice(&self.data[rb.as_usize_range(self.len())])
             }
         }
 
         impl<I: Idx, T> IndexMut<$range_type<I>> for IndexVec<I, T> {
             #[inline]
             fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
-                let range = rb.into_usize_range(self.len());
+                let range = rb.as_usize_range(self.len());
                 IndexSlice::from_slice_mut(&mut self.data[range])
             }
         }

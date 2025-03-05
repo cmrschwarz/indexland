@@ -101,16 +101,29 @@ impl<I> From<IdxRange<I>> for Range<I> {
     }
 }
 
-pub trait RangeBoundsToRange<I>: Sized {
-    fn into_usize_range(self, len: usize) -> Range<usize>;
-    fn into_range(self, len: I) -> Range<I>;
-    fn into_idx_range(self, len: I) -> IdxRange<I> {
-        IdxRange::from(self.into_range(len))
+pub trait UsizeRangeAsIdxRange: Sized {
+    fn idx_range<I: Idx>(&self) -> IdxRange<I>;
+}
+
+impl UsizeRangeAsIdxRange for Range<usize> {
+    fn idx_range<I: Idx>(&self) -> IdxRange<I> {
+        IdxRange::from(Range {
+            start: I::from_usize(self.start),
+            end: I::from_usize(self.start),
+        })
     }
 }
 
-impl<I: Idx, RB: RangeBounds<I>> RangeBoundsToRange<I> for RB {
-    fn into_range(self, len: I) -> Range<I> {
+pub trait RangeBoundsAsRange<I> {
+    fn as_usize_range(&self, len: usize) -> Range<usize>;
+    fn as_range(&self, len: I) -> Range<I>;
+    fn as_idx_range(&self, len: I) -> IdxRange<I> {
+        IdxRange::from(self.as_range(len))
+    }
+}
+
+impl<I: Idx, RB: RangeBounds<I>> RangeBoundsAsRange<I> for RB {
+    fn as_range(&self, len: I) -> Range<I> {
         let start = match self.start_bound() {
             std::ops::Bound::Included(i) => *i,
             std::ops::Bound::Excluded(i) => *i + I::ONE,
@@ -123,7 +136,7 @@ impl<I: Idx, RB: RangeBounds<I>> RangeBoundsToRange<I> for RB {
         };
         start..end
     }
-    fn into_usize_range(self, len: usize) -> Range<usize> {
+    fn as_usize_range(&self, len: usize) -> Range<usize> {
         let start = match self.start_bound() {
             std::ops::Bound::Included(i) => i.into_usize(),
             std::ops::Bound::Excluded(i) => i.into_usize() + 1,
