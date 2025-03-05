@@ -29,17 +29,24 @@ indexland_derive = { path = "./derive", optional = true, default-features = fals
 [dev-dependencies]
 derive_more = { version = "2.0.1", features = ["full"] }
 
-indexland = { path = "." }
-[features]
 
+[package.metadata.docs.rs]
+features = ["full"]
+
+
+[features]
 default = ["derive", "arrayvec"]
 
 full = ["derive", "nonmax", "smallvec", "arrayvec", "serde"]
 
 derive = ["dep:indexland_derive"]
+
 nonmax = []
-smallvec = ["dep:smallvec"]
-arrayvec = ["dep:arrayvec"]
-serde = ["dep:serde", "arrayvec/serde", "smallvec/serde"]
 
 disable_debuggable_nonmax = []
+
+smallvec = ["dep:smallvec"]
+
+arrayvec = ["dep:arrayvec"]
+
+serde = ["dep:serde", "arrayvec/serde", "smallvec/serde"]

@@ -77,7 +77,6 @@
 #![allow(clippy::module_name_repetitions)]
 
 pub mod enumerated_index_iter;
-pub mod get_many_mut;
 pub mod idx;
 pub mod index_array;
 pub mod index_slice;
@@ -94,25 +93,42 @@ pub mod index_array_vec;
 pub mod index_small_vec;
 
 // convenience exports
-pub use crate::idx::*;
+
+#[doc(inline)]
+pub use crate::idx::{
+    EnumIdx, Idx, IdxRange, NewtypeIdx, RangeBoundsAsRange,
+    UsizeRangeAsIdxRange,
+};
+
+#[doc(inline)]
 pub use index_array::{EnumIndexArray, IndexArray};
+
+#[doc(inline)]
 pub use index_slice::IndexSlice;
+
+#[doc(inline)]
 pub use index_vec::IndexVec;
+
+#[doc(inline)]
 pub use index_vec_deque::IndexVecDeque;
 
 #[cfg(feature = "derive")]
+#[doc(inline)]
 pub use indexland_derive::{EnumIdx, Idx, NewtypeIdx};
 
 #[cfg(feature = "nonmax")]
+#[doc(hidden)]
 pub use nonmax::{
     NonMaxI16, NonMaxI32, NonMaxI64, NonMaxI8, NonMaxIsize, NonMaxU16,
     NonMaxU32, NonMaxU64, NonMaxU8, NonMaxUsize,
 };
 
 #[cfg(feature = "arrayvec")]
+#[doc(inline)]
 pub use index_array_vec::IndexArrayVec;
 
 #[cfg(feature = "smallvec")]
+#[doc(inline)]
 pub use index_small_vec::IndexSmallVec;
 
 // used in macros, not public api
