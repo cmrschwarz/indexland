@@ -10,10 +10,14 @@ pub enum GetManyMutError {
 }
 
 /// # Safety
-/// If `is_in_bounds()` returns `true` and `is_overlapping()` returns `false`,
-/// it must be safe to index the slice with the indices.
+/// If `is_in_bounds()` returns `true` it must be safe to index the slice with
+/// the indices.
+/// If `is_overlapping()` returns `false` for two (in bounds) indices it must
+/// be safe to access a slice mutably at both indices the same time.
+/// !! These validations must hold *after* the
+/// `into_usize` conversion of the `Idx`, even if that conversion has changed
+/// the value / ordering.
 pub unsafe trait GetManyMutIndex<I>: Clone {
-    // Required methods
     fn is_in_bounds(&self, len: I) -> bool;
     fn is_overlapping(&self, other: &Self) -> bool;
 }
@@ -26,26 +30,29 @@ unsafe impl<I: Idx> GetManyMutIndex<I> for I {
 
     #[inline]
     fn is_overlapping(&self, other: &Self) -> bool {
-        *self == *other
+        self.into_usize() == other.into_usize()
     }
 }
 
 unsafe impl<I: Idx> GetManyMutIndex<I> for Range<I> {
     #[inline]
     fn is_in_bounds(&self, len: I) -> bool {
-        (self.start <= self.end) & (self.end <= len)
+        (self.start.into_usize() <= self.end.into_usize())
+            & (self.end.into_usize() <= len.into_usize())
     }
 
     #[inline]
     fn is_overlapping(&self, other: &Self) -> bool {
-        (self.start < other.end) & (other.start < self.end)
+        (self.start.into_usize() < other.end.into_usize())
+            & (other.start.into_usize() < self.end.into_usize())
     }
 }
 
 unsafe impl<I: Idx> GetManyMutIndex<I> for RangeInclusive<I> {
     #[inline]
     fn is_in_bounds(&self, len: I) -> bool {
-        (self.start() <= self.end()) & (*self.end() < len)
+        (self.start().into_usize() <= self.end().into_usize())
+            & (self.end().into_usize() < len.into_usize())
     }
 
     #[inline]

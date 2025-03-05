@@ -22,22 +22,24 @@ arrayvec = { version = "0.7.6", optional = true, default-features = false }
 smallvec = { version = "1.14.0", optional = true, default-features = false, features = [
     "const_new",
 ] }
+
 serde = { version = "1.0.218", optional = true, default-features = false }
 indexland_derive = { path = "./derive", optional = true, default-features = false }
 
 [dev-dependencies]
-indexland = { path = "." }
 derive_more = { version = "2.0.1", features = ["full"] }
 
+indexland = { path = "." }
 [features]
+
 default = ["derive", "arrayvec"]
 
-derive = ["dep:indexland_derive"]
+full = ["derive", "nonmax", "smallvec", "arrayvec", "serde"]
 
+derive = ["dep:indexland_derive"]
+nonmax = []
+smallvec = ["dep:smallvec"]
+arrayvec = ["dep:arrayvec"]
 serde = ["dep:serde", "arrayvec/serde", "smallvec/serde"]
 
-smallvec = ["dep:smallvec"]
-
-arrayvec = ["dep:arrayvec"]
-
-multi_ref_mut_handout = ["dep:arrayvec"]
+disable_debuggable_nonmax = []

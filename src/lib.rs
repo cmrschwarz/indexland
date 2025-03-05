@@ -76,25 +76,35 @@
 #![allow(clippy::module_name_repetitions)]
 
 pub mod enumerated_index_iter;
+pub mod get_many_mut;
 pub mod idx;
 pub mod index_array;
 pub mod index_slice;
 pub mod index_vec;
 
+#[cfg(feature = "nonmax")]
+pub mod nonmax;
+
 #[cfg(feature = "arrayvec")]
 pub mod index_array_vec;
 
-pub mod get_many_mut;
 #[cfg(feature = "smallvec")]
 pub mod index_small_vec;
 
-#[cfg(feature = "derive")]
-pub use indexland_derive::{EnumIdx, Idx, NewtypeIdx};
-
+// convenience exports
 pub use crate::idx::*;
 pub use index_array::{EnumIndexArray, IndexArray};
 pub use index_slice::IndexSlice;
 pub use index_vec::IndexVec;
+
+#[cfg(feature = "derive")]
+pub use indexland_derive::{EnumIdx, Idx, NewtypeIdx};
+
+#[cfg(feature = "nonmax")]
+pub use nonmax::{
+    NonMaxI16, NonMaxI32, NonMaxI64, NonMaxI8, NonMaxIsize, NonMaxU16,
+    NonMaxU32, NonMaxU64, NonMaxU8, NonMaxUsize,
+};
 
 #[cfg(feature = "arrayvec")]
 pub use index_array_vec::IndexArrayVec;
