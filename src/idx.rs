@@ -2,7 +2,9 @@
 
 use std::{
     hash::Hash,
-    ops::{Add, AddAssign, Range, RangeInclusive, Sub, SubAssign},
+    ops::{
+        Add, AddAssign, Range, RangeBounds, RangeInclusive, Sub, SubAssign,
+    },
 };
 
 pub trait Idx:
@@ -82,6 +84,59 @@ impl<I: Idx> IdxRange<I> {
         }
     }
 }
+impl<I> From<Range<I>> for IdxRange<I> {
+    fn from(r: Range<I>) -> Self {
+        IdxRange {
+            start: r.start,
+            end: r.end,
+        }
+    }
+}
+impl<I> From<IdxRange<I>> for Range<I> {
+    fn from(r: IdxRange<I>) -> Self {
+        Range {
+            start: r.start,
+            end: r.end,
+        }
+    }
+}
+
+pub trait RangeBoundsToRange<I>: Sized {
+    fn into_usize_range(self, len: usize) -> Range<usize>;
+    fn into_range(self, len: I) -> Range<I>;
+    fn into_idx_range(self, len: I) -> IdxRange<I> {
+        IdxRange::from(self.into_range(len))
+    }
+}
+
+impl<I: Idx, RB: RangeBounds<I>> RangeBoundsToRange<I> for RB {
+    fn into_range(self, len: I) -> Range<I> {
+        let start = match self.start_bound() {
+            std::ops::Bound::Included(i) => *i,
+            std::ops::Bound::Excluded(i) => *i + I::ONE,
+            std::ops::Bound::Unbounded => I::ZERO,
+        };
+        let end = match self.end_bound() {
+            std::ops::Bound::Included(i) => *i + I::ONE,
+            std::ops::Bound::Excluded(i) => *i,
+            std::ops::Bound::Unbounded => len,
+        };
+        start..end
+    }
+    fn into_usize_range(self, len: usize) -> Range<usize> {
+        let start = match self.start_bound() {
+            std::ops::Bound::Included(i) => i.into_usize(),
+            std::ops::Bound::Excluded(i) => i.into_usize() + 1,
+            std::ops::Bound::Unbounded => 0,
+        };
+        let end = match self.end_bound() {
+            std::ops::Bound::Included(i) => i.into_usize() + 1,
+            std::ops::Bound::Excluded(i) => i.into_usize(),
+            std::ops::Bound::Unbounded => len,
+        };
+        start..end
+    }
+}
 
 impl<I: Idx> Iterator for IdxRange<I> {
     type Item = I;
@@ -103,12 +158,6 @@ impl<I: Idx> DoubleEndedIterator for IdxRange<I> {
         }
         self.end = I::from_usize(self.end.into_usize() - 1);
         Some(self.end)
-    }
-}
-
-impl<I: Idx> From<Range<I>> for IdxRange<I> {
-    fn from(r: Range<I>) -> Self {
-        IdxRange::new(r)
     }
 }
 
@@ -315,48 +364,52 @@ macro_rules! newtype_idx {
                 self.0
             }
         }
-        impl From<usize> for $name {
+        impl ::core::convert::From<usize> for $name {
             #[inline(always)]
             fn from(v: usize) -> $name {
                 $name(<$base_type as $crate::Idx>::from_usize(v))
             }
         }
-        impl From<$name> for usize {
+        impl ::core::convert::From<$name> for usize {
             #[inline(always)]
             fn from(v: $name) -> usize {
                 <$base_type as $crate::Idx>::into_usize(v.0)
             }
         }
-        impl core::fmt::Debug for $name {
+        impl ::core::fmt::Debug for $name {
             #[inline]
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 std::fmt::Debug::fmt(&self.0, f)
             }
         }
-        impl core::fmt::Display for $name {
+        impl ::core::fmt::Display for $name {
             #[inline]
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 std::fmt::Display::fmt(&self.0, f)
             }
         }
-        impl core::ops::Add for $name {
+        impl ::core::ops::Add for $name {
             type Output = Self;
+            #[inline]
             fn add(self, other: Self) -> Self {
                 $name(self.0 + other.0)
             }
         }
-        impl core::ops::Sub for $name {
+        impl ::core::ops::Sub for $name {
             type Output = Self;
+            #[inline]
             fn sub(self, other: Self) -> Self {
                 $name(self.0 - other.0)
             }
         }
-        impl core::ops::AddAssign for $name {
+        impl ::core::ops::AddAssign for $name {
+            #[inline]
             fn add_assign(&mut self, other: Self) {
                 self.0 += other.0;
             }
         }
-        impl core::ops::SubAssign for $name {
+        impl ::core::ops::SubAssign for $name {
+            #[inline]
             fn sub_assign(&mut self, other: Self) {
                 self.0 -= other.0;
             }

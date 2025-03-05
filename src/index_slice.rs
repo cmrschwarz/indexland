@@ -1,9 +1,6 @@
 use crate::enumerated_index_iter::EnumeratedIndexIter;
 
-use super::{get_two_distinct_mut, Idx};
-
-#[cfg(feature = "multi_ref_mut_handout")]
-use crate::multi_ref_mut_handout::{MultiRefMutHandout, RefHandoutStackBase};
+use super::Idx;
 
 use std::{
     fmt::Debug,
@@ -29,6 +26,14 @@ impl<I: Idx, T> IndexSlice<I, T> {
     #[inline]
     pub fn from_slice_mut(s: &mut [T]) -> &mut Self {
         unsafe { &mut *(std::ptr::from_mut(s) as *mut Self) }
+    }
+    pub fn from_boxed_slice(slice_box: Box<[T]>) -> Box<Self> {
+        unsafe {
+            let base_box_raw = Box::into_raw(slice_box);
+            let index_box_raw = IndexSlice::from_slice_mut(&mut *base_box_raw)
+                as *mut IndexSlice<I, T>;
+            Box::from_raw(index_box_raw)
+        }
     }
     pub fn iter_enumerated(
         &self,
@@ -66,14 +71,6 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn as_slice_mut(&mut self) -> &mut [T] {
         &mut self.data
     }
-    pub fn from_boxed_slice(slice_box: Box<[T]>) -> Box<Self> {
-        unsafe {
-            let base_box_raw = Box::into_raw(slice_box);
-            let index_box_raw = IndexSlice::from_slice_mut(&mut *base_box_raw)
-                as *mut IndexSlice<I, T>;
-            Box::from_raw(index_box_raw)
-        }
-    }
     pub fn len_idx(&self) -> I {
         I::from_usize(self.data.len())
     }
@@ -92,21 +89,6 @@ impl<I: Idx, T> IndexSlice<I, T> {
     }
     pub fn iter_mut(&mut self) -> std::slice::IterMut<T> {
         self.data.iter_mut()
-    }
-    pub fn two_distinct_mut(&mut self, a: I, b: I) -> (&mut T, &mut T) {
-        get_two_distinct_mut(&mut self.data, a.into_usize(), b.into_usize())
-    }
-
-    #[cfg(feature = "multi_ref_mut_handout")]
-    pub fn multi_ref_mut_handout<const CAP: usize>(
-        &mut self,
-    ) -> MultiRefMutHandout<I, T, CAP> {
-        MultiRefMutHandout::new(self)
-    }
-
-    #[cfg(feature = "multi_ref_mut_handout")]
-    pub fn ref_handout_stack(&mut self) -> RefHandoutStackBase<I, T> {
-        RefHandoutStackBase::new(self)
     }
 
     pub fn split_at_mut(
@@ -227,20 +209,22 @@ impl<'a, I: Idx, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
     }
 }
 
+use crate::idx::RangeBoundsToRange;
+
 macro_rules! slice_index_impl {
     ($($range_type: ident),*) => {$(
         impl<I: Idx, T> Index<$range_type<I>> for IndexSlice<I, T> {
             type Output = IndexSlice<I, T>;
             #[inline]
             fn index(&self, rb: $range_type<I>) -> &Self::Output {
-                IndexSlice::from_slice(&self.data[$crate::range_bounds_to_range_usize(rb, self.len())])
+                IndexSlice::from_slice(&self.data[rb.into_usize_range(self.len())])
             }
         }
 
         impl<I: Idx, T> IndexMut<$range_type<I>> for IndexSlice<I, T> {
             #[inline]
             fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
-                let range = $crate::range_bounds_to_range_usize(rb, self.len());
+                let range = rb.into_usize_range(self.len());
                 IndexSlice::from_slice_mut(&mut self.data[range])
             }
         }

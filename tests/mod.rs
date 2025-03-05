@@ -3,11 +3,11 @@ use indexland::{
     index_array,
     index_array::{EnumIndexArray, IndexArray},
     index_vec::IndexVec,
-    EnumIdx, Idx, NewtypeIdx,
+    newtype_idx, EnumIdx, Idx, NewtypeIdx,
 };
 
 #[test]
-fn derive_idx_enum() {
+fn derive_enum_idx() {
     #[derive(EnumIdx)]
     enum Foo {
         A,
@@ -20,12 +20,26 @@ fn derive_idx_enum() {
 }
 
 #[test]
-fn derive_idx_newtype() {
+fn derive_newtype_idx() {
     #[derive(NewtypeIdx)]
-    pub struct FooIdx(u32);
+    pub struct FooId(u32);
 
-    let foo = IndexVec::<FooIdx, i32>::from_iter([0, 1, 2]);
-    assert_eq!(foo[FooIdx::ONE], 1);
+    let foo = IndexVec::<FooId, i32>::from_iter([0, 1, 2]);
+    assert_eq!(foo[FooId::ONE], 1);
+}
+
+#[test]
+fn declarative_newtype_idx() {
+    newtype_idx! {
+        pub struct FooId(u32);
+    }
+    newtype_idx! {
+        pub struct BarId(u32);
+        pub struct BazId(u32);
+    }
+
+    let foo = IndexVec::<FooId, i32>::from_iter([0, 1, 2]);
+    assert_eq!(foo[FooId::ONE], 1);
 }
 
 #[test]

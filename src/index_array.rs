@@ -63,7 +63,8 @@ macro_rules! index_array {
             );
             i += 1;
         }
-        let data = unsafe { $crate::transpose_maybe_uninit(data) };
+        // SAFETY: we called `take()` LEN times so all slots must be filled
+        let data = unsafe { $crate::__private::transpose_assume_uninit(data) };
         $crate::IndexArray::new(data)
     }};
 }
@@ -257,20 +258,22 @@ impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<[T]>
     }
 }
 
+use crate::idx::RangeBoundsToRange;
+
 macro_rules! slice_index_impl {
     ($($range_type: ident),+) => {$(
         impl<I: Idx, T, const LEN: usize> Index<$range_type<I>> for IndexArray<I, T, LEN> {
             type Output = IndexSlice<I, T>;
             #[inline]
             fn index(&self, rb: $range_type<I>) -> &Self::Output {
-                IndexSlice::from_slice(&self.data[$crate::range_bounds_to_range_usize(rb, self.len())])
+                IndexSlice::from_slice(&self.data[rb.into_usize_range(self.len())])
             }
         }
 
         impl<I: Idx, T, const LEN: usize> IndexMut<$range_type<I>> for IndexArray<I, T, LEN> {
             #[inline]
             fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
-                let range = $crate::range_bounds_to_range_usize(rb, self.len());
+                let range = rb.into_usize_range(self.len());
                 IndexSlice::from_slice_mut(&mut self.data[range])
             }
         }

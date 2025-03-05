@@ -69,40 +69,24 @@
 //! - [Serde](https://docs.rs/serde/latest/serde/) support for all Collections
 
 #![warn(clippy::pedantic)]
-#![allow(clippy::missing_safety_doc)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::return_self_not_must_use)]
 #![allow(clippy::module_name_repetitions)]
 
-pub mod counted_stable_universe;
-pub mod counted_universe;
 pub mod enumerated_index_iter;
 pub mod idx;
 pub mod index_array;
 pub mod index_slice;
 pub mod index_vec;
-pub mod nonmax;
-pub mod offset_vec_deque;
-pub mod phantom_slot;
-pub mod random_access_container;
-pub mod stable_universe;
-pub mod stable_vec;
-pub mod temp_vec;
-pub mod universe;
 
 #[cfg(feature = "arrayvec")]
 pub mod index_array_vec;
 
+pub mod get_many_mut;
 #[cfg(feature = "smallvec")]
 pub mod index_small_vec;
-
-#[cfg(feature = "multi_ref_mut_handout")]
-pub mod multi_ref_mut_handout;
-
-#[cfg(feature = "multi_ref_mut_handout")]
-pub mod universe_multi_ref_mut_handout;
 
 #[cfg(feature = "derive")]
 pub use indexland_derive::{EnumIdx, Idx, NewtypeIdx};
@@ -118,147 +102,29 @@ pub use index_array_vec::IndexArrayVec;
 #[cfg(feature = "smallvec")]
 pub use index_small_vec::IndexSmallVec;
 
-use std::{
-    mem::MaybeUninit,
-    ops::{Range, RangeBounds},
-};
+// used in macros, not public api
+#[doc(hidden)]
+pub mod __private {
+    use std::mem::MaybeUninit;
 
-pub enum GetManyMutError {
-    IndexOutOfBounds,
-    OverlappingIndices,
-}
-
-// miscellaneous utility functions
-
-pub fn get_two_distinct_mut<T>(
-    slice: &mut [T],
-    idx1: usize,
-    idx2: usize,
-) -> (&mut T, &mut T) {
-    assert!(idx1 != idx2, "indices must be unique");
-    assert!(
-        idx1 < slice.len() && idx2 < slice.len(),
-        "indices out of bounds"
-    );
-    unsafe {
-        let ptr = slice.as_mut_ptr();
-        (&mut *ptr.add(idx1), &mut *ptr.add(idx2))
+    /// Essentially [`std::mem::MaybeUninit::transpose`] in stable Rust. Will
+    /// be removed once [maybe_uninit_uninit_array_transpose](https://github.com/rust-lang/rust/issues/96097)
+    /// is stabilized.
+    #[allow(clippy::needless_pass_by_value)]
+    pub const unsafe fn transpose_assume_uninit<T, const N: usize>(
+        v: [MaybeUninit<T>; N],
+    ) -> [T; N] {
+        let mut res = MaybeUninit::<[T; N]>::uninit();
+        let mut i = 0;
+        while i < v.len() {
+            unsafe {
+                res.as_mut_ptr()
+                    .cast::<T>()
+                    .add(i)
+                    .write(v.as_ptr().add(i).read().assume_init());
+            };
+            i += 1;
+        }
+        unsafe { res.assume_init() }
     }
-}
-
-pub fn get_three_distinct_mut<T>(
-    slice: &mut [T],
-    idx1: usize,
-    idx2: usize,
-    idx3: usize,
-) -> (&mut T, &mut T, &mut T) {
-    assert!(idx1 != idx2 && idx2 != idx3, "indices must be unique");
-    assert!(
-        idx1 < slice.len() && idx2 < slice.len() && idx3 < slice.len(),
-        "indices out of bounds"
-    );
-    unsafe {
-        let ptr = slice.as_mut_ptr();
-        (
-            &mut *ptr.add(idx1),
-            &mut *ptr.add(idx2),
-            &mut *ptr.add(idx3),
-        )
-    }
-}
-
-pub fn subslice_slice_pair<'a, T>(
-    slices: (&'a [T], &'a [T]),
-    range: Range<usize>,
-) -> (&'a [T], &'a [T]) {
-    let (s1, s2) = slices;
-    let s1_len = s1.len();
-    if range.start > s1_len {
-        (&[], &s2[range.start - s1_len..range.end - s1_len])
-    } else if range.end <= s1_len {
-        (&s1[range.start..range.end], &[])
-    } else {
-        (
-            &s1[range.start..],
-            &s2[..range.len() - (s1_len - range.start)],
-        )
-    }
-}
-
-pub fn subslice_slice_pair_mut<'a, T>(
-    slices: (&'a mut [T], &'a mut [T]),
-    range: Range<usize>,
-) -> (&'a mut [T], &'a mut [T]) {
-    let (s1, s2) = slices;
-    let s1_len = s1.len();
-    if range.start > s1_len {
-        (&mut [], &mut s2[range.start - s1_len..range.end - s1_len])
-    } else {
-        (
-            &mut s1[range.start..],
-            &mut s2[..range.len() - (s1_len - range.start)],
-        )
-    }
-}
-
-pub fn range_bounds_to_range_wrapping<I: Idx>(
-    rb: impl RangeBounds<I>,
-    len: I,
-) -> Range<I> {
-    let start = match rb.start_bound() {
-        std::ops::Bound::Included(i) => *i,
-        std::ops::Bound::Excluded(i) => i.wrapping_add(I::ONE),
-        std::ops::Bound::Unbounded => I::ZERO,
-    };
-    let end = match rb.end_bound() {
-        std::ops::Bound::Included(i) => i.wrapping_add(I::ONE),
-        std::ops::Bound::Excluded(i) => *i,
-        std::ops::Bound::Unbounded => len,
-    };
-    start..end
-}
-
-pub fn range_bounds_to_range_usize<I: Idx>(
-    rb: impl RangeBounds<I>,
-    len: usize,
-) -> Range<usize> {
-    let start = match rb.start_bound() {
-        std::ops::Bound::Included(i) => i.into_usize(),
-        std::ops::Bound::Excluded(i) => i.into_usize() + 1,
-        std::ops::Bound::Unbounded => 0,
-    };
-    let end = match rb.end_bound() {
-        std::ops::Bound::Included(i) => i.into_usize() + 1,
-        std::ops::Bound::Excluded(i) => i.into_usize(),
-        std::ops::Bound::Unbounded => len,
-    };
-    start..end
-}
-
-pub fn range_contains<I: PartialOrd>(
-    range: Range<I>,
-    subrange: Range<I>,
-) -> bool {
-    range.start <= subrange.start && range.end >= subrange.end
-}
-
-/// [`std::mem::MaybeUninit::transpose`] implementation in stable Rust. Replace
-/// once [maybe_uninit_uninit_array_transpose](https://github.com/rust-lang/rust/issues/96097)
-/// is stabilized.
-#[allow(clippy::needless_pass_by_value)]
-pub const unsafe fn transpose_maybe_uninit<T, const N: usize>(
-    v: [MaybeUninit<T>; N],
-) -> [T; N] {
-    let mut res = MaybeUninit::<[T; N]>::uninit();
-    let mut i = 0;
-    while i < v.len() {
-        unsafe {
-            res.as_mut_ptr()
-                .cast::<T>()
-                .add(i)
-                .write(v.as_ptr().add(i).read().assume_init());
-        };
-        i += 1;
-    }
-    unsafe { res.assume_init() }
 }
