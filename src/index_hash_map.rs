@@ -11,12 +11,11 @@ use super::{idx::Idx, idx_range::IdxRange};
 
 /// Create an [`IndexHashMap`] containing the arguments.
 ///
-/// The syntax is identical to [`indexmap!`](https://docs.rs/indexmap/latest/indexmap/macro.indexmap.html).
-// NOTE: referencing [`indexmap!`](indexmap::indexmap) is somehow broken :/
+/// The syntax is identical to [`indexmap!`](indexmap::indexmap!).
 #[macro_export]
 macro_rules! index_hash_map {
     ($($anything: tt)+) => {
-        $crate::IndexHashMap::from(index_map![$($anything)+])
+        $crate::IndexHashMap::from(::indexmap::indexmap![$($anything)+])
     };
 }
 

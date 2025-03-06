@@ -55,7 +55,7 @@
 //! let my_color = COLOR_MAPPING[PrimaryColor::Red];
 //! ```
 //!
-//! # Support for all common Array Based Collections
+//! # Support for most common Array Based Collections
 //! - [`IndexSlice<I, T>`](crate::IndexSlice)
 //!   wrapping [`&[T]`](std::slice)
 //! - [`IndexArray<I, T, LEN>`](crate::IndexArray)
@@ -68,8 +68,10 @@
 //!   wrapping [`SmallVec<[T;CAP]>`](smallvec::SmallVec) (Optional)
 //! - [`IndexArrayVec<I, T, CAP>`](crate::IndexArrayVec)
 //!   wrapping [`ArrayVec<T, CAP>`](arrayvec::ArrayVec) (Optional)
-//! - [`IndexHashMap<I, K, V, S>`](crate::IndexHashMap)
-//!   wrapping [`IndexMap<K, V, S>`](indexmap::IndexMap) (Optional)
+//! - [`IndexHashMap<I, K, V>`](crate::IndexHashMap)
+//!   wrapping [`IndexMap<K, V>`](indexmap::IndexMap) (Optional)
+//! - [`IndexHashSet<I, T>`](crate::IndexHashSet)
+//!   wrapping [`IndexSet<T>`](indexmap::IndexSet) (Optional)
 //! - [`NonMax<T>`](crate::nonmax) Integer Types for Niche Optimizations (Optional)
 //! - [`serde`] support for all Collections (Optional)
 
@@ -100,6 +102,9 @@ pub mod index_small_vec;
 
 #[cfg(feature = "indexmap")]
 pub mod index_hash_map;
+
+#[cfg(feature = "indexmap")]
+pub mod index_hash_set;
 
 // convenience exports
 
@@ -139,7 +144,7 @@ pub use index_small_vec::IndexSmallVec;
 
 #[cfg(feature = "indexmap")]
 #[doc(inline)]
-pub use index_hash_map::IndexHashMap;
+pub use {index_hash_map::IndexHashMap, index_hash_set::IndexHashSet};
 
 // used in macros, not public api
 #[doc(hidden)]
