@@ -20,9 +20,9 @@
 //! # Newtype Indices
 //! ```rust
 //! # #[cfg(feature = "alloc")] {
-//! use indexland::{IdxNewtype, IndexVec};
+//! use indexland::{Idx, IndexVec};
 //!
-//! #[derive(IdxNewtype)]
+//! #[derive(Idx)]
 //! struct NodeId(u32);
 //!
 //! struct Node<T> {
@@ -38,9 +38,9 @@
 //!
 //! # Enums as Indices
 //! ```rust
-//! use indexland::{IdxEnum, EnumIndexArray, enum_index_array};
+//! use indexland::{Idx, EnumIndexArray, enum_index_array};
 //!
-//! #[derive(IdxEnum)]
+//! #[derive(Idx)]
 //! enum PrimaryColor {
 //!     Red,
 //!     Green,

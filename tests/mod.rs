@@ -45,7 +45,6 @@ fn declarative_idx_newtype() {
 fn derive_idx_newtype_manual() {
     #[derive(
         Default,
-        Idx,
         Add,
         Sub,
         AddAssign,
@@ -60,20 +59,47 @@ fn derive_idx_newtype_manual() {
     )]
     pub struct FooIdx(u32);
 
+    impl Idx for FooIdx {
+        const ZERO: Self = FooIdx(0);
+        const ONE: Self = FooIdx(1);
+        const MAX: Self = FooIdx(u32::MAX);
+        fn from_usize(v: usize) -> Self {
+            FooIdx(v as u32)
+        }
+        fn into_usize(self) -> usize {
+            self.0 as usize
+        }
+    }
+
     let foo = IndexArrayVec::<FooIdx, i32, 3>::from_iter([0, 1, 2]);
     assert_eq!(foo[FooIdx::ONE], 1);
 }
 
 #[test]
 fn derive_idx_enum_manual() {
-    #[derive(
-        Default, Idx, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord,
-    )]
+    #[derive(Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
     enum Foo {
         #[default]
         A,
         B,
     }
+
+    impl Idx for Foo {
+        const ZERO: Self = Foo::A;
+        const ONE: Self = Foo::B;
+        const MAX: Self = Foo::B;
+        fn from_usize(v: usize) -> Self {
+            match v {
+                0 => Foo::A,
+                1 => Foo::B,
+                _ => panic!(),
+            }
+        }
+        fn into_usize(self) -> usize {
+            self as usize
+        }
+    }
+
     impl core::ops::Add for Foo {
         type Output = Self;
 

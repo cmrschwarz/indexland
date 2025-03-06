@@ -2,12 +2,12 @@
 //! `"derive"` feature to `indexland` instead of depending on this directly.
 //! ```rust
 //! // re-exported by indexland aswell
-//! use indexland_derive::{IdxNewtype, IdxEnum};
+//! use indexland_derive::{Idx};
 //!
-//! #[derive(IdxNewtype)]
+//! #[derive(Idx)]
 //! struct NodeId(u32);
 //!
-//! #[derive(IdxEnum)]
+//! #[derive(Idx)]
 //! enum PrimaryColor{
 //!     Red,
 //!     Green,
@@ -137,27 +137,6 @@ fn derive_idx_for_struct(
         }
     };
     Ok(output)
-}
-
-fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
-    match &ast.data {
-        Data::Enum(enum_data) => derive_idx_for_enum(&ast, enum_data),
-        Data::Struct(struct_data) => derive_idx_for_struct(&ast, struct_data),
-        _ => Err(syn::Error::new(
-            Span::call_site(),
-            "This macro only supports enums and structs",
-        )),
-    }
-}
-
-/// Only derives the `Idx` trait, not it's requireed super traits.
-/// For more oppinionionated defaults use
-/// `#[derive(IdxNewtype)]` or `#[derive(IdxEnum)]` instead.
-#[proc_macro_derive(Idx)]
-pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    derive_idx_inner(syn::parse_macro_input!(input as DeriveInput))
-        .unwrap_or_else(|e| e.to_compile_error())
-        .into()
 }
 
 fn derive_idx_newtype_inner(
@@ -417,6 +396,26 @@ pub fn derive_idx_enum(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     derive_idx_enum_inner(syn::parse_macro_input!(input as DeriveInput))
+        .unwrap_or_else(|e| e.to_compile_error())
+        .into()
+}
+
+fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
+    match &ast.data {
+        Data::Enum(_) => derive_idx_enum_inner(ast),
+        Data::Struct(_) => derive_idx_newtype_inner(ast),
+        _ => Err(syn::Error::new(
+            Span::call_site(),
+            "This macro only supports enums and structs",
+        )),
+    }
+}
+
+/// For structs this is equivalent to [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
+/// for enums to [`#[derive(IdxEnum)]`](crate::IdxEnum).
+#[proc_macro_derive(Idx)]
+pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    derive_idx_inner(syn::parse_macro_input!(input as DeriveInput))
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
 }
