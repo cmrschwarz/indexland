@@ -13,10 +13,20 @@ use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 /// Create an [`IndexVecDeque`] containing the arguments.
 ///
 /// The syntax is identical to [`vec!`](alloc::vec!).
+///
+/// The index type cannot be inferred from the macro so you
+/// might have to add type annotations.
+///
+/// ## Example
+/// ```
+/// use indexland::{IndexVecDeque, index_vec_deque};
+///
+/// let vd: IndexVecDeque<u32, _> = index_vec_deque![-1, 2, 3];
+/// ```
 #[macro_export]
 macro_rules! index_vec_deque {
     ($($anything: tt)+) => {
-        $crate::IndexVecDeque::from(::alloc::vec![$($anything)+])
+        $crate::IndexVecDeque::from($crate::__private::alloc::vec![$($anything)+])
     };
 }
 

@@ -19,6 +19,7 @@
 //!
 //! # Newtype Indices
 //! ```rust
+//! # #[cfg(feature = "alloc")] {
 //! use indexland::{IdxNewtype, IndexVec};
 //!
 //! #[derive(IdxNewtype)]
@@ -32,6 +33,7 @@
 //! struct DoublyLinkedList<T> {
 //!     nodes: IndexVec<NodeId, Node<T>>,
 //! }
+//! # }
 //! ```
 //!
 //! # Enums as Indices
@@ -185,4 +187,6 @@ pub mod __private {
         }
         unsafe { res.assume_init() }
     }
+    // reexport for vec!
+    pub extern crate alloc;
 }

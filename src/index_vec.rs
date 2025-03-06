@@ -15,10 +15,19 @@ use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 /// Create an [`IndexVec`] containing the arguments.
 ///
 /// The syntax is identical to [`vec!`](alloc::vec!).
+/// The index type cannot be inferred from the macro so you
+/// might have to add type annotations.
+///
+/// ## Example
+/// ```
+/// use indexland::{IndexVec, index_vec};
+///
+/// let v: IndexVec<u32, _> = index_vec![-1, 2, 3];
+/// ```
 #[macro_export]
 macro_rules! index_vec {
     ($($anything: tt)+) => {
-        $crate::IndexVec::from(::alloc::vec![$($anything)+])
+        $crate::IndexVec::from($crate::__private::alloc::vec![$($anything)+])
     };
 }
 

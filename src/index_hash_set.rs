@@ -13,10 +13,13 @@ use std::{
 ///
 /// The syntax is identical to [`indexset!`](::indexmap::indexset!).
 ///
+/// The index type cannot be inferred from the macro so you
+/// might have to add type annotations.
+///
 /// ## Example
 /// ```
-/// use indexland::index_hash_set;
-/// let set = index_hash_set!{
+/// use indexland::{IndexHashSet, index_hash_set};
+/// let set: IndexHashSet<u32, _> = index_hash_set!{
 ///     "a",
 ///     "b",
 /// };

@@ -15,10 +15,13 @@ use super::{idx::Idx, idx_range::IdxRange};
 ///
 /// The syntax is identical to [`indexmap!`](::indexmap::indexmap!).
 ///
+/// The index type cannot be inferred from the macro so you
+/// might have to add type annotations.
+///
 /// ## Example
 /// ```
-/// use indexland::index_hash_map;
-/// let map = index_hash_map!{
+/// use indexland::{IndexHashMap, index_hash_map};
+/// let map: IndexHashMap<u32, _, _> = index_hash_map!{
 ///     "a" => 17,
 ///     "b" => 42,
 /// };

@@ -2,8 +2,7 @@ use derive_more::{Add, AddAssign, Sub, SubAssign};
 use indexland::{
     idx_newtype, index_array,
     index_array::{EnumIndexArray, IndexArray},
-    index_vec::IndexVec,
-    Idx, IdxEnum, IdxNewtype,
+    Idx, IdxEnum, IdxNewtype, IndexArrayVec,
 };
 
 #[test]
@@ -24,7 +23,7 @@ fn derive_idx_newtype() {
     #[derive(IdxNewtype)]
     pub struct FooId(u32);
 
-    let foo = IndexVec::<FooId, i32>::from_iter([0, 1, 2]);
+    let foo = IndexArrayVec::<FooId, i32, 3>::from_iter([0, 1, 2]);
     assert_eq!(foo[FooId::ONE], 1);
 }
 
@@ -38,7 +37,7 @@ fn declarative_idx_newtype() {
         pub struct BazId(u32);
     }
 
-    let foo = IndexVec::<FooId, i32>::from_iter([0, 1, 2]);
+    let foo = IndexArrayVec::<FooId, i32, 3>::from_iter([0, 1, 2]);
     assert_eq!(foo[FooId::ONE], 1);
 }
 
@@ -61,7 +60,7 @@ fn derive_idx_newtype_manual() {
     )]
     pub struct FooIdx(u32);
 
-    let foo = IndexVec::<FooIdx, i32>::from_iter([0, 1, 2]);
+    let foo = IndexArrayVec::<FooIdx, i32, 3>::from_iter([0, 1, 2]);
     assert_eq!(foo[FooIdx::ONE], 1);
 }
 

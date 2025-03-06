@@ -90,9 +90,9 @@ macro_rules! index_array {
 /// This is an alias for [`index_array!`]
 /// ### Examples:
 /// ```
-/// use indexland::{Idx, EnumIndexArray, enum_index_array};
+/// use indexland::{IdxEnum, EnumIndexArray, enum_index_array};
 ///
-/// #[derive(Idx)]
+/// #[derive(IdxEnum)]
 /// enum MyId { A, B, C }
 ///
 /// const BAZ: EnumIndexArray<MyId, i32> = enum_index_array![

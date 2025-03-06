@@ -17,6 +17,16 @@ use smallvec::SmallVec;
 /// Create an [`IndexSmallVec`] containing the arguments.
 ///
 /// The syntax is identical to [`smallvec!`](::smallvec::smallvec!).
+///
+/// The index type and capacity cannot be inferred from the macro so you
+/// might have to add type annotations.
+///
+/// ## Example
+/// ```
+/// use indexland::{IndexSmallVec, index_small_vec};
+///
+/// let v: IndexSmallVec<u32, _, 3> = index_small_vec![-1, 2, 3];
+/// ```
 #[macro_export]
 macro_rules! index_small_vec {
     ($($anything: tt)+) => {
