@@ -47,12 +47,10 @@ impl<I: Idx, T> IndexSlice<I, T> {
         unsafe { &mut *(std::ptr::from_mut(s) as *mut Self) }
     }
     pub fn from_boxed_slice(slice_box: Box<[T]>) -> Box<Self> {
-        unsafe {
-            let base_box_raw = Box::into_raw(slice_box);
-            let index_box_raw = IndexSlice::from_slice_mut(&mut *base_box_raw)
-                as *mut IndexSlice<I, T>;
-            Box::from_raw(index_box_raw)
-        }
+        unsafe { Box::from_raw(Box::into_raw(slice_box) as *mut Self) }
+    }
+    pub fn into_boxed_slice(self: Box<Self>) -> Box<[T]> {
+        unsafe { Box::from_raw(Box::into_raw(self) as *mut [T]) }
     }
     pub fn iter_enumerated(
         &self,

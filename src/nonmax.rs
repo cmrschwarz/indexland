@@ -1,7 +1,8 @@
 //! Integers with a niche value based on `NonZeroXX`, allowing for better
 //! enum layout optimizations.
 //!
-//! Very similar to the nonmax crate, but with a few key differences:
+//! Similar to the [`nonmax`](https://docs.rs/nonmax/latest/nonmax/) crate,
+//! but with a few key differences:
 //!  - Implements arithmetic operations (required for [`Idx`])
 //!  - Makes using debuggers less painful by removing the optimization in debug
 //!    mode.

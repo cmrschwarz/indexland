@@ -84,9 +84,6 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
             _phantom: PhantomData,
         }
     }
-    pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
-        self.data.extend(iter);
-    }
     pub fn swap_remove(&mut self, idx: I) -> T {
         self.data.swap_remove(idx.into_usize())
     }
@@ -167,6 +164,12 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     }
     pub fn as_index_slice_mut(&mut self) -> &IndexSlice<I, T> {
         IndexSlice::from_slice_mut(&mut self.data)
+    }
+}
+
+impl<I, T, const CAP: usize> Extend<T> for IndexSmallVec<I, T, CAP> {
+    fn extend<It: IntoIterator<Item = T>>(&mut self, iter: It) {
+        self.data.extend(iter);
     }
 }
 

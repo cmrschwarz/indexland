@@ -82,10 +82,6 @@ impl<I: Idx, T> IndexVec<I, T> {
             _phantom: PhantomData,
         }
     }
-    pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
-        self.data.extend(iter);
-    }
-
     pub fn extend_from_slice(&mut self, slice: &[T])
     where
         T: Clone,
@@ -157,6 +153,12 @@ impl<I: Idx, T> IndexVec<I, T> {
     }
     pub fn as_index_slice_mut(&mut self) -> &IndexSlice<I, T> {
         IndexSlice::from_slice_mut(&mut self.data)
+    }
+}
+
+impl<I, T> Extend<T> for IndexVec<I, T> {
+    fn extend<It: IntoIterator<Item = T>>(&mut self, iter: It) {
+        self.data.extend(iter);
     }
 }
 

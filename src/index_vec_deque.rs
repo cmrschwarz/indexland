@@ -96,9 +96,6 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn last_idx(&self) -> Option<I> {
         self.len().checked_sub(1).map(I::from_usize)
     }
-    pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
-        self.data.extend(iter);
-    }
     pub fn reserve(&mut self, additional: I) {
         self.data.reserve(additional.into_usize());
     }
@@ -188,6 +185,12 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     }
     pub fn iter_mut(&mut self) -> std::collections::vec_deque::IterMut<T> {
         self.data.iter_mut()
+    }
+}
+
+impl<I, T> Extend<T> for IndexVecDeque<I, T> {
+    fn extend<It: IntoIterator<Item = T>>(&mut self, iter: It) {
+        self.data.extend(iter);
     }
 }
 

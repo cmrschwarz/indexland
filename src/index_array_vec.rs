@@ -97,10 +97,6 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
             _phantom: PhantomData,
         }
     }
-    pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
-        self.data.extend(iter);
-    }
-
     pub fn try_extend_from_slice(
         &mut self,
         slice: &[T],
@@ -184,6 +180,12 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     }
     pub fn as_index_slice_mut(&mut self) -> &IndexSlice<I, T> {
         IndexSlice::from_slice_mut(&mut self.data)
+    }
+}
+
+impl<I, T, const CAP: usize> Extend<T> for IndexArrayVec<I, T, CAP> {
+    fn extend<It: IntoIterator<Item = T>>(&mut self, iter: It) {
+        self.data.extend(iter);
     }
 }
 

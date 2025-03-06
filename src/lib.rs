@@ -67,6 +67,8 @@
 //!   (Optional)
 //! - `IndexArrayVec<I, T, CAP>` based on [`ArrayVec<T, CAP>`](https://docs.rs/arrayvec/latest/arrayvec/)
 //!   (Optional)
+//! - `IndexHashMap<I, K, V, S>` based on [`IndexMap<K, V, S>`](https://docs.rs/indexmap/latest/indexmap/)
+//!   (Optional)
 //! - [Serde](https://docs.rs/serde/latest/serde/) support for all Collections
 
 #![warn(clippy::pedantic)]
@@ -80,6 +82,7 @@ pub mod idx;
 pub mod idx_enumerate;
 pub mod idx_range;
 pub mod index_array;
+
 pub mod index_slice;
 pub mod index_vec;
 pub mod index_vec_deque;
@@ -92,6 +95,9 @@ pub mod index_array_vec;
 
 #[cfg(feature = "smallvec")]
 pub mod index_small_vec;
+
+#[cfg(feature = "indexmap")]
+pub mod index_hash_map;
 
 // convenience exports
 
