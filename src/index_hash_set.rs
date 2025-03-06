@@ -12,6 +12,15 @@ use super::{idx::Idx, idx_range::IdxRange};
 /// Create an [`IndexHashSet`] containing the arguments.
 ///
 /// The syntax is identical to [`indexset!`](::indexmap::indexset!).
+///
+/// ## Example
+/// ```
+/// use indexland::index_hash_set;
+/// let set = index_hash_set!{
+///     "a",
+///     "b",
+/// };
+/// ```
 #[macro_export]
 macro_rules! index_hash_set {
     ($($anything: tt)+) => {

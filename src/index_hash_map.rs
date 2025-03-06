@@ -11,7 +11,16 @@ use super::{idx::Idx, idx_range::IdxRange};
 
 /// Create an [`IndexHashMap`] containing the arguments.
 ///
-/// The syntax is identical to [`indexmap!`](indexmap::indexmap!).
+/// The syntax is identical to [`indexmap!`](::indexmap::indexmap!).
+///
+/// ## Example
+/// ```
+/// use indexland::index_hash_map;
+/// let map = index_hash_map!{
+///     "a" => 17,
+///     "b" => 42,
+/// };
+/// ```
 #[macro_export]
 macro_rules! index_hash_map {
     ($($anything: tt)+) => {
