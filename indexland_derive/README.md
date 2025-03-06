@@ -2,18 +2,20 @@
 
 Provides derive macros for `indexland`. For better ergonomics add the
 `"derive"` feature to `indexland` instead of depending on this directly.
-```rust
-// re-exported by indexland aswell
-use indexland_derive::{IdxNewtype, IdxEnum};
 
-#[derive(IdxNewtype)]
+## Example
+```rust
+// `indexland_derive::Idx` is re-exported by indexland
+use indexland::Idx;
+
+#[derive(Idx)]
 struct NodeId(u32);
 
-#[derive(IdxEnum)]
-enum PrimaryColor{
+#[derive(Idx)]
+enum PrimaryColor {
     Red,
     Green,
-    Blue
+    Blue,
 };
 ```
 

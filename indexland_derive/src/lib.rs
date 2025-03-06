@@ -1,33 +1,10 @@
-//! Provides derive macros for `indexland`. For better ergonomics add the
-//! `"derive"` feature to `indexland` instead of depending on this directly.
-//!
-//! ## Example
-//! ```
-//! // `indexland_derive::Idx` is re-exported by indexland
-//! use indexland::Idx;
-//!
-//! #[derive(Idx)]
-//! struct NodeId(u32);
-//!
-//! #[derive(Idx)]
-//! enum PrimaryColor {
-//!     Red,
-//!     Green,
-//!     Blue,
-//! };
-//! ```
-
-// TODO: add macro to supporess specific implementations to be able to
-// customize them for IdxEnum and IdxNewtype. Then also add default Display
-// implementation to IdxEnum.
+#![doc = include_str!("../README.md")]
 
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{Data, DataEnum, DataStruct, DeriveInput, Fields};
 
-fn get_single_struct_member(
-    struct_data: &DataStruct,
-) -> Result<&syn::Field, syn::Error> {
+fn get_single_struct_member(struct_data: &DataStruct) -> Result<&syn::Field, syn::Error> {
     let inner = match &struct_data.fields {
         Fields::Unnamed(fields_unnamed) => {
             if fields_unnamed.unnamed.len() != 1 {
@@ -48,10 +25,7 @@ fn get_single_struct_member(
     Ok(inner)
 }
 
-fn derive_idx_for_enum(
-    ast: &DeriveInput,
-    enum_data: &DataEnum,
-) -> Result<TokenStream, syn::Error> {
+fn derive_idx_for_enum(ast: &DeriveInput, enum_data: &DataEnum) -> Result<TokenStream, syn::Error> {
     let name = &ast.ident;
     let gen = &ast.generics;
     let (impl_generics, ty_generics, where_clause) = gen.split_for_impl();
@@ -141,9 +115,7 @@ fn derive_idx_for_struct(
     Ok(output)
 }
 
-fn derive_idx_newtype_inner(
-    ast: DeriveInput,
-) -> Result<TokenStream, syn::Error> {
+fn derive_idx_newtype_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     let Data::Struct(struct_data) = &ast.data else {
         return Err(syn::Error::new(
             Span::call_site(),
@@ -278,9 +250,7 @@ fn derive_idx_newtype_inner(
 /// struct FooId(u32);
 /// ```
 #[proc_macro_derive(IdxNewtype)]
-pub fn derive_idx_newtype(
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn derive_idx_newtype(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_idx_newtype_inner(syn::parse_macro_input!(input as DeriveInput))
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
@@ -415,9 +385,7 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 /// };
 /// ```
 #[proc_macro_derive(IdxEnum)]
-pub fn derive_idx_enum(
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_idx_enum_inner(syn::parse_macro_input!(input as DeriveInput))
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
