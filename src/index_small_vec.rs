@@ -16,11 +16,11 @@ use smallvec::SmallVec;
 
 /// Create an [`IndexSmallVec`] containing the arguments.
 ///
-/// The syntax is identical to [`vec!`].
+/// The syntax is identical to [`smallvec!`](::smallvec::smallvec!).
 #[macro_export]
 macro_rules! index_small_vec {
     ($($anything: tt)+) => {
-        $crate::IndexSmallVec::from([$($anything)+])
+        $crate::IndexSmallVec::from(::smallvec::smallvec![$($anything)+])
     };
 }
 

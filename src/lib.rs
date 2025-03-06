@@ -61,7 +61,7 @@
 //! - [`IndexArray<I, T, LEN>`](crate::IndexArray)
 //!   wrapping [`[T; LEN]`](std::array)
 //! - [`IndexVec<I, T>`](crate::IndexVec)
-//!   wrapping [`Vec<T>`]
+//!   wrapping [`Vec<T>`](alloc::vec::Vec)
 //! - [`IndexVecDeque<I, T>`](crate::IndexVecDeque)
 //!   wrapping[`VecDeque<T>`](std::collections::VecDeque)
 //! - [`IndexSmallVec<I, T, CAP>`]
@@ -145,6 +145,7 @@ pub use index_vec_deque::IndexVecDeque;
 pub use indexland_derive::{Idx, IdxEnum, IdxNewtype};
 
 #[cfg(feature = "nonmax")]
+#[doc(inline)]
 pub use nonmax::NonMax;
 
 #[cfg(feature = "arrayvec")]

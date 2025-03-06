@@ -14,11 +14,11 @@ use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 
 /// Create an [`IndexVec`] containing the arguments.
 ///
-/// The syntax is identical to [`vec!`].
+/// The syntax is identical to [`vec!`](alloc::vec!).
 #[macro_export]
 macro_rules! index_vec {
     ($($anything: tt)+) => {
-        $crate::IndexVec::from(vec![$($anything)+])
+        $crate::IndexVec::from(::alloc::vec![$($anything)+])
     };
 }
 
