@@ -1,60 +1,13 @@
-[package]
-name = "indexland"
+[workspace]
+resolver = "2"
 
-version = "0.1.0"
-license = "MIT"
+members = ["indexland", "indexland_derive"]
 
-edition.workspace = true
-rust-version.workspace = true
-authors.workspace = true
-repository.workspace = true
-
-categories = ["data-structures", "memory-management", "rust-patterns"]
-keywords = ["index", "collection", "container", "vec", "slice"]
-
-description = "collections based on newtype indices"
-
-[lib]
-name = "indexland"
-
-[dependencies]
-arrayvec = { version = "0.7.6", optional = true, default-features = false }
-indexmap = { version = "2.7.1", optional = true, default-features = false }
-smallvec = { version = "1.14.0", optional = true, default-features = false, features = [
-    "const_new",
-] }
-
-serde = { version = "1.0.218", optional = true, default-features = false }
-indexland_derive = { path = "./derive", optional = true, default-features = false }
-
-[dev-dependencies]
-derive_more = { version = "2.0.1", features = ["full"] }
-
-
-[package.metadata.docs.rs]
-features = ["full"]
-rustdoc-args = ["--extern="]
-
-
-[features]
-default = ["std", "derive", "arrayvec"]
-
-full = ["std", "derive", "nonmax", "arrayvec", "smallvec", "indexmap", "serde"]
-
-derive = ["dep:indexland_derive"]
-
-nonmax = []
-
-disable_debuggable_nonmax = []
-
-alloc = []
-
-std = ["alloc", "arrayvec/std", "indexmap/std"]
-
-smallvec = ["std", "dep:smallvec"] # smallvec v1 does not support nostd
-
-arrayvec = ["dep:arrayvec"]
-
-indexmap = ["alloc", "dep:indexmap"]
-
-serde = ["dep:serde", "arrayvec/serde", "smallvec/serde", "indexmap/serde"]
+package.version = "0.1.0"
+package.license = "MIT"
+package.authors = ["Christian Schwarz <cmrs@cmrs.io>"]
+package.repository = "https://github.com/cmrschwarz/indexland"
+package.edition = "2021"
+package.rust-version = "1.80"
+package.categories = ["data-structures", "memory-management", "rust-patterns"]
+package.keywords = ["index", "collection", "container", "vec", "slice"]

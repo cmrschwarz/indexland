@@ -66,7 +66,7 @@
 //!   wrapping [`Vec<T>`](alloc::vec::Vec)
 //! - [`IndexVecDeque<I, T>`](crate::IndexVecDeque)
 //!   wrapping[`VecDeque<T>`](std::collections::VecDeque)
-//! - [`IndexSmallVec<I, T, CAP>`]
+//! - [`IndexSmallVec<I, T, CAP>`](crate::IndexSmallVec)
 //!   wrapping [`SmallVec<[T;CAP]>`](smallvec::SmallVec) (Optional)
 //! - [`IndexArrayVec<I, T, CAP>`](crate::IndexArrayVec)
 //!   wrapping [`ArrayVec<T, CAP>`](arrayvec::ArrayVec) (Optional)
@@ -83,6 +83,7 @@
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::return_self_not_must_use)]
 #![allow(clippy::module_name_repetitions)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 // nostd
 #![no_std]
 #[cfg(feature = "std")]
@@ -99,24 +100,31 @@ pub mod index_array;
 pub mod index_slice;
 
 #[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub mod index_vec;
 
 #[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub mod index_vec_deque;
 
 #[cfg(feature = "nonmax")]
+#[cfg_attr(docsrs, doc(cfg(feature = "nonmax")))]
 pub mod nonmax;
 
 #[cfg(feature = "arrayvec")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arrayvec")))]
 pub mod index_array_vec;
 
 #[cfg(feature = "smallvec")]
+#[cfg_attr(docsrs, doc(cfg(feature = "smallvec")))]
 pub mod index_small_vec;
 
 #[cfg(feature = "indexmap")]
+#[cfg_attr(docsrs, doc(cfg(feature = "indexmap")))]
 pub mod index_hash_map;
 
 #[cfg(feature = "indexmap")]
+#[cfg_attr(docsrs, doc(cfg(feature = "indexmap")))]
 pub mod index_hash_set;
 
 // convenience exports
@@ -143,6 +151,7 @@ pub use index_vec::IndexVec;
 pub use index_vec_deque::IndexVecDeque;
 
 #[cfg(feature = "derive")]
+#[cfg_attr(docsrs, doc(cfg(feature = "derive")))]
 #[doc(inline)]
 pub use indexland_derive::{Idx, IdxEnum, IdxNewtype};
 

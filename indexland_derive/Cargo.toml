@@ -1,18 +1,16 @@
 [package]
 name = "indexland_derive"
 
-version = "0.1.0"
-license = "MIT"
-
+version.workspace = true
+license.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 repository.workspace = true
+categories.workspace = true
+keywords.workspace = true
 
-categories = ["data-structures", "memory-management", "rust-patterns"]
-keywords = ["index", "collection", "container", "vec", "slice"]
-
-description = "collections based on newtype indices"
+description = "Derive Macros for indexland"
 
 [lib]
 name = "indexland_derive"
@@ -24,6 +22,4 @@ syn = { version = "2.0.98", features = ["parsing"] }
 quote = "1.0.38"
 
 [dev-dependencies]
-indexland = { path = ".." }
-
-[features]
+indexland = { path = "../indexland" }
