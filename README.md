@@ -75,7 +75,7 @@ let my_color = COLOR_MAPPING[PrimaryColor::Red];
 - [`IndexHashSet<I, T>`](crate::IndexHashSet)
   wrapping [`IndexSet<T>`](indexmap::IndexSet) (Optional)
 - [`NonMax<T>`](crate::nonmax) Integer Types for Niche Optimizations (Optional)
-- [`serde`] support for all Collections (Optional)
+- [`serde`](::serde) support for all Collections (Optional)
 
 ## License
 [MIT](../../LICENSE)
