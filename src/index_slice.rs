@@ -1,6 +1,6 @@
 use super::Idx;
 use crate::{
-    enumerated_index_iter::EnumeratedIndexIter, idx_range::RangeBoundsAsRange,
+    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange,
 };
 
 use std::{
@@ -59,14 +59,14 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn iter_enumerated(
         &self,
         initial_offset: I,
-    ) -> EnumeratedIndexIter<I, std::slice::Iter<T>> {
-        EnumeratedIndexIter::new(initial_offset, &self.data)
+    ) -> IdxEnumerate<I, std::slice::Iter<T>> {
+        IdxEnumerate::new(initial_offset, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
         initial_offset: I,
-    ) -> EnumeratedIndexIter<I, std::slice::IterMut<T>> {
-        EnumeratedIndexIter::new(initial_offset, &mut self.data)
+    ) -> IdxEnumerate<I, std::slice::IterMut<T>> {
+        IdxEnumerate::new(initial_offset, &mut self.data)
     }
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()

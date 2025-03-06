@@ -21,9 +21,9 @@ not ready for public use yet.
 
 ## Newtype Indices
 ```rust
-use indexland::{NewtypeIdx, IndexVec};
+use indexland::{IdxNewtype, IndexVec};
 
-#[derive(NewtypeIdx)]
+#[derive(IdxNewtype)]
 struct NodeId(u32);
 
 struct Node<T> {
@@ -38,9 +38,9 @@ struct DoublyLinkedList<T> {
 
 ## Enums as Indices
 ```rust
-use indexland::{EnumIdx, IndexArray, EnumIndexArray, index_array};
+use indexland::{IdxEnum, IndexArray, EnumIndexArray, index_array};
 
-#[derive(EnumIdx)]
+#[derive(IdxEnum)]
 enum PrimaryColor{
     Red,
     Green,

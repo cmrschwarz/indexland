@@ -1,11 +1,11 @@
 use crate::Idx;
 
-pub struct EnumeratedIndexIter<I, IT> {
+pub struct IdxEnumerate<I, IT> {
     pos: I,
     base_iter: IT,
 }
 
-impl<I: Idx, IT: Iterator> EnumeratedIndexIter<I, IT> {
+impl<I: Idx, IT: Iterator> IdxEnumerate<I, IT> {
     pub fn new(pos: I, base_iter: impl IntoIterator<IntoIter = IT>) -> Self {
         Self {
             pos,
@@ -14,7 +14,7 @@ impl<I: Idx, IT: Iterator> EnumeratedIndexIter<I, IT> {
     }
 }
 
-impl<I: Idx, IT: Iterator> Iterator for EnumeratedIndexIter<I, IT> {
+impl<I: Idx, IT: Iterator> Iterator for IdxEnumerate<I, IT> {
     type Item = (I, IT::Item);
 
     fn next(&mut self) -> Option<Self::Item> {

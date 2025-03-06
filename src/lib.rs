@@ -19,9 +19,9 @@
 //!
 //! # Newtype Indices
 //! ```rust
-//! use indexland::{NewtypeIdx, IndexVec};
+//! use indexland::{IdxNewtype, IndexVec};
 //!
-//! #[derive(NewtypeIdx)]
+//! #[derive(IdxNewtype)]
 //! struct NodeId(u32);
 //!
 //! struct Node<T> {
@@ -36,9 +36,9 @@
 //!
 //! # Enums as Indices
 //! ```rust
-//! use indexland::{EnumIdx, IndexArray, EnumIndexArray, index_array};
+//! use indexland::{IdxEnum, IndexArray, EnumIndexArray, index_array};
 //!
-//! #[derive(EnumIdx)]
+//! #[derive(IdxEnum)]
 //! enum PrimaryColor{
 //!     Red,
 //!     Green,
@@ -76,8 +76,8 @@
 #![allow(clippy::return_self_not_must_use)]
 #![allow(clippy::module_name_repetitions)]
 
-pub mod enumerated_index_iter;
 pub mod idx;
+pub mod idx_enumerate;
 pub mod idx_range;
 pub mod index_array;
 pub mod index_slice;
@@ -97,8 +97,9 @@ pub mod index_small_vec;
 
 #[doc(inline)]
 pub use crate::{
-    idx::{EnumIdx, Idx, NewtypeIdx},
+    idx::{Idx, IdxEnum, IdxNewtype},
     idx_range::IdxRange,
+    idx_range::IdxRangeInclusive,
 };
 
 #[doc(inline)]
@@ -115,7 +116,7 @@ pub use index_vec_deque::IndexVecDeque;
 
 #[cfg(feature = "derive")]
 #[doc(inline)]
-pub use indexland_derive::{EnumIdx, Idx, NewtypeIdx};
+pub use indexland_derive::{Idx, IdxEnum, IdxNewtype};
 
 #[cfg(feature = "nonmax")]
 #[doc(hidden)]

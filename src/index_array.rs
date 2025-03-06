@@ -1,6 +1,6 @@
 use crate::{
-    enumerated_index_iter::EnumeratedIndexIter, idx_range::RangeBoundsAsRange,
-    index_slice::IndexSlice, EnumIdx,
+    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange,
+    index_slice::IndexSlice, IdxEnum,
 };
 
 use super::Idx;
@@ -20,24 +20,24 @@ pub struct IndexArray<I, T, const LEN: usize> {
     _phantom: PhantomData<fn(I) -> T>,
 }
 
-/// Helper to construct `IndexArray<E, T, { <E as EnumIdx>::COUNT } >`
+/// Helper to construct `IndexArray<E, T, { <E as IdxEnum>::COUNT } >`
 /// without const generics.
 ///
 /// ### Example:
 /// ```
-/// # use indexland::{EnumIdx, index_array::{IndexArray, EnumIndexArray}};
-/// #[derive(EnumIdx)]
+/// # use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
+/// #[derive(IdxEnum)]
 /// enum Foo { A, B, C }
 /// const FOOS: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2, 3]);
 /// ```
-pub type EnumIndexArray<E, T> = <E as EnumIdx>::EnumIndexArray<T>;
+pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 
 /// Ergonomic way to construct an [`IndexArray`] from it's keys
 ///
 /// ### Example:
 /// ```
-/// # use indexland::{EnumIdx, EnumIndexArray, index_array};
-/// #[derive(EnumIdx)]
+/// # use indexland::{IdxEnum, EnumIndexArray, index_array};
+/// #[derive(IdxEnum)]
 /// enum Foo { A, B, C }
 ///
 /// const FOOS: EnumIndexArray<Foo, i32> = index_array![
@@ -106,20 +106,18 @@ impl<I: Idx, T, const LEN: usize> IndexArray<I, T, LEN> {
     pub fn as_index_slice_mut(&mut self) -> &mut IndexSlice<I, T> {
         IndexSlice::from_slice_mut(&mut self.data)
     }
-    pub fn iter_enumerated(
-        &self,
-    ) -> EnumeratedIndexIter<I, std::slice::Iter<T>> {
-        EnumeratedIndexIter::new(I::ZERO, &self.data)
+    pub fn iter_enumerated(&self) -> IdxEnumerate<I, std::slice::Iter<T>> {
+        IdxEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> EnumeratedIndexIter<I, std::slice::IterMut<T>> {
-        EnumeratedIndexIter::new(I::ZERO, &mut self.data)
+    ) -> IdxEnumerate<I, std::slice::IterMut<T>> {
+        IdxEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> EnumeratedIndexIter<I, std::array::IntoIter<T, LEN>> {
-        EnumeratedIndexIter::new(I::ZERO, self.data)
+    ) -> IdxEnumerate<I, std::array::IntoIter<T, LEN>> {
+        IdxEnumerate::new(I::ZERO, self.data)
     }
     pub fn into_array(self) -> [T; LEN] {
         self.data

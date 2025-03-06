@@ -9,7 +9,7 @@ use std::{
 
 use super::{idx::Idx, index_slice::IndexSlice};
 use crate::{
-    enumerated_index_iter::EnumeratedIndexIter, idx_range::RangeBoundsAsRange,
+    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange,
     IdxRange,
 };
 
@@ -141,18 +141,18 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     }
     pub fn iter_enumerated(
         &self,
-    ) -> EnumeratedIndexIter<I, std::slice::Iter<T>> {
-        EnumeratedIndexIter::new(I::ZERO, &self.data)
+    ) -> IdxEnumerate<I, std::slice::Iter<T>> {
+        IdxEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> EnumeratedIndexIter<I, std::slice::IterMut<T>> {
-        EnumeratedIndexIter::new(I::ZERO, &mut self.data)
+    ) -> IdxEnumerate<I, std::slice::IterMut<T>> {
+        IdxEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> EnumeratedIndexIter<I, smallvec::IntoIter<[T; CAP]>> {
-        EnumeratedIndexIter::new(I::ZERO, self.data)
+    ) -> IdxEnumerate<I, smallvec::IntoIter<[T; CAP]>> {
+        IdxEnumerate::new(I::ZERO, self.data)
     }
     pub fn indices(&self) -> IdxRange<I> {
         IdxRange::new(I::ZERO..self.len_idx())

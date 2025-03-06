@@ -5,7 +5,7 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use crate::enumerated_index_iter::EnumeratedIndexIter;
+use crate::idx_enumerate::IdxEnumerate;
 
 use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 
@@ -128,18 +128,18 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
 
     pub fn iter_enumerated(
         &self,
-    ) -> EnumeratedIndexIter<I, std::collections::vec_deque::Iter<T>> {
-        EnumeratedIndexIter::new(I::ZERO, &self.data)
+    ) -> IdxEnumerate<I, std::collections::vec_deque::Iter<T>> {
+        IdxEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> EnumeratedIndexIter<I, std::collections::vec_deque::IterMut<T>> {
-        EnumeratedIndexIter::new(I::ZERO, &mut self.data)
+    ) -> IdxEnumerate<I, std::collections::vec_deque::IterMut<T>> {
+        IdxEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> EnumeratedIndexIter<I, std::collections::vec_deque::IntoIter<T>> {
-        EnumeratedIndexIter::new(I::ZERO, self.data)
+    ) -> IdxEnumerate<I, std::collections::vec_deque::IntoIter<T>> {
+        IdxEnumerate::new(I::ZERO, self.data)
     }
     pub fn indices(&self) -> IdxRange<I> {
         IdxRange::new(I::ZERO..self.len_idx())

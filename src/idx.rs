@@ -51,7 +51,7 @@ pub trait Idx:
     }
 }
 
-pub trait EnumIdx: Idx + 'static {
+pub trait IdxEnum: Idx + 'static {
     const COUNT: usize;
     const VARIANTS: &'static [Self];
 
@@ -65,7 +65,7 @@ pub trait EnumIdx: Idx + 'static {
     }
 }
 
-pub trait NewtypeIdx: Idx {
+pub trait IdxNewtype: Idx {
     type Base: Idx;
     fn new(inner: Self::Base) -> Self;
     fn into_inner(self) -> Self::Base;
@@ -182,12 +182,12 @@ impl Idx for u64 {
     }
 }
 
-/// Declarative alternative to `#[derive(NewtypeIdx)]` that allows generating
+/// Declarative alternative to `#[derive(IdxNewtype)]` that allows generating
 /// multiple indices at once and does not require proc-macros.
 /// ### Example
 /// ```rust
-/// # use indexland::{newtype_idx, index_vec::IndexVec};
-/// newtype_idx!{
+/// # use indexland::{idx_newtype, index_vec::IndexVec};
+/// idx_newtype!{
 ///     struct FooId(usize);
 ///     struct BarId(u32);
 /// }
@@ -200,7 +200,7 @@ impl Idx for u64 {
 /// }
 /// ```
 #[macro_export]
-macro_rules! newtype_idx {
+macro_rules! idx_newtype {
     { $( $(#[$attrs: meta])* $type_vis: vis struct $name: ident ($base_vis: vis $base_type: path); )* } => {$(
         $(#[$attrs])*
         #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -226,7 +226,7 @@ macro_rules! newtype_idx {
                 $name(<$base_type as $crate::Idx>::wrapping_sub(self.0, other.0))
             }
         }
-        impl $crate::NewtypeIdx for $name {
+        impl $crate::IdxNewtype for $name {
             type Base = $base_type;
             fn new(v: $base_type) -> Self {
                 $name(v)
