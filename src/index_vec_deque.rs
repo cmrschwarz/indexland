@@ -5,14 +5,17 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use crate::idx_enumerate::IdxEnumerate;
+use crate::{idx_enumerate::IdxEnumerate, IndexVec};
 
 use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 
+/// Create an [`IndexVecDeque`] containing the arguments.
+///
+/// The syntax is identical to [`vec!`].
 #[macro_export]
 macro_rules! index_vec_deque {
     ($($anything: tt)+) => {
-        IndexVecDequeDeque::from(vec![$($anything)+])
+        IndexVecDeque::from(vec![$($anything)+])
     };
 }
 
@@ -22,6 +25,22 @@ pub struct IndexVecDeque<I, T> {
     _phantom: PhantomData<fn(I) -> T>,
 }
 
+impl<I, T> From<Vec<T>> for IndexVecDeque<I, T> {
+    fn from(value: Vec<T>) -> Self {
+        IndexVecDeque {
+            data: VecDeque::from(value),
+            _phantom: PhantomData,
+        }
+    }
+}
+impl<I, T> From<IndexVec<I, T>> for IndexVecDeque<I, T> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        IndexVecDeque {
+            data: VecDeque::from(Vec::from(value)),
+            _phantom: PhantomData,
+        }
+    }
+}
 impl<I, T> From<VecDeque<T>> for IndexVecDeque<I, T> {
     fn from(value: VecDeque<T>) -> Self {
         IndexVecDeque {

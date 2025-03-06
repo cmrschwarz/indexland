@@ -9,15 +9,18 @@ use std::{
 
 use arrayvec::{ArrayVec, CapacityError};
 
-use crate::{idx_enumerate::IdxEnumerate, IdxRange};
+use crate::{idx_enumerate::IdxEnumerate, IdxRange, IndexArray};
 
 use super::{idx::Idx, index_slice::IndexSlice};
 use crate::idx_range::RangeBoundsAsRange;
 
+/// Create an [`IndexArrayVec`] containing the arguments.
+///
+/// The syntax is identical to [`index_array!`](crate::index_array!).
 #[macro_export]
 macro_rules! index_array_vec {
     ($($anything: tt)+) => {
-        IndexArrayVec::from([$($anything)+])
+        IndexArrayVec::from(index_array![$($anything)+])
     };
 }
 
@@ -48,6 +51,19 @@ impl<I, T, const CAP: usize> From<ArrayVec<T, CAP>>
             data: v,
             _phantom: PhantomData,
         }
+    }
+}
+
+impl<I: Idx, T, const CAP: usize> From<[T; CAP]> for IndexArrayVec<I, T, CAP> {
+    fn from(value: [T; CAP]) -> Self {
+        IndexArrayVec::from(ArrayVec::from(value))
+    }
+}
+impl<I: Idx, T, const CAP: usize> From<IndexArray<I, T, CAP>>
+    for IndexArrayVec<I, T, CAP>
+{
+    fn from(value: IndexArray<I, T, CAP>) -> Self {
+        IndexArrayVec::from(<[T; CAP]>::from(value))
     }
 }
 

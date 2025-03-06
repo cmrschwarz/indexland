@@ -10,6 +10,9 @@ use std::{
 
 use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 
+/// Create an [`IndexVec`] containing the arguments.
+///
+/// The syntax is identical to [`vec!`].
 #[macro_export]
 macro_rules! index_vec {
     ($($anything: tt)+) => {

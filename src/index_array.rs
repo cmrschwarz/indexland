@@ -32,18 +32,23 @@ pub struct IndexArray<I, T, const LEN: usize> {
 /// ```
 pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 
-/// Ergonomic way to construct an [`IndexArray`] from it's keys
+/// Create a [`IndexArray`] containing the arguments.
 ///
-/// ### Example:
+/// If the inputs are constant this creates a compile time constant array.
+/// ### Examples:
 /// ```
 /// # use indexland::{IdxEnum, EnumIndexArray, index_array};
-/// #[derive(IdxEnum)]
-/// enum Foo { A, B, C }
+/// const FOO: IndexArray<usize, i32> = index_array![1, 2, 3];
 ///
-/// const FOOS: EnumIndexArray<Foo, i32> = index_array![
-///     Foo::A => 1,
-///     Foo::B => 2,
-///     Foo::C => 3,
+/// const BAR: IndexArray<usize, f32> = index_array![0.0; 42];
+///
+/// #[derive(IdxEnum)]
+/// enum MyId { A, B, C }
+///
+/// const BAZ: EnumIndexArray<MyId, i32> = index_array![
+///     MyId::A => 1,
+///     MyId::B => 2,
+///     MyId::C => 3,
 /// ];
 /// ```
 #[macro_export]
@@ -67,6 +72,12 @@ macro_rules! index_array {
         let data = unsafe { $crate::__private::transpose_assume_uninit(data) };
         $crate::IndexArray::new(data)
     }};
+    ($($value:expr,)+ $(,)?) => {
+        $crate::IndexArray::new([$($value),*])
+    };
+    ($value:expr; $count: expr) => {
+        $crate::IndexArray::new([ $value; $count])
+    }
 }
 
 impl<I, T, const LEN: usize> Default for IndexArray<I, T, LEN>

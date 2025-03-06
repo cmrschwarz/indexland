@@ -9,12 +9,14 @@ use std::{
 
 use super::{idx::Idx, index_slice::IndexSlice};
 use crate::{
-    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange,
-    IdxRange,
+    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange, IdxRange,
 };
 
 use smallvec::SmallVec;
 
+/// Create an [`IndexSmallVec`] containing the arguments.
+///
+/// The syntax is identical to [`vec!`].
 #[macro_export]
 macro_rules! index_small_vec {
     ($($anything: tt)+) => {
@@ -139,9 +141,7 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn truncate(&mut self, new_end_index: I) {
         self.data.truncate(new_end_index.into_usize());
     }
-    pub fn iter_enumerated(
-        &self,
-    ) -> IdxEnumerate<I, std::slice::Iter<T>> {
+    pub fn iter_enumerated(&self) -> IdxEnumerate<I, std::slice::Iter<T>> {
         IdxEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
