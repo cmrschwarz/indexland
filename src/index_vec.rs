@@ -92,7 +92,10 @@ impl<I: Idx, T> IndexVec<I, T> {
     {
         self.data.extend_from_slice(slice);
     }
-    pub fn reserve(&mut self, additional: usize) {
+    pub fn reserve(&mut self, additional: I) {
+        self.data.reserve(additional.into_usize());
+    }
+    pub fn reserve_len(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     pub fn push(&mut self, v: T) {
@@ -107,8 +110,8 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn resize_with(&mut self, new_len: usize, f: impl FnMut() -> T) {
         self.data.resize_with(new_len, f);
     }
-    pub fn truncate(&mut self, new_end_index: I) {
-        self.data.truncate(new_end_index.into_usize());
+    pub fn truncate(&mut self, end: I) {
+        self.data.truncate(end.into_usize());
     }
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
@@ -130,7 +133,6 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.data.push(v);
         id
     }
-
     pub fn iter_enumerated(&self) -> IdxEnumerate<I, std::slice::Iter<T>> {
         IdxEnumerate::new(I::ZERO, &self.data)
     }

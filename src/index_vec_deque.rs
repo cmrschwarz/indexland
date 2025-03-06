@@ -99,7 +99,10 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn extend(&mut self, iter: impl IntoIterator<Item = T>) {
         self.data.extend(iter);
     }
-    pub fn reserve(&mut self, additional: usize) {
+    pub fn reserve(&mut self, additional: I) {
+        self.data.reserve(additional.into_usize());
+    }
+    pub fn reserve_len(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     pub fn push_front(&mut self, v: T) {
@@ -120,8 +123,8 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn resize_with(&mut self, new_len: usize, f: impl FnMut() -> T) {
         self.data.resize_with(new_len, f);
     }
-    pub fn truncate(&mut self, new_end_index: I) {
-        self.data.truncate(new_end_index.into_usize());
+    pub fn truncate(&mut self, end: I) {
+        self.data.truncate(end.into_usize());
     }
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
@@ -138,13 +141,11 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn as_vec_deque_mut(&mut self) -> &mut VecDeque<T> {
         &mut self.data
     }
-
     pub fn push_back_get_id(&mut self, v: T) -> I {
         let id = self.len_idx();
         self.data.push_back(v);
         id
     }
-
     pub fn iter_enumerated(
         &self,
     ) -> IdxEnumerate<I, std::collections::vec_deque::Iter<T>> {

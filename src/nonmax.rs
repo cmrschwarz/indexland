@@ -1,12 +1,13 @@
-/// Integers with a niche value based on `NonZeroXX`, allowing for better
-/// enum layout optimizations.
-/// This is very similar to the nonmax crate, but with a few key
-/// differences:
-///  - Implements `Add`, `AddAssign`, `Sub` and `SubAssign` (required for
-///    `Idx`)
-///  - Makes using debuggers less painful by removing the optimization in
-///    debug mode (can be disabled using the `"disable_debuggable_nonmax"`
-///    feature).
+//! Integers with a niche value based on `NonZeroXX`, allowing for better
+//! enum layout optimizations.
+//!
+//! Very similar to the nonmax crate, but with a few key differences:
+//!  - Implements arithmetic operations (required for [`Idx`])
+//!  - Makes using debuggers less painful by removing the optimization in debug
+//!    mode.
+//!
+//!    (This can be disabled using the `"disable_debuggable_nonmax"` feature).
+
 use std::{
     cmp::Ordering,
     fmt::{Debug, Display},
@@ -208,19 +209,36 @@ macro_rules! nonmax_impl {
                 Self::ZERO
             }
         }
-
         impl std::ops::Add for $nonmax {
             type Output = $nonmax;
-
             fn add(self, rhs: Self) -> Self::Output {
                 self.checked_add(rhs).unwrap()
             }
         }
         impl std::ops::Sub for $nonmax {
             type Output = $nonmax;
-
             fn sub(self, rhs: Self) -> Self::Output {
                 self.checked_sub(rhs).unwrap()
+            }
+        }
+        impl std::ops::Mul for $nonmax {
+            type Output = $nonmax;
+            fn mul(self, rhs: Self) -> Self::Output {
+                Self::try_from(self.get() * rhs.get()).unwrap()
+            }
+        }
+        impl std::ops::Div for $nonmax {
+            type Output = $nonmax;
+            fn div(self, rhs: Self) -> Self::Output {
+                // this can never reach MAX
+                unsafe { Self::new_unchecked(self.get() / rhs.get()) }
+            }
+        }
+        impl std::ops::Rem for $nonmax {
+            type Output = $nonmax;
+            fn rem(self, rhs: Self) -> Self::Output {
+                // this can never reach MAX
+                unsafe { Self::new_unchecked(self.get() % rhs.get()) }
             }
         }
         impl std::ops::AddAssign for $nonmax {
@@ -231,6 +249,21 @@ macro_rules! nonmax_impl {
         impl std::ops::SubAssign for $nonmax {
             fn sub_assign(&mut self, rhs: Self) {
                 *self = std::ops::Sub::sub(*self, rhs);
+            }
+        }
+        impl std::ops::MulAssign for $nonmax {
+            fn mul_assign(&mut self, rhs: Self) {
+                *self = std::ops::Mul::mul(*self, rhs);
+            }
+        }
+        impl std::ops::DivAssign for $nonmax {
+            fn div_assign(&mut self, rhs: Self) {
+                *self = std::ops::Div::div(*self, rhs);
+            }
+        }
+        impl std::ops::RemAssign for $nonmax {
+            fn rem_assign(&mut self, rhs: Self) {
+                *self = std::ops::Rem::rem(*self, rhs);
             }
         }
     };

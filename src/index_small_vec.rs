@@ -90,7 +90,10 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn swap_remove(&mut self, idx: I) -> T {
         self.data.swap_remove(idx.into_usize())
     }
-    pub fn reserve(&mut self, additional: usize) {
+    pub fn reserve(&mut self, additional: I) {
+        self.data.reserve(additional.into_usize());
+    }
+    pub fn reserve_len(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     pub fn extend_from_slice(&mut self, slice: &[T])
@@ -120,10 +123,6 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn clear(&mut self) {
         self.data.clear();
     }
-    pub fn truncate_len(&mut self, len: usize) {
-        self.data.truncate(len);
-    }
-
     pub fn as_array_vec(&self) -> &SmallVec<[T; CAP]> {
         &self.data
     }
@@ -138,8 +137,11 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
         self.data.push(v);
         id
     }
-    pub fn truncate(&mut self, new_end_index: I) {
-        self.data.truncate(new_end_index.into_usize());
+    pub fn truncate(&mut self, end: I) {
+        self.data.truncate(end.into_usize());
+    }
+    pub fn truncate_len(&mut self, len: usize) {
+        self.data.truncate(len);
     }
     pub fn iter_enumerated(&self) -> IdxEnumerate<I, std::slice::Iter<T>> {
         IdxEnumerate::new(I::ZERO, &self.data)

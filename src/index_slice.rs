@@ -1,7 +1,5 @@
 use super::Idx;
-use crate::{
-    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange,
-};
+use crate::{idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange};
 
 use std::{
     fmt::Debug,
@@ -110,7 +108,6 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn iter_mut(&mut self) -> std::slice::IterMut<T> {
         self.data.iter_mut()
     }
-
     pub fn split_at_mut(
         &mut self,
         idx: I,

@@ -182,21 +182,17 @@ impl Idx for u64 {
     }
 }
 
-/// Declarative alternative to `#[derive(IdxNewtype)]` that allows generating
-/// multiple indices at once and does not require proc-macros.
+/// Declarative alternative to `#[derive(IdxNewtype)]`.
+///
+/// Allows generating multiple indices at once and does not require
+/// proc-macros.
+///
 /// ### Example
 /// ```rust
-/// # use indexland::{idx_newtype, index_vec::IndexVec};
-/// idx_newtype!{
+/// # use indexland::idx_newtype;
+/// idx_newtype! {
 ///     struct FooId(usize);
 ///     struct BarId(u32);
-/// }
-///
-/// struct Foo { /*...*/ }
-/// struct Bar { /*...*/ }
-/// struct Container {
-///     foos: IndexVec<FooId, Foo>,
-///     bars: IndexVec<BarId, Bar>,
 /// }
 /// ```
 #[macro_export]
