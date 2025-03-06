@@ -19,6 +19,7 @@ pub mod idx_range;
 pub mod index_array;
 
 pub mod index_slice;
+pub mod index_slice_index;
 
 #[cfg(feature = "alloc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]

@@ -1,5 +1,8 @@
 use super::Idx;
-use crate::{idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange};
+use crate::{
+    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange,
+    index_slice_index::IndexSliceIndex,
+};
 
 use core::{
     fmt::Debug,
@@ -17,16 +20,16 @@ use alloc::boxed::Box;
 #[repr(transparent)]
 pub struct IndexSlice<I, T> {
     _phantom: PhantomData<fn(I) -> T>,
-    data: [T],
+    pub(crate) data: [T],
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GetManyMutError {
+pub enum GetDisjointMutError {
     IndexOutOfBounds,
     OverlappingIndices,
 }
 
-/// `IndexSlice` version of the unstable `std::slice::get_many_mut` API
+/// `IndexSlice` version of the [`std::slice::get_disjoint_mut`] API
 /// # Safety
 /// If `is_in_bounds()` returns `true` it must be safe to index the slice with
 /// the indices.
@@ -35,7 +38,7 @@ pub enum GetManyMutError {
 /// !! These validations must hold *after* the
 /// `into_usize` conversion of the `Idx`, even if that conversion has changed
 /// the value / ordering.
-pub unsafe trait GetManyMutIndex<I>: Clone {
+pub unsafe trait GetDisjointMutIndex<I>: Clone {
     fn is_in_bounds(&self, len: I) -> bool;
     fn is_overlapping(&self, other: &Self) -> bool;
 }
@@ -120,7 +123,7 @@ impl<I: Idx, T> IndexSlice<I, T> {
     }
 }
 
-unsafe impl<I: Idx> GetManyMutIndex<I> for I {
+unsafe impl<I: Idx> GetDisjointMutIndex<I> for I {
     #[inline]
     fn is_in_bounds(&self, len: I) -> bool {
         self.into_usize() < len.into_usize()
@@ -132,7 +135,7 @@ unsafe impl<I: Idx> GetManyMutIndex<I> for I {
     }
 }
 
-unsafe impl<I: Idx> GetManyMutIndex<I> for Range<I> {
+unsafe impl<I: Idx> GetDisjointMutIndex<I> for Range<I> {
     #[inline]
     fn is_in_bounds(&self, len: I) -> bool {
         (self.start.into_usize() <= self.end.into_usize())
@@ -146,7 +149,7 @@ unsafe impl<I: Idx> GetManyMutIndex<I> for Range<I> {
     }
 }
 
-unsafe impl<I: Idx> GetManyMutIndex<I> for RangeInclusive<I> {
+unsafe impl<I: Idx> GetDisjointMutIndex<I> for RangeInclusive<I> {
     #[inline]
     fn is_in_bounds(&self, len: I) -> bool {
         (self.start().into_usize() <= self.end().into_usize())
@@ -163,45 +166,54 @@ impl<I: Idx, T> IndexSlice<I, T> {
     /// # Safety
     /// Calling this method with overlapping keys is undefined behavior
     /// even if the resulting references are not used.
-    pub unsafe fn get_many_unchecked_mut<const N: usize>(
+    pub unsafe fn get_disjoint_unchecked_mut<
+        ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
+        const N: usize,
+    >(
         &mut self,
-        indices: [I; N],
-    ) -> [&mut T; N] {
-        let slice: *mut T = self.as_slice_mut().as_mut_ptr();
-        let mut arr: core::mem::MaybeUninit<[&mut T; N]> =
+        indices: [ISI; N],
+    ) -> [&mut ISI::Output; N] {
+        let slice = self as *mut IndexSlice<I, T>;
+        let mut arr: core::mem::MaybeUninit<[&mut ISI::Output; N]> =
             core::mem::MaybeUninit::uninit();
         let arr_ptr = arr.as_mut_ptr();
 
         // SAFETY: We expect `indices` to be disjunct and in bounds
         unsafe {
             for i in 0..N {
-                let idx = indices.get_unchecked(i).into_usize();
-                arr_ptr.cast::<&mut T>().add(i).write(&mut *slice.add(idx));
+                let idx = indices.get_unchecked(i);
+                arr_ptr
+                    .cast::<&mut ISI::Output>()
+                    .add(i)
+                    .write(&mut *idx.clone().get_unchecked_mut(slice));
             }
             arr.assume_init()
         }
     }
 
-    pub fn get_many_mut<const N: usize>(
+    pub fn get_disjoint_mut<
+        ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
+        const N: usize,
+    >(
         &mut self,
-        indices: [I; N],
-    ) -> Result<[&mut T; N], GetManyMutError> {
+        indices: [ISI; N],
+    ) -> Result<[&mut ISI::Output; N], GetDisjointMutError> {
         let len = self.len_idx();
         // NB: The optimizer should inline the loops into a sequence
         // of instructions without additional branching.
         for (i, idx) in indices.iter().enumerate() {
             if !idx.is_in_bounds(len) {
-                return Err(GetManyMutError::IndexOutOfBounds);
+                return Err(GetDisjointMutError::IndexOutOfBounds);
             }
             for idx2 in &indices[..i] {
                 if idx.is_overlapping(idx2) {
-                    return Err(GetManyMutError::OverlappingIndices);
+                    return Err(GetDisjointMutError::OverlappingIndices);
                 }
             }
         }
         // SAFETY: The `get_many_check_valid()` call checked that all indices
         // are disjunct and in bounds.
-        unsafe { Ok(self.get_many_unchecked_mut(indices)) }
+        unsafe { Ok(self.get_disjoint_unchecked_mut(indices)) }
     }
 }
 
@@ -335,3 +347,19 @@ macro_rules! slice_index_impl {
 }
 
 slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
+
+#[cfg(test)]
+mod test {
+    use crate::{index_array, IndexArray};
+
+    #[test]
+    fn get_disjoint_mut() {
+        let mut arr: IndexArray<usize, i32, 5> = index_array![1, 2, 3, 4, 5];
+
+        let [arr_slice_1, arr_slice_2] =
+            arr.get_disjoint_mut([0..=1, 3..=4]).unwrap();
+
+        assert_eq!(arr_slice_1.iter().copied().sum::<i32>(), 3);
+        assert_eq!(arr_slice_2.iter().copied().sum::<i32>(), 9);
+    }
+}
