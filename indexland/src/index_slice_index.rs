@@ -130,38 +130,56 @@ macro_rules! index_slice_partial_range_impl {
             type Output = IndexSlice<I, T>;
             #[inline]
             fn get(self, slice: &IndexSlice<I, T>) -> Option<&IndexSlice<I, T>> {
-                self.as_range(slice.len_idx()).get(slice)
+                Some(IndexSlice::from_slice(
+                    slice.as_slice().get(self.as_usize_range(slice.len()))?,
+                ))
             }
             #[inline]
             fn get_mut(
                 self,
                 slice: &mut IndexSlice<I, T>,
             ) -> Option<&mut IndexSlice<I, T>> {
-                self.as_range(slice.len_idx()).get_mut(slice)
+                let range = self.as_usize_range(slice.len());
+                Some(IndexSlice::from_slice_mut(
+                    slice.as_slice_mut().get_mut(range)?,
+                ))
             }
             #[inline]
             unsafe fn get_unchecked(
                 self,
                 slice: *const IndexSlice<I, T>,
             ) -> *const IndexSlice<I, T> {
-                let range = self.as_range(I::from_usize((slice as *const [T]).len()));
-                unsafe { range.get_unchecked(slice) }
+                let slice = slice as *mut [T];
+                let range = self.as_usize_range((slice as *const [T]).len());
+                unsafe {
+                    core::ptr::slice_from_raw_parts(
+                        slice.cast::<T>().add(range.start),
+                        range.end - range.start,
+                    ) as _
+                }
             }
             #[inline]
             unsafe fn get_unchecked_mut(
                 self,
                 slice: *mut IndexSlice<I, T>,
             ) -> *mut IndexSlice<I, T> {
-                let range = self.as_range(I::from_usize((slice as *mut [T]).len()));
-                unsafe { range.get_unchecked_mut(slice) }
+                let slice = slice as *mut [T];
+                let range = self.as_usize_range((slice as *const [T]).len());
+                unsafe {
+                    core::ptr::slice_from_raw_parts_mut(
+                        slice.cast::<T>().add(range.start),
+                        range.end - range.start,
+                    ) as _
+                }
             }
             #[inline(always)]
             fn index(self, slice: &IndexSlice<I, T>) -> &IndexSlice<I, T> {
-                self.as_range(slice.len_idx()).index(slice)
+                IndexSlice::from_slice(&slice.as_slice()[self.as_usize_range(slice.len())])
             }
             #[inline]
             fn index_mut(self, slice: &mut IndexSlice<I, T>) -> &mut IndexSlice<I, T> {
-                self.as_range(slice.len_idx()).index_mut(slice)
+                let range = self.as_usize_range(slice.len());
+                IndexSlice::from_slice_mut(&mut slice.as_slice_mut()[range])
             }
         }
 
