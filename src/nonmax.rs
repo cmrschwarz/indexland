@@ -3,12 +3,25 @@
 //!
 //! Similar to the [`nonmax`](https://docs.rs/nonmax/latest/nonmax/) crate,
 //! but with a few key differences:
-//!  - `NonMax<u8>` instead of `NonMaxU8`
+//!  - [`NonMax<u8>`] instead of `NonMaxU8`
 //!  - Implements arithmetic operations (required for [`Idx`])
 //!  - Makes using debuggers less painful by removing the optimization in debug
 //!    mode.
 //!
 //!    (This can be disabled using the `"disable_debuggable_nonmax"` feature).
+//!
+//! ## Implementations
+//! - [`NonMax<u8>`]
+//! - [`NonMax<u16>`]
+//! - [`NonMax<u32>`]
+//! - [`NonMax<u64>`]
+//! - [`NonMax<usize>`]
+//!
+//! - [`NonMax<i8>`]
+//! - [`NonMax<i16>`]
+//! - [`NonMax<i32>`]
+//! - [`NonMax<i64>`]
+//! - [`NonMax<isize>`]
 
 use std::{
     fmt::{Debug, Display},
@@ -24,11 +37,17 @@ use std::num::NonZero;
 
 use crate::Idx;
 
+/// Generic [`NonMax`]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct NonMax<T: NonMaxPrimitive>(T::NonMaxInner);
+
 #[derive(Debug)]
 pub struct NonMaxOutOfRangeError;
 
 /// # Safety
-/// `into_inner_unchecked` and `from_inner` must be inverse
+/// [`into_inner_unchecked`](NonMaxPrimitive::into_inner_unchecked) and
+/// [`from_inner`](NonMaxPrimitive::from_inner)
+/// must be the inverse of each other.
 pub unsafe trait NonMaxPrimitive:
     Debug
     + Display
@@ -76,9 +95,6 @@ pub unsafe trait NonMaxPrimitive:
         rhs: Self::NonMaxInner,
     ) -> Self::NonMaxInner;
 }
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NonMax<T: NonMaxPrimitive>(T::NonMaxInner);
 
 impl<P: NonMaxPrimitive> NonMax<P> {
     pub const ZERO: NonMax<P> = NonMax(P::ZERO);
@@ -190,7 +206,7 @@ macro_rules! nonmax_impl {
     ($($primitive: ident),*) => {$(
         impl NonMax<$primitive> {
             /// # Safety
-            /// must not be `$primitive::MAX`
+            #[doc = concat!("Must not be [`", stringify!($primitive), "::MAX`].")]
             pub const unsafe fn new_unchecked_const(v: $primitive) -> Self {
                 #[cfg(all(
                     debug_assertions,

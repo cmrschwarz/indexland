@@ -73,7 +73,7 @@
 //!   wrapping [`ArrayVec<T, CAP>`](arrayvec::ArrayVec) (Optional)
 //! - [`IndexHashMap<I, K, V, S>`](crate::IndexHashMap)
 //!   wrapping [`IndexMap<K, V, S>`](indexmap::IndexMap) (Optional)
-//! - [`nonmax`](crate::nonmax) Integer Types for Niche Optimizations (Optional)
+//! - [`NonMax<T>`](crate::nonmax) Integer Types for Niche Optimizations (Optional)
 //! - [`serde`] support for all Collections (Optional)
 
 #![warn(clippy::pedantic)]
