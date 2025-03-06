@@ -182,7 +182,7 @@ impl Idx for u64 {
     }
 }
 
-/// Declarative alternative to `#[derive(IdxNewtype)]`.
+/// Declarative alternative to [`#[derive(IdxNewtype)]`](indexland_derive::IdxNewtype).
 ///
 /// Allows generating multiple indices at once and does not require
 /// proc-macros.

@@ -59,17 +59,21 @@
 //! ```
 //!
 //! # Support for all common Array Based Collections
-//! - `&IndexSlice<I, T>` wrapping `&[T]`
-//! - `IndexArray<I, T, LEN>` wrapping `[T; LEN]`
-//! - `IndexVec<I, T>` wrapping `Vec<T>`
-//! - `IndexVecDeque<I, T>` wrapping `VecDeque<T>`
-//! - `IndexSmallVec<I, T, CAP>` wrapping [`SmallVec<[T; CAP]>`](https://docs.rs/smallvec/latest/smallvec)
-//!   (Optional)
-//! - `IndexArrayVec<I, T, CAP>` based on [`ArrayVec<T, CAP>`](https://docs.rs/arrayvec/latest/arrayvec/)
-//!   (Optional)
-//! - `IndexHashMap<I, K, V, S>` based on [`IndexMap<K, V, S>`](https://docs.rs/indexmap/latest/indexmap/)
-//!   (Optional)
-//! - [Serde](https://docs.rs/serde/latest/serde/) support for all Collections
+//! - [`IndexSlice<I, T>`](crate::IndexSlice)
+//!   wrapping [`&[T]`](std::slice)
+//! - [`IndexArray<I, T, LEN>`](crate::IndexArray)
+//!   wrapping [`[T; LEN]`](std::array)
+//! - [`IndexVec<I, T>`](crate::IndexVec)
+//!   wrapping [`Vec<T>`]
+//! - [`IndexVecDeque<I, T>`](crate::IndexVecDeque)
+//!   wrapping[`VecDeque<T>`](std::collections::VecDeque)
+//! - [`IndexSmallVec<I, T, CAP>`]
+//!   wrapping [`SmallVec<[T;CAP]>`](smallvec::SmallVec) (Optional)
+//! - [`IndexArrayVec<I, T, CAP>`](crate::IndexArrayVec)
+//!   wrapping [`ArrayVec<T, CAP>`](arrayvec::ArrayVec) (Optional)
+//! - [`IndexHashMap<I, K, V, S>`](crate::IndexHashMap)
+//!   wrapping [`IndexMap<K, V, S>`](indexmap::IndexMap) (Optional)
+//! - [`serde`](serde) support for all Collections
 
 #![warn(clippy::pedantic)]
 #![allow(clippy::missing_errors_doc)]
@@ -138,6 +142,10 @@ pub use index_array_vec::IndexArrayVec;
 #[cfg(feature = "smallvec")]
 #[doc(inline)]
 pub use index_small_vec::IndexSmallVec;
+
+#[cfg(feature = "indexmap")]
+#[doc(inline)]
+pub use index_hash_map::IndexHashMap;
 
 // used in macros, not public api
 #[doc(hidden)]
