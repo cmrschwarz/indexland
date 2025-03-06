@@ -37,7 +37,7 @@ rustdoc-args = ["--extern="]
 
 
 [features]
-default = ["derive", "arrayvec"]
+default = ["std", "derive", "arrayvec"]
 
 full = ["std", "derive", "nonmax", "arrayvec", "smallvec", "indexmap", "serde"]
 

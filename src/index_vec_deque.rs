@@ -19,7 +19,7 @@ use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 ///
 /// ## Example
 /// ```
-/// use indexland::{IndexVecDeque, index_vec_deque};
+/// use indexland::{index_vec_deque, IndexVecDeque};
 ///
 /// let vd: IndexVecDeque<u32, _> = index_vec_deque![-1, 2, 3];
 /// ```

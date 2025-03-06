@@ -1,17 +1,19 @@
 //! Provides derive macros for `indexland`. For better ergonomics add the
 //! `"derive"` feature to `indexland` instead of depending on this directly.
-//! ```rust
-//! // re-exported by indexland aswell
-//! use indexland_derive::{Idx};
+//!
+//! ## Example
+//! ```
+//! // `indexland_derive::Idx` is re-exported by indexland
+//! use indexland::Idx;
 //!
 //! #[derive(Idx)]
 //! struct NodeId(u32);
 //!
 //! #[derive(Idx)]
-//! enum PrimaryColor{
+//! enum PrimaryColor {
 //!     Red,
 //!     Green,
-//!     Blue
+//!     Blue,
 //! };
 //! ```
 
@@ -224,12 +226,12 @@ fn derive_idx_newtype_inner(
             }
         }
         impl ::core::cmp::PartialOrd for #name {
-            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
                 core::cmp::PartialOrd::partial_cmp(&self.0, &other.0)
             }
         }
         impl ::core::cmp::Ord for #name {
-            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            fn cmp(&self, other: &Self) -> core::cmp::Ordering {
                 core::cmp::Ord::cmp(&self.0, &other.0)
             }
         }
@@ -267,6 +269,14 @@ fn derive_idx_newtype_inner(
 /// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
 /// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
 /// - [`From<usize>`](core::convert::From) + [`From<Self> for usize`](core::convert::From)
+///
+/// ## Example
+/// ```
+/// use indexland::IdxNewtype;
+///
+/// #[derive(IdxNewtype)]
+/// struct FooId(u32);
+/// ```
 #[proc_macro_derive(IdxNewtype)]
 pub fn derive_idx_newtype(
     input: proc_macro::TokenStream,
@@ -352,13 +362,13 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
             }
         }
         impl ::core::cmp::PartialOrd for #name {
-            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
                 ::indexland::Idx::into_usize(*self)
                     .partial_cmp(&::indexland::Idx::into_usize(*other))
             }
         }
         impl ::core::cmp::Ord for #name {
-            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            fn cmp(&self, other: &Self) -> core::cmp::Ordering {
                 ::indexland::Idx::into_usize(*self)
                     .cmp(&::indexland::Idx::into_usize(*other))
             }
@@ -391,6 +401,19 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 /// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
 /// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
 /// - [`From<usize>`](core::convert::From) + [`From<Self> for usize`](core::convert::From)
+///
+///
+/// ## Example
+/// ```
+/// use indexland::IdxEnum;
+///
+/// #[derive(IdxEnum)]
+/// enum PrimaryColor {
+///     Red,
+///     Green,
+///     Blue,
+/// };
+/// ```
 #[proc_macro_derive(IdxEnum)]
 pub fn derive_idx_enum(
     input: proc_macro::TokenStream,
@@ -413,6 +436,20 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 
 /// For structs this is equivalent to [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
 /// for enums to [`#[derive(IdxEnum)]`](crate::IdxEnum).
+/// //! ## Example
+/// ```
+/// use indexland::Idx;
+///
+/// #[derive(Idx)]
+/// struct NodeId(u32);
+///
+/// #[derive(Idx)]
+/// enum PrimaryColor {
+///     Red,
+///     Green,
+///     Blue,
+/// };
+/// ```
 #[proc_macro_derive(Idx)]
 pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_idx_inner(syn::parse_macro_input!(input as DeriveInput))

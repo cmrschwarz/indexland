@@ -20,7 +20,7 @@ use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 ///
 /// ## Example
 /// ```
-/// use indexland::{IndexVec, index_vec};
+/// use indexland::{index_vec, IndexVec};
 ///
 /// let v: IndexVec<u32, _> = index_vec![-1, 2, 3];
 /// ```

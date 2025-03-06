@@ -18,8 +18,8 @@ use std::{
 ///
 /// ## Example
 /// ```
-/// use indexland::{IndexHashSet, index_hash_set};
-/// let set: IndexHashSet<u32, _> = index_hash_set!{
+/// use indexland::{index_hash_set, IndexHashSet};
+/// let set: IndexHashSet<u32, _> = index_hash_set! {
 ///     "a",
 ///     "b",
 /// };

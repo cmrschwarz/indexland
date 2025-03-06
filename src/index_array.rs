@@ -20,16 +20,19 @@ pub struct IndexArray<I, T, const LEN: usize> {
     _phantom: PhantomData<fn(I) -> T>,
 }
 
-/// Helper to construct `IndexArray<E, T, { <E as IdxEnum>::COUNT } >`
-/// without const generics.
+/// Helper to construct `IndexArray<E, T, { <E as IdxEnum>::COUNT } >`.
 ///
-/// Use `IndexArray` instead for Arrays that don't have exactly `COUNT` elements.
+/// Use [`IndexArray`] instead for Arrays that don't have exactly `COUNT` elements.
 ///
 /// ### Example:
 /// ```
-/// # use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
-/// #[derive(IdxEnum)]
-/// enum Foo { A, B, C }
+/// # use indexland::{Idx, index_array::{IndexArray, EnumIndexArray}};
+/// #[derive(Idx)]
+/// enum Foo {
+///     A,
+///     B,
+///     C,
+/// }
 /// const FOOS: EnumIndexArray<Foo, i32> = IndexArray::new([1, 2, 3]);
 /// ```
 pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
@@ -39,16 +42,20 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 /// If the inputs are constant this creates a compile time constant array.
 /// ### Examples:
 /// ```
-/// use indexland::{IdxEnum, IndexArray, index_array};
+/// use indexland::{index_array, Idx, IdxEnum, IndexArray};
 ///
 /// const FOO: IndexArray<u8, i32, 3> = index_array![1, 2, 3];
 ///
 /// const BAR: IndexArray<u8, f32, 42> = index_array![0.0; 42];
 ///
-/// #[derive(IdxEnum)]
-/// enum MyId { A, B, C }
+/// #[derive(Idx)]
+/// enum MyId {
+///     A,
+///     B,
+///     C,
+/// }
 ///
-/// const BAZ: IndexArray<MyId, i32, {MyId::COUNT}> = index_array![
+/// const BAZ: IndexArray<MyId, i32, { MyId::COUNT }> = index_array![
 ///     MyId::A => 1,
 ///     MyId::B => 2,
 ///     MyId::C => 3,
@@ -90,10 +97,14 @@ macro_rules! index_array {
 /// This is an alias for [`index_array!`]
 /// ### Examples:
 /// ```
-/// use indexland::{IdxEnum, EnumIndexArray, enum_index_array};
+/// use indexland::{enum_index_array, EnumIndexArray, IdxEnum};
 ///
 /// #[derive(IdxEnum)]
-/// enum MyId { A, B, C }
+/// enum MyId {
+///     A,
+///     B,
+///     C,
+/// }
 ///
 /// const BAZ: EnumIndexArray<MyId, i32> = enum_index_array![
 ///     MyId::A => 1,

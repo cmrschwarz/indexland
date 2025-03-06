@@ -23,7 +23,7 @@ use smallvec::SmallVec;
 ///
 /// ## Example
 /// ```
-/// use indexland::{IndexSmallVec, index_small_vec};
+/// use indexland::{index_small_vec, IndexSmallVec};
 ///
 /// let v: IndexSmallVec<u32, _, 3> = index_small_vec![-1, 2, 3];
 /// ```

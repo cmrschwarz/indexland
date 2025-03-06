@@ -29,7 +29,8 @@
 //!     prev: NodeId,
 //!     next: NodeId,
 //!     data: T,
-//! };
+//! }
+//!
 //! struct DoublyLinkedList<T> {
 //!     nodes: IndexVec<NodeId, Node<T>>,
 //! }
@@ -38,14 +39,14 @@
 //!
 //! # Enums as Indices
 //! ```rust
-//! use indexland::{Idx, EnumIndexArray, enum_index_array};
+//! use indexland::{enum_index_array, EnumIndexArray, Idx};
 //!
 //! #[derive(Idx)]
 //! enum PrimaryColor {
 //!     Red,
 //!     Green,
-//!     Blue
-//! };
+//!     Blue,
+//! }
 //!
 //! const COLOR_MAPPING: EnumIndexArray<PrimaryColor, u32> = enum_index_array![
 //!     PrimaryColor::Red => 0xFF0000,
@@ -53,7 +54,6 @@
 //!     PrimaryColor::Blue => 0x0000FF,
 //! ];
 //!
-//! // index using enum variants
 //! let my_color = COLOR_MAPPING[PrimaryColor::Red];
 //! ```
 //!

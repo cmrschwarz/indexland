@@ -20,8 +20,8 @@ use super::{idx::Idx, idx_range::IdxRange};
 ///
 /// ## Example
 /// ```
-/// use indexland::{IndexHashMap, index_hash_map};
-/// let map: IndexHashMap<u32, _, _> = index_hash_map!{
+/// use indexland::{index_hash_map, IndexHashMap};
+/// let map: IndexHashMap<u32, _, _> = index_hash_map! {
 ///     "a" => 17,
 ///     "b" => 42,
 /// };

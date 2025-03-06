@@ -23,7 +23,7 @@
 //! - [`NonMax<i64>`]
 //! - [`NonMax<isize>`]
 
-use std::{
+use core::{
     fmt::{Debug, Display},
     hash::Hash,
     ops::{
@@ -33,7 +33,7 @@ use std::{
 };
 
 #[cfg(any(not(debug_assertions), feature = "disable_debuggable_nonmax"))]
-use std::num::NonZero;
+use core::num::NonZero;
 
 use crate::Idx;
 
@@ -122,12 +122,12 @@ impl<P: NonMaxPrimitive> Default for NonMax<P> {
 }
 
 impl<P: NonMaxPrimitive> Debug for NonMax<P> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         core::fmt::Debug::fmt(&self.0.get(), f)
     }
 }
 impl<P: NonMaxPrimitive> Display for NonMax<P> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         core::fmt::Display::fmt(&self.0.get(), f)
     }
 }
