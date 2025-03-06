@@ -350,10 +350,19 @@ slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
 
 #[cfg(test)]
 mod test {
-    use crate::{index_array, IndexArray};
+    use crate::{index_array, Idx, IndexArray};
 
     #[test]
     fn get_disjoint_mut() {
+        #[derive(Idx)]
+        enum I {
+            A,
+            B,
+            C,
+            D,
+            E,
+        }
+
         let mut arr: IndexArray<usize, i32, 5> = index_array![1, 2, 3, 4, 5];
 
         let [arr_slice_1, arr_slice_2] =
