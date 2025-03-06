@@ -1,9 +1,9 @@
+use super::Idx;
 use crate::{
     idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange,
     index_slice::IndexSlice, IdxEnum,
 };
 
-use super::Idx;
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -23,6 +23,8 @@ pub struct IndexArray<I, T, const LEN: usize> {
 /// Helper to construct `IndexArray<E, T, { <E as IdxEnum>::COUNT } >`
 /// without const generics.
 ///
+/// Use `IndexArray` instead for Arrays that don't have exactly `COUNT` elements.
+///
 /// ### Example:
 /// ```
 /// # use indexland::{IdxEnum, index_array::{IndexArray, EnumIndexArray}};
@@ -37,7 +39,8 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 /// If the inputs are constant this creates a compile time constant array.
 /// ### Examples:
 /// ```
-/// # use indexland::{IdxEnum, EnumIndexArray, IndexArray, index_array};
+/// use indexland::{IdxEnum, IndexArray, index_array};
+///
 /// const FOO: IndexArray<u8, i32, 3> = index_array![1, 2, 3];
 ///
 /// const BAR: IndexArray<u8, f32, 42> = index_array![0.0; 42];
@@ -45,7 +48,7 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 /// #[derive(IdxEnum)]
 /// enum MyId { A, B, C }
 ///
-/// const BAZ: EnumIndexArray<MyId, i32> = index_array![
+/// const BAZ: IndexArray<MyId, i32, {MyId::COUNT}> = index_array![
 ///     MyId::A => 1,
 ///     MyId::B => 2,
 ///     MyId::C => 3,
@@ -79,6 +82,30 @@ macro_rules! index_array {
         $crate::IndexArray::new(data)
     }};
 
+}
+
+/// Create a [`EnumIndexArray`] containing the arguments.
+///
+/// If the inputs are constant this creates a compile time constant array.
+/// This is an alias for [`index_array!`]
+/// ### Examples:
+/// ```
+/// use indexland::{Idx, EnumIndexArray, enum_index_array};
+///
+/// #[derive(Idx)]
+/// enum MyId { A, B, C }
+///
+/// const BAZ: EnumIndexArray<MyId, i32> = enum_index_array![
+///     MyId::A => 1,
+///     MyId::B => 2,
+///     MyId::C => 3,
+/// ];
+/// ```
+#[macro_export]
+macro_rules! enum_index_array {
+    ($($anything: tt)+) => {
+        $crate::index_array![$($anything)+]
+    };
 }
 
 impl<I, T, const LEN: usize> Default for IndexArray<I, T, LEN>

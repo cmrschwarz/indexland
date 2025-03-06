@@ -20,7 +20,7 @@ use crate::idx_range::RangeBoundsAsRange;
 #[macro_export]
 macro_rules! index_array_vec {
     ($($anything: tt)+) => {
-        IndexArrayVec::from(index_array![$($anything)+])
+        $crate::IndexArrayVec::from(index_array![$($anything)+])
     };
 }
 

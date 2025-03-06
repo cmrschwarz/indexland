@@ -15,7 +15,7 @@ use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 #[macro_export]
 macro_rules! index_vec_deque {
     ($($anything: tt)+) => {
-        IndexVecDeque::from(vec![$($anything)+])
+        $crate::IndexVecDeque::from(vec![$($anything)+])
     };
 }
 

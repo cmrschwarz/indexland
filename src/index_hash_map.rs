@@ -16,7 +16,7 @@ use super::{idx::Idx, idx_range::IdxRange};
 #[macro_export]
 macro_rules! index_hash_map {
     ($($anything: tt)+) => {
-        IndexHashMap::from(index_map![$($anything)+])
+        $crate::IndexHashMap::from(index_map![$($anything)+])
     };
 }
 
@@ -119,7 +119,7 @@ impl<I: Idx, K: Debug, V: Debug, S> Debug for IndexHashMap<I, K, V, S> {
     }
 }
 
-impl<I: Idx, K, V> IndexHashMap<I, K, V> {
+impl<I, K, V> IndexHashMap<I, K, V> {
     pub fn new() -> Self {
         Self {
             data: IndexMap::default(),

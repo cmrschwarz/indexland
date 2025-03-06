@@ -20,7 +20,7 @@ use smallvec::SmallVec;
 #[macro_export]
 macro_rules! index_small_vec {
     ($($anything: tt)+) => {
-        IndexSmallVec::from([$($anything)+])
+        $crate::IndexSmallVec::from([$($anything)+])
     };
 }
 

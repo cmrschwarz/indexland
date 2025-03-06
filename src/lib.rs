@@ -36,16 +36,16 @@
 //!
 //! # Enums as Indices
 //! ```rust
-//! use indexland::{IdxEnum, IndexArray, EnumIndexArray, index_array};
+//! use indexland::{IdxEnum, EnumIndexArray, enum_index_array};
 //!
 //! #[derive(IdxEnum)]
-//! enum PrimaryColor{
+//! enum PrimaryColor {
 //!     Red,
 //!     Green,
 //!     Blue
 //! };
 //!
-//! const COLOR_MAPPING: EnumIndexArray<PrimaryColor, u32> = index_array![
+//! const COLOR_MAPPING: EnumIndexArray<PrimaryColor, u32> = enum_index_array![
 //!     PrimaryColor::Red => 0xFF0000,
 //!     PrimaryColor::Green => 0x00FF00,
 //!     PrimaryColor::Blue => 0x0000FF,
@@ -53,9 +53,6 @@
 //!
 //! // index using enum variants
 //! let my_color = COLOR_MAPPING[PrimaryColor::Red];
-//!
-//! // use convenience constants for iteration etc.
-//! assert_eq!(PrimaryColor::COUNT, PrimaryColor::VARIANTS.len());
 //! ```
 //!
 //! # Support for all common Array Based Collections
