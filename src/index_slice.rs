@@ -1,7 +1,7 @@
 use super::Idx;
 use crate::{idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange};
 
-use std::{
+use core::{
     fmt::Debug,
     marker::PhantomData,
     ops::{
@@ -9,6 +9,9 @@ use std::{
         RangeToInclusive,
     },
 };
+
+#[cfg(feature = "alloc")]
+use alloc::boxed::Box;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -40,28 +43,30 @@ pub unsafe trait GetManyMutIndex<I>: Clone {
 impl<I: Idx, T> IndexSlice<I, T> {
     #[inline]
     pub fn from_slice(s: &[T]) -> &Self {
-        unsafe { &*(std::ptr::from_ref(s) as *const Self) }
+        unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline]
     pub fn from_slice_mut(s: &mut [T]) -> &mut Self {
-        unsafe { &mut *(std::ptr::from_mut(s) as *mut Self) }
+        unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
+    #[cfg(feature = "alloc")]
     pub fn from_boxed_slice(slice_box: Box<[T]>) -> Box<Self> {
         unsafe { Box::from_raw(Box::into_raw(slice_box) as *mut Self) }
     }
+    #[cfg(feature = "alloc")]
     pub fn into_boxed_slice(self: Box<Self>) -> Box<[T]> {
         unsafe { Box::from_raw(Box::into_raw(self) as *mut [T]) }
     }
     pub fn iter_enumerated(
         &self,
         initial_offset: I,
-    ) -> IdxEnumerate<I, std::slice::Iter<T>> {
+    ) -> IdxEnumerate<I, core::slice::Iter<T>> {
         IdxEnumerate::new(initial_offset, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
         initial_offset: I,
-    ) -> IdxEnumerate<I, std::slice::IterMut<T>> {
+    ) -> IdxEnumerate<I, core::slice::IterMut<T>> {
         IdxEnumerate::new(initial_offset, &mut self.data)
     }
     pub fn is_empty(&self) -> bool {
@@ -100,10 +105,10 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn get_mut(&mut self, idx: I) -> Option<&mut T> {
         self.data.get_mut(idx.into_usize())
     }
-    pub fn iter(&self) -> std::slice::Iter<T> {
+    pub fn iter(&self) -> core::slice::Iter<T> {
         self.data.iter()
     }
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<T> {
+    pub fn iter_mut(&mut self) -> core::slice::IterMut<T> {
         self.data.iter_mut()
     }
     pub fn split_at_mut(
@@ -163,8 +168,8 @@ impl<I: Idx, T> IndexSlice<I, T> {
         indices: [I; N],
     ) -> [&mut T; N] {
         let slice: *mut T = self.as_slice_mut().as_mut_ptr();
-        let mut arr: std::mem::MaybeUninit<[&mut T; N]> =
-            std::mem::MaybeUninit::uninit();
+        let mut arr: core::mem::MaybeUninit<[&mut T; N]> =
+            core::mem::MaybeUninit::uninit();
         let arr_ptr = arr.as_mut_ptr();
 
         // SAFETY: We expect `indices` to be disjunct and in bounds
@@ -201,7 +206,7 @@ impl<I: Idx, T> IndexSlice<I, T> {
 }
 
 impl<I: Idx, T: Debug> Debug for IndexSlice<I, T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
@@ -224,7 +229,7 @@ impl<I: Idx, T> IndexMut<I> for IndexSlice<I, T> {
 impl<'a, I: Idx, T> IntoIterator for &'a IndexSlice<I, T> {
     type Item = &'a T;
 
-    type IntoIter = std::slice::Iter<'a, T>;
+    type IntoIter = core::slice::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
@@ -234,7 +239,7 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexSlice<I, T> {
 impl<'a, I: Idx, T> IntoIterator for &'a mut IndexSlice<I, T> {
     type Item = &'a mut T;
 
-    type IntoIter = std::slice::IterMut<'a, T>;
+    type IntoIter = core::slice::IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()

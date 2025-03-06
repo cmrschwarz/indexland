@@ -1,9 +1,10 @@
-use std::{
-    collections::VecDeque,
+use core::{
     fmt::Debug,
     marker::PhantomData,
     ops::{Index, IndexMut},
 };
+
+use alloc::{collections::VecDeque, vec::Vec};
 
 use crate::{idx_enumerate::IdxEnumerate, IndexVec};
 
@@ -66,7 +67,7 @@ impl<I, T> Default for IndexVecDeque<I, T> {
 }
 
 impl<I: Idx, T: Debug> Debug for IndexVecDeque<I, T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
@@ -145,17 +146,17 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     }
     pub fn iter_enumerated(
         &self,
-    ) -> IdxEnumerate<I, std::collections::vec_deque::Iter<T>> {
+    ) -> IdxEnumerate<I, alloc::collections::vec_deque::Iter<T>> {
         IdxEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IdxEnumerate<I, std::collections::vec_deque::IterMut<T>> {
+    ) -> IdxEnumerate<I, alloc::collections::vec_deque::IterMut<T>> {
         IdxEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IdxEnumerate<I, std::collections::vec_deque::IntoIter<T>> {
+    ) -> IdxEnumerate<I, alloc::collections::vec_deque::IntoIter<T>> {
         IdxEnumerate::new(I::ZERO, self.data)
     }
     pub fn indices(&self) -> IdxRange<I> {
@@ -180,10 +181,10 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
         let (s1, s2) = self.data.as_mut_slices();
         (IndexSlice::from_slice(s1), IndexSlice::from_slice(s2))
     }
-    pub fn iter(&self) -> std::collections::vec_deque::Iter<T> {
+    pub fn iter(&self) -> alloc::collections::vec_deque::Iter<T> {
         self.data.iter()
     }
-    pub fn iter_mut(&mut self) -> std::collections::vec_deque::IterMut<T> {
+    pub fn iter_mut(&mut self) -> alloc::collections::vec_deque::IterMut<T> {
         self.data.iter_mut()
     }
 }
@@ -197,7 +198,7 @@ impl<I, T> Extend<T> for IndexVecDeque<I, T> {
 impl<I: Idx, T> IntoIterator for IndexVecDeque<I, T> {
     type Item = T;
 
-    type IntoIter = std::collections::vec_deque::IntoIter<T>;
+    type IntoIter = alloc::collections::vec_deque::IntoIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.into_iter()
@@ -207,7 +208,7 @@ impl<I: Idx, T> IntoIterator for IndexVecDeque<I, T> {
 impl<'a, I: Idx, T> IntoIterator for &'a IndexVecDeque<I, T> {
     type Item = &'a T;
 
-    type IntoIter = std::collections::vec_deque::Iter<'a, T>;
+    type IntoIter = alloc::collections::vec_deque::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.iter()
@@ -217,7 +218,7 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexVecDeque<I, T> {
 impl<'a, I: Idx, T> IntoIterator for &'a mut IndexVecDeque<I, T> {
     type Item = &'a mut T;
 
-    type IntoIter = std::collections::vec_deque::IterMut<'a, T>;
+    type IntoIter = alloc::collections::vec_deque::IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.iter_mut()

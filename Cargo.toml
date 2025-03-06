@@ -39,7 +39,7 @@ rustdoc-args = ["--extern="]
 [features]
 default = ["derive", "arrayvec"]
 
-full = ["derive", "nonmax", "arrayvec", "smallvec", "indexmap", "serde"]
+full = ["std", "derive", "nonmax", "arrayvec", "smallvec", "indexmap", "serde"]
 
 derive = ["dep:indexland_derive"]
 
@@ -47,10 +47,14 @@ nonmax = []
 
 disable_debuggable_nonmax = []
 
-smallvec = ["dep:smallvec"]
+alloc = []
+
+std = ["alloc", "arrayvec/std", "indexmap/std"]
+
+smallvec = ["std", "dep:smallvec"] # smallvec v1 does not support nostd
 
 arrayvec = ["dep:arrayvec"]
 
-indexmap = ["dep:indexmap"]
+indexmap = ["alloc", "dep:indexmap"]
 
 serde = ["dep:serde", "arrayvec/serde", "smallvec/serde", "indexmap/serde"]

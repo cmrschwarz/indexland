@@ -1,4 +1,4 @@
-use std::{
+use core::{
     fmt::Debug,
     marker::PhantomData,
     ops::{
@@ -85,7 +85,7 @@ impl<I, T, const CAP: usize> Default for IndexArrayVec<I, T, CAP> {
 }
 
 impl<I: Idx, T: Debug, const CAP: usize> Debug for IndexArrayVec<I, T, CAP> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
@@ -156,12 +156,12 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn truncate(&mut self, new_end_index: I) {
         self.data.truncate(new_end_index.into_usize());
     }
-    pub fn iter_enumerated(&self) -> IdxEnumerate<I, std::slice::Iter<T>> {
+    pub fn iter_enumerated(&self) -> IdxEnumerate<I, core::slice::Iter<T>> {
         IdxEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IdxEnumerate<I, std::slice::IterMut<T>> {
+    ) -> IdxEnumerate<I, core::slice::IterMut<T>> {
         IdxEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
@@ -204,7 +204,7 @@ impl<'a, I: Idx, T, const CAP: usize> IntoIterator
 {
     type Item = &'a T;
 
-    type IntoIter = std::slice::Iter<'a, T>;
+    type IntoIter = core::slice::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
@@ -216,7 +216,7 @@ impl<'a, I: Idx, T, const CAP: usize> IntoIterator
 {
     type Item = &'a mut T;
 
-    type IntoIter = std::slice::IterMut<'a, T>;
+    type IntoIter = core::slice::IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()

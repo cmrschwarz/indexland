@@ -1,6 +1,6 @@
 #![allow(clippy::inline_always)]
 
-use std::{
+use core::{
     hash::Hash,
     ops::{Add, AddAssign, Sub, SubAssign},
 };

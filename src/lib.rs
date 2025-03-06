@@ -81,6 +81,13 @@
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::return_self_not_must_use)]
 #![allow(clippy::module_name_repetitions)]
+// nostd
+#![no_std]
+#[cfg(feature = "std")]
+extern crate std;
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
 pub mod idx;
 pub mod idx_enumerate;
@@ -88,7 +95,11 @@ pub mod idx_range;
 pub mod index_array;
 
 pub mod index_slice;
+
+#[cfg(feature = "alloc")]
 pub mod index_vec;
+
+#[cfg(feature = "alloc")]
 pub mod index_vec_deque;
 
 #[cfg(feature = "nonmax")]
@@ -121,9 +132,11 @@ pub use index_array::{EnumIndexArray, IndexArray};
 #[doc(inline)]
 pub use index_slice::IndexSlice;
 
+#[cfg(feature = "alloc")]
 #[doc(inline)]
 pub use index_vec::IndexVec;
 
+#[cfg(feature = "alloc")]
 #[doc(inline)]
 pub use index_vec_deque::IndexVecDeque;
 
@@ -149,7 +162,7 @@ pub use {index_hash_map::IndexHashMap, index_hash_set::IndexHashSet};
 // used in macros, not public api
 #[doc(hidden)]
 pub mod __private {
-    use std::mem::MaybeUninit;
+    use core::mem::MaybeUninit;
 
     /// Essentially [`std::mem::MaybeUninit::transpose`] in stable Rust. Will
     /// be removed once [maybe_uninit_uninit_array_transpose](https://github.com/rust-lang/rust/issues/96097)

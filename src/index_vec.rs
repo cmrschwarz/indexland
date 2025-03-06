@@ -1,5 +1,5 @@
 use crate::{idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange};
-use std::{
+use core::{
     fmt::Debug,
     marker::PhantomData,
     ops::{
@@ -7,6 +7,8 @@ use std::{
         RangeTo, RangeToInclusive,
     },
 };
+
+use alloc::{boxed::Box, vec::Vec};
 
 use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
 
@@ -64,7 +66,7 @@ impl<I, T> Default for IndexVec<I, T> {
 }
 
 impl<I: Idx, T: Debug> Debug for IndexVec<I, T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
@@ -129,17 +131,17 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.data.push(v);
         id
     }
-    pub fn iter_enumerated(&self) -> IdxEnumerate<I, std::slice::Iter<T>> {
+    pub fn iter_enumerated(&self) -> IdxEnumerate<I, core::slice::Iter<T>> {
         IdxEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IdxEnumerate<I, std::slice::IterMut<T>> {
+    ) -> IdxEnumerate<I, core::slice::IterMut<T>> {
         IdxEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IdxEnumerate<I, std::vec::IntoIter<T>> {
+    ) -> IdxEnumerate<I, alloc::vec::IntoIter<T>> {
         IdxEnumerate::new(I::ZERO, self.data)
     }
     pub fn indices(&self) -> IdxRange<I> {
@@ -165,7 +167,7 @@ impl<I, T> Extend<T> for IndexVec<I, T> {
 impl<I: Idx, T> IntoIterator for IndexVec<I, T> {
     type Item = T;
 
-    type IntoIter = std::vec::IntoIter<T>;
+    type IntoIter = alloc::vec::IntoIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.into_iter()
@@ -175,7 +177,7 @@ impl<I: Idx, T> IntoIterator for IndexVec<I, T> {
 impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
     type Item = &'a T;
 
-    type IntoIter = std::slice::Iter<'a, T>;
+    type IntoIter = core::slice::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.iter()
@@ -185,7 +187,7 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
 impl<'a, I: Idx, T> IntoIterator for &'a mut IndexVec<I, T> {
     type Item = &'a mut T;
 
-    type IntoIter = std::slice::IterMut<'a, T>;
+    type IntoIter = core::slice::IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.iter_mut()

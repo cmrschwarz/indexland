@@ -1,11 +1,13 @@
 use crate::idx_enumerate::IdxEnumerate;
-use indexmap::{map::Slice, Equivalent, IndexMap};
-use std::{
+use alloc::boxed::Box;
+use core::{
     fmt::Debug,
-    hash::{BuildHasher, Hash, RandomState},
+    hash::{BuildHasher, Hash},
     marker::PhantomData,
     ops::Index,
 };
+
+use indexmap::{map::Slice, Equivalent, IndexMap};
 
 use super::{idx::Idx, idx_range::IdxRange};
 
@@ -28,6 +30,9 @@ macro_rules! index_hash_map {
     };
 }
 
+#[cfg(feature = "std")]
+use std::collections::hash_map::RandomState;
+
 #[derive(Clone)]
 pub struct IndexHashMap<I, K, V, S = RandomState> {
     data: IndexMap<K, V, S>,
@@ -43,19 +48,19 @@ pub struct IndexHashMapSlice<I, K, V> {
 impl<I, K, V> IndexHashMapSlice<I, K, V> {
     #[inline]
     pub fn from_index_map_slice(s: &Slice<K, V>) -> &Self {
-        unsafe { &*(std::ptr::from_ref(s) as *const Self) }
+        unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline]
     pub fn from_index_map_slice_mut(s: &mut Slice<K, V>) -> &mut Self {
-        unsafe { &mut *(std::ptr::from_mut(s) as *mut Self) }
+        unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[inline]
     pub fn into_index_map_slice(s: &Self) -> &Slice<K, V> {
-        unsafe { &*(std::ptr::from_ref(s) as *const Slice<K, V>) }
+        unsafe { &*(core::ptr::from_ref(s) as *const Slice<K, V>) }
     }
     #[inline]
     pub fn into_index_map_slice_mut(s: &mut Self) -> &mut Slice<K, V> {
-        unsafe { &mut *(std::ptr::from_mut(s) as *mut Slice<K, V>) }
+        unsafe { &mut *(core::ptr::from_mut(s) as *mut Slice<K, V>) }
     }
     pub fn from_boxed_slice(slice_box: Box<Slice<K, V>>) -> Box<Self> {
         unsafe { Box::from_raw(Box::into_raw(slice_box) as *mut Self) }
@@ -122,7 +127,7 @@ impl<I, K, V, S: Default> Default for IndexHashMap<I, K, V, S> {
 }
 
 impl<I: Idx, K: Debug, V: Debug, S> Debug for IndexHashMap<I, K, V, S> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }

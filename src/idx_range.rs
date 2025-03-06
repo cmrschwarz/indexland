@@ -1,6 +1,6 @@
 #![allow(clippy::inline_always)]
 
-use std::ops::{Range, RangeBounds, RangeInclusive};
+use core::ops::{Range, RangeBounds, RangeInclusive};
 
 use crate::Idx;
 
@@ -58,27 +58,27 @@ pub trait RangeBoundsAsRange<I> {
 impl<I: Idx, RB: RangeBounds<I>> RangeBoundsAsRange<I> for RB {
     fn as_range(&self, len: I) -> Range<I> {
         let start = match self.start_bound() {
-            std::ops::Bound::Included(i) => *i,
-            std::ops::Bound::Excluded(i) => *i + I::ONE,
-            std::ops::Bound::Unbounded => I::ZERO,
+            core::ops::Bound::Included(i) => *i,
+            core::ops::Bound::Excluded(i) => *i + I::ONE,
+            core::ops::Bound::Unbounded => I::ZERO,
         };
         let end = match self.end_bound() {
-            std::ops::Bound::Included(i) => *i + I::ONE,
-            std::ops::Bound::Excluded(i) => *i,
-            std::ops::Bound::Unbounded => len,
+            core::ops::Bound::Included(i) => *i + I::ONE,
+            core::ops::Bound::Excluded(i) => *i,
+            core::ops::Bound::Unbounded => len,
         };
         start..end
     }
     fn as_usize_range(&self, len: usize) -> Range<usize> {
         let start = match self.start_bound() {
-            std::ops::Bound::Included(i) => i.into_usize(),
-            std::ops::Bound::Excluded(i) => i.into_usize() + 1,
-            std::ops::Bound::Unbounded => 0,
+            core::ops::Bound::Included(i) => i.into_usize(),
+            core::ops::Bound::Excluded(i) => i.into_usize() + 1,
+            core::ops::Bound::Unbounded => 0,
         };
         let end = match self.end_bound() {
-            std::ops::Bound::Included(i) => i.into_usize() + 1,
-            std::ops::Bound::Excluded(i) => i.into_usize(),
-            std::ops::Bound::Unbounded => len,
+            core::ops::Bound::Included(i) => i.into_usize() + 1,
+            core::ops::Bound::Excluded(i) => i.into_usize(),
+            core::ops::Bound::Unbounded => len,
         };
         start..end
     }

@@ -1,4 +1,6 @@
+use super::{idx::Idx, idx_range::IdxRange};
 use crate::idx_enumerate::IdxEnumerate;
+use alloc::boxed::Box;
 use indexmap::{set::Slice, Equivalent, IndexSet};
 use std::{
     fmt::Debug,
@@ -6,8 +8,6 @@ use std::{
     marker::PhantomData,
     ops::Index,
 };
-
-use super::{idx::Idx, idx_range::IdxRange};
 
 /// Create an [`IndexHashSet`] containing the arguments.
 ///
