@@ -278,16 +278,16 @@ fn derive_idx_newtype_inner(
 }
 
 /// Implements the following traits:
-/// - `IdxNewtype` + `Idx`
-/// - `Default`
-/// - `Debug` + `Display`
-/// - `Clone` + `Copy`
-/// - `Hash`
-/// - `PartialOrd` + `Ord`
-/// - `PartialEq` + `Eq`
-/// - `Add` + `AddAssign`
-/// - `Sub` + `SubAssign`
-/// - `From<usize>` + `From<Self> for usize`
+/// - [`IdxNewtype`] + [`Idx`]
+/// - [`Default`]
+/// - [`Debug`] + [`Display`](core::fmt::Display)
+/// - [`Clone`] + [Copy]
+/// - [`PartialOrd`] + [`Ord`]
+/// - [`PartialEq`] + [`Eq`]
+/// - [`Hash`]
+/// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
+/// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
+/// - [`From<usize>`](core::convert::From) + [`From<Self> for usize`](core::convert::From)
 #[proc_macro_derive(IdxNewtype)]
 pub fn derive_idx_newtype(
     input: proc_macro::TokenStream,
@@ -402,16 +402,16 @@ fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 }
 
 /// Implements the following traits:
-/// - `IdxEnum` + `Idx`
-/// - `Default` (uses first variant)
-/// - `Debug` + (`Display` intentionally omitted, implement as desired)
-/// - `Clone + Copy`
-/// - `PartialOrd + Ord`
-/// - `PartialEq + Eq`
-/// - `Hash`
-/// - `Add + AddAssign`
-/// - `Sub + SubAssign`
-/// - `From<usize>` + `From<Self> for usize`
+/// - [`IdxEnum`] + [`Idx`]
+/// - [`Default`] (uses first variant)
+/// - [`Debug`] + ( [`Display`](core::fmt::Display) intentionally omitted, implement as desired)
+/// - [`Clone`] + [`Copy`]
+/// - [`PartialOrd`] + [`Ord`]
+/// - [`PartialEq`] + [`Eq`]
+/// - [`Hash`]
+/// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
+/// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
+/// - [`From<usize>`](core::convert::From) + [`From<Self> for usize`](core::convert::From)
 #[proc_macro_derive(IdxEnum)]
 pub fn derive_idx_enum(
     input: proc_macro::TokenStream,

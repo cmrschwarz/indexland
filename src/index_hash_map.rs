@@ -28,6 +28,7 @@ pub struct IndexHashMap<I, K, V, S = RandomState> {
 
 pub struct IndexHashMapSlice<I, K, V> {
     _phantom: PhantomData<fn(I) -> (K, V)>,
+    #[allow(unused)]
     data: Slice<K, V>,
 }
 
@@ -219,7 +220,7 @@ where
     S: BuildHasher,
 {
     fn extend<I: IntoIterator<Item = (&'a K, &'a V)>>(&mut self, iter: I) {
-        self.data.extend(iter)
+        self.data.extend(iter);
     }
 }
 

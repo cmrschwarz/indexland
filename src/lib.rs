@@ -73,7 +73,8 @@
 //!   wrapping [`ArrayVec<T, CAP>`](arrayvec::ArrayVec) (Optional)
 //! - [`IndexHashMap<I, K, V, S>`](crate::IndexHashMap)
 //!   wrapping [`IndexMap<K, V, S>`](indexmap::IndexMap) (Optional)
-//! - [`serde`](serde) support for all Collections
+//! - [`nonmax`](crate::nonmax) Integer Types for Niche Optimizations (Optional)
+//! - [`serde`] support for all Collections (Optional)
 
 #![warn(clippy::pedantic)]
 #![allow(clippy::missing_errors_doc)]
@@ -129,11 +130,7 @@ pub use index_vec_deque::IndexVecDeque;
 pub use indexland_derive::{Idx, IdxEnum, IdxNewtype};
 
 #[cfg(feature = "nonmax")]
-#[doc(hidden)]
-pub use nonmax::{
-    NonMaxI16, NonMaxI32, NonMaxI64, NonMaxI8, NonMaxIsize, NonMaxU16,
-    NonMaxU32, NonMaxU64, NonMaxU8, NonMaxUsize,
-};
+pub use nonmax::NonMax;
 
 #[cfg(feature = "arrayvec")]
 #[doc(inline)]

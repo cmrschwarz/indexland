@@ -37,10 +37,10 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 /// If the inputs are constant this creates a compile time constant array.
 /// ### Examples:
 /// ```
-/// # use indexland::{IdxEnum, EnumIndexArray, index_array};
-/// const FOO: IndexArray<usize, i32> = index_array![1, 2, 3];
+/// # use indexland::{IdxEnum, EnumIndexArray, IndexArray, index_array};
+/// const FOO: IndexArray<u8, i32, 3> = index_array![1, 2, 3];
 ///
-/// const BAR: IndexArray<usize, f32> = index_array![0.0; 42];
+/// const BAR: IndexArray<u8, f32, 42> = index_array![0.0; 42];
 ///
 /// #[derive(IdxEnum)]
 /// enum MyId { A, B, C }
@@ -53,6 +53,12 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 /// ```
 #[macro_export]
 macro_rules! index_array {
+    ($($value:expr),+ $(,)?) => {
+        $crate::IndexArray::new([$($value),*])
+    };
+    ($value:expr; $count: expr) => {
+        $crate::IndexArray::new([ $value; $count])
+    };
     ($($key:expr => $value:expr),* $(,)?) => {{
         use core::mem::MaybeUninit;
         const LEN: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
@@ -72,12 +78,7 @@ macro_rules! index_array {
         let data = unsafe { $crate::__private::transpose_assume_uninit(data) };
         $crate::IndexArray::new(data)
     }};
-    ($($value:expr,)+ $(,)?) => {
-        $crate::IndexArray::new([$($value),*])
-    };
-    ($value:expr; $count: expr) => {
-        $crate::IndexArray::new([ $value; $count])
-    }
+
 }
 
 impl<I, T, const LEN: usize> Default for IndexArray<I, T, LEN>
