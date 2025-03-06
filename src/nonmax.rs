@@ -39,16 +39,12 @@ use crate::Idx;
 
 /// Generic [`NonMax`]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NonMax<T: NonMaxPrimitive>(T::NonMaxInner);
+pub struct NonMax<P: NonMaxPrimitive>(P::NonMaxInner);
 
 #[derive(Debug)]
 pub struct NonMaxOutOfRangeError;
 
-/// # Safety
-/// [`into_inner_unchecked`](NonMaxPrimitive::into_inner_unchecked) and
-/// [`from_inner`](NonMaxPrimitive::from_inner)
-/// must be the inverse of each other.
-pub unsafe trait NonMaxPrimitive:
+pub trait NonMaxPrimitive:
     Debug
     + Display
     + Clone
@@ -65,78 +61,74 @@ pub unsafe trait NonMaxPrimitive:
     + Div<Output = Self>
     + Rem<Output = Self>
 {
-    type NonMaxInner: Sized + Copy + PartialEq + Eq + PartialOrd + Ord + Hash;
-    const ZERO: Self::NonMaxInner;
-    const ONE: Self::NonMaxInner;
-    const MIN: Self::NonMaxInner;
-    const MAX: Self::NonMaxInner;
+    type NonMaxInner: NonMaxInner<Self>;
+}
+
+pub trait NonMaxInner<P>:
+    Sized + Copy + PartialEq + Eq + PartialOrd + Ord + Hash
+{
+    const ZERO: Self;
+    const ONE: Self;
+    const MIN: Self;
+    const MAX: Self;
+
+    fn new(v: P) -> Option<Self>;
 
     /// # Safety
-    /// `into_inner_unchecked` and `from_inner` must be inverse
-    unsafe fn into_inner_unchecked(self) -> Self::NonMaxInner;
+    /// value must not me `P::MAX`
+    unsafe fn new_unchecked(value: P) -> Self;
 
-    fn into_inner(self) -> Self::NonMaxInner {
-        self.try_into_inner().unwrap()
-    }
-    fn try_into_inner(self) -> Option<Self::NonMaxInner>;
+    fn get(self) -> P;
 
-    fn from_inner(inner: Self::NonMaxInner) -> Self;
-
-    fn wrapping_add(
-        lhs: Self::NonMaxInner,
-        rhs: Self::NonMaxInner,
-    ) -> Self::NonMaxInner;
-    fn wrapping_sub(
-        lhs: Self::NonMaxInner,
-        rhs: Self::NonMaxInner,
-    ) -> Self::NonMaxInner;
-    fn wrapping_mul(
-        lhs: Self::NonMaxInner,
-        rhs: Self::NonMaxInner,
-    ) -> Self::NonMaxInner;
+    fn wrapping_add(self, rhs: Self) -> Self;
+    fn wrapping_sub(self, rhs: Self) -> Self;
+    fn wrapping_mul(self, rhs: Self) -> Self;
 }
 
 impl<P: NonMaxPrimitive> NonMax<P> {
-    pub const ZERO: NonMax<P> = NonMax(P::ZERO);
-    pub const ONE: NonMax<P> = NonMax(P::ONE);
-    pub const MIN: NonMax<P> = NonMax(P::MIN);
-    pub const MAX: NonMax<P> = NonMax(P::MAX);
+    pub const ZERO: NonMax<P> = NonMax(P::NonMaxInner::ZERO);
+    pub const ONE: NonMax<P> = NonMax(P::NonMaxInner::ONE);
+    pub const MIN: NonMax<P> = NonMax(P::NonMaxInner::MIN);
+    pub const MAX: NonMax<P> = NonMax(P::NonMaxInner::MAX);
+
     pub fn new(v: P) -> Option<Self> {
-        Some(NonMax(P::try_into_inner(v)?))
+        let inner = P::NonMaxInner::new(v)?;
+        Some(NonMax(inner))
     }
     /// # Safety
     /// value must not be `MAX`
     pub unsafe fn new_unchecked(v: P) -> Self {
-        NonMax(unsafe { P::into_inner_unchecked(v) })
+        NonMax(unsafe { P::NonMaxInner::new_unchecked(v) })
     }
+
     pub fn wrapping_add(self, rhs: Self) -> Self {
-        NonMax(P::wrapping_add(self.0, rhs.0))
+        NonMax(self.0.wrapping_add(rhs.0))
     }
     pub fn wrapping_sub(self, rhs: Self) -> Self {
-        NonMax(P::wrapping_sub(self.0, rhs.0))
+        NonMax(self.0.wrapping_sub(rhs.0))
     }
     pub fn wrapping_mul(self, rhs: Self) -> Self {
-        NonMax(P::wrapping_mul(self.0, rhs.0))
+        NonMax(self.0.wrapping_mul(rhs.0))
     }
     pub fn get(self) -> P {
-        P::from_inner(self.0)
+        self.0.get()
     }
 }
 
 impl<P: NonMaxPrimitive> Default for NonMax<P> {
     fn default() -> Self {
-        Self(P::ZERO)
+        Self(P::NonMaxInner::ZERO)
     }
 }
 
 impl<P: NonMaxPrimitive> Debug for NonMax<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        core::fmt::Debug::fmt(&P::from_inner(self.0), f)
+        core::fmt::Debug::fmt(&self.0.get(), f)
     }
 }
 impl<P: NonMaxPrimitive> Display for NonMax<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        core::fmt::Display::fmt(&P::from_inner(self.0), f)
+        core::fmt::Display::fmt(&self.0.get(), f)
     }
 }
 
@@ -144,35 +136,35 @@ impl<P: NonMaxPrimitive> Add for NonMax<P> {
     type Output = NonMax<P>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        NonMax(P::into_inner(P::from_inner(self.0) + P::from_inner(rhs.0)))
+        NonMax(NonMaxInner::new(self.0.get() + rhs.0.get()).unwrap())
     }
 }
 impl<P: NonMaxPrimitive> Sub for NonMax<P> {
     type Output = NonMax<P>;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        NonMax(P::into_inner(P::from_inner(self.0) - P::from_inner(rhs.0)))
+        NonMax(NonMaxInner::new(self.0.get() - rhs.0.get()).unwrap())
     }
 }
 impl<P: NonMaxPrimitive> Mul for NonMax<P> {
     type Output = NonMax<P>;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        NonMax(P::into_inner(P::from_inner(self.0) * P::from_inner(rhs.0)))
+        NonMax(NonMaxInner::new(self.0.get() * rhs.0.get()).unwrap())
     }
 }
 impl<P: NonMaxPrimitive> Div for NonMax<P> {
     type Output = NonMax<P>;
 
     fn div(self, rhs: Self) -> Self::Output {
-        NonMax(P::into_inner(P::from_inner(self.0) / P::from_inner(rhs.0)))
+        NonMax(NonMaxInner::new(self.0.get() / rhs.0.get()).unwrap())
     }
 }
 impl<P: NonMaxPrimitive> Rem for NonMax<P> {
     type Output = NonMax<P>;
 
     fn rem(self, rhs: Self) -> Self::Output {
-        NonMax(P::into_inner(P::from_inner(self.0) % P::from_inner(rhs.0)))
+        NonMax(NonMaxInner::new(self.0.get() % rhs.0.get()).unwrap())
     }
 }
 
@@ -221,7 +213,7 @@ macro_rules! nonmax_impl {
                 NonMax(unsafe { NonZero::new_unchecked(v ^ $primitive::MAX) })
             }
         }
-        unsafe impl NonMaxPrimitive for $primitive {
+        impl NonMaxPrimitive for $primitive {
             #[cfg(all(
                 debug_assertions,
                 not(feature = "disable_debuggable_nonmax")
@@ -233,98 +225,97 @@ macro_rules! nonmax_impl {
                 feature = "disable_debuggable_nonmax"
             ))]
             type NonMaxInner = NonZero<$primitive>;
-
-            const ZERO: Self::NonMaxInner =
+        }
+        impl NonMaxInner<$primitive> for <$primitive as NonMaxPrimitive>::NonMaxInner {
+            const ZERO: Self =
                 unsafe { NonMax::<$primitive>::new_unchecked_const(0) }.0;
 
-            const ONE: Self::NonMaxInner =
+            const ONE: Self =
                 unsafe { NonMax::<$primitive>::new_unchecked_const(1) }.0;
 
-            const MIN: Self::NonMaxInner = unsafe {
+            const MIN: Self = unsafe {
                 NonMax::<$primitive>::new_unchecked_const($primitive::MIN)
             }
             .0;
-
-            const MAX: Self::NonMaxInner = unsafe {
+            const MAX: Self = unsafe {
                 NonMax::<$primitive>::new_unchecked_const($primitive::MAX - 1)
             }
             .0;
-
-            unsafe fn into_inner_unchecked(self) -> Self::NonMaxInner {
-                unsafe { NonMax::<$primitive>::new_unchecked_const(self) }.0
-            }
-
-            fn try_into_inner(self) -> Option<Self::NonMaxInner> {
-                if self == $primitive::MAX {
+            fn new(v: $primitive) -> Option<Self> {
+                if v == $primitive::MAX {
                     return None;
                 }
-                Some(unsafe { self.into_inner_unchecked() })
+                Some(unsafe{Self::new_unchecked(v)})
             }
-
-            fn from_inner(inner: Self::NonMaxInner) -> Self {
+            unsafe fn new_unchecked(v: $primitive) -> Self {
+                unsafe { NonMax::<$primitive>::new_unchecked_const(v) }.0
+            }
+            fn get(self) -> $primitive {
                 #[cfg(all(
                     debug_assertions,
                     not(feature = "disable_debuggable_nonmax")
                 ))]
-                return inner;
+                return self;
 
                 #[cfg(any(
                     not(debug_assertions),
                     feature = "disable_debuggable_nonmax"
                 ))]
-                inner.get()
+                self.get()
             }
+            fn wrapping_add(self, rhs: Self) -> Self {
+                #[cfg(all(
+                    debug_assertions,
+                    not(feature = "disable_debuggable_nonmax")
+                ))]
+                let mut res = $primitive::wrapping_add(self, rhs);
 
-            fn wrapping_add(
-                lhs: Self::NonMaxInner,
-                rhs: Self::NonMaxInner,
-            ) -> Self::NonMaxInner {
                 #[cfg(any(
                     not(debug_assertions),
                     feature = "disable_debuggable_nonmax"
                 ))]
-                let (lhs, rhs) = (lhs.get(), rhs.get());
+                let mut res = self.get().wrapping_add(rhs.get());
 
-                let mut r = lhs.wrapping_add(rhs);
-
-                if r == $primitive::MAX {
-                    r = 0;
+                if res == $primitive::MAX {
+                    res = 0;
                 }
-                unsafe { NonMax::<$primitive>::new_unchecked_const(r) }.0
+                unsafe { Self::new_unchecked(res) }
             }
+            fn wrapping_sub(self, rhs: Self) -> Self {
+                #[cfg(all(
+                    debug_assertions,
+                    not(feature = "disable_debuggable_nonmax")
+                ))]
+                let mut res = $primitive::wrapping_sub(self, rhs);
 
-            fn wrapping_sub(
-                lhs: Self::NonMaxInner,
-                rhs: Self::NonMaxInner,
-            ) -> Self::NonMaxInner {
                 #[cfg(any(
                     not(debug_assertions),
                     feature = "disable_debuggable_nonmax"
                 ))]
-                let (lhs, rhs) = (lhs.get(), rhs.get());
+                let mut res = self.get().wrapping_sub(rhs.get());
 
-                let mut r = lhs.wrapping_sub(rhs);
-                if r == $primitive::MAX {
-                    r = 0;
+                if res == $primitive::MAX {
+                    res = 0;
                 }
-                unsafe { NonMax::<$primitive>::new_unchecked_const(r) }.0
+                unsafe { Self::new_unchecked(res) }
             }
+            fn wrapping_mul(self, rhs: Self) -> Self {
+                #[cfg(all(
+                    debug_assertions,
+                    not(feature = "disable_debuggable_nonmax")
+                ))]
+                let mut res = $primitive::wrapping_mul(self, rhs);
 
-            fn wrapping_mul(
-                lhs: Self::NonMaxInner,
-                rhs: Self::NonMaxInner,
-            ) -> Self::NonMaxInner {
                 #[cfg(any(
                     not(debug_assertions),
                     feature = "disable_debuggable_nonmax"
                 ))]
-                let (lhs, rhs) = (lhs.get(), rhs.get());
+                let mut res = self.get().wrapping_mul(rhs.get());
 
-                let mut r = lhs.wrapping_mul(rhs);
-                if r == $primitive::MAX {
-                    r = 0;
+                if res == $primitive::MAX {
+                    res = 0;
                 }
-                unsafe { NonMax::<$primitive>::new_unchecked_const(r) }.0
+                unsafe { Self::new_unchecked(res) }
             }
         }
         impl From<NonMax<$primitive>> for $primitive {
