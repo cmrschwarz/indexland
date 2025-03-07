@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{cell::RefCell, fmt::Display};
 
 use proc_macro2::Span;
 use quote::ToTokens;
@@ -7,21 +7,23 @@ use syn::{
     Token,
 };
 
+const INDEXLAND: &str = "indexland";
 const CRATE: &str = "crate";
 const ONLY: &str = "only";
 const OMIT: &str = "omit";
 const WHITELIST_AND_BLACKLIST_ERROR: &str =
     "omit and only are mutually exclusive";
-const INDEXLAND: &str = "indexland";
 
 #[derive(Default)]
 pub struct ErrorList {
-    pub errors: Option<syn::Error>,
+    pub errors: RefCell<Option<syn::Error>>,
 }
 pub struct Attrs {
     pub indexland_path: syn::Path,
     pub blacklist: Vec<syn::Ident>,
     pub whitelist: Vec<syn::Ident>,
+    pub blacklist_active: bool,
+    pub whitelist_active: bool,
 }
 
 pub struct Context {
@@ -31,19 +33,20 @@ pub struct Context {
 
 impl ErrorList {
     pub fn is_empty(&self) -> bool {
-        self.errors.is_none()
+        self.errors.borrow().is_none()
     }
-    pub fn push(&mut self, e: syn::Error) {
-        if let Some(prev) = &mut self.errors {
+    pub fn push(&self, e: syn::Error) {
+        let mut errs = self.errors.borrow_mut();
+        if let Some(prev) = &mut *errs {
             prev.combine(e);
         } else {
-            self.errors = Some(e);
+            *errs = Some(e);
         }
     }
-    fn error(&mut self, span: Span, message: impl Display) {
+    pub fn error(&self, span: Span, message: impl Display) {
         self.push(syn::Error::new(span, message));
     }
-    pub fn check(&mut self) -> syn::Result<()> {
+    pub fn check(&self) -> syn::Result<()> {
         match self.errors.take() {
             Some(e) => Err(e),
             None => Ok(()),
@@ -51,9 +54,15 @@ impl ErrorList {
     }
 }
 
+impl Drop for ErrorList {
+    fn drop(&mut self) {
+        assert!(self.is_empty())
+    }
+}
+
 impl Context {
     pub fn from_input(ast: &DeriveInput) -> Context {
-        let mut errs = ErrorList::default();
+        let errs = ErrorList::default();
         let mut indexland_path = None;
         let mut blacklist = Vec::new();
         let mut first_blacklist = None;
@@ -136,13 +145,9 @@ impl Context {
                 indexland_path,
                 whitelist,
                 blacklist,
+                blacklist_active: first_blacklist.is_some(),
+                whitelist_active: first_whitelist.is_some(),
             },
         }
-    }
-}
-
-impl Drop for Context {
-    fn drop(&mut self) {
-        assert!(self.error_list.is_empty())
     }
 }
