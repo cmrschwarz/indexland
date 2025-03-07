@@ -15,4 +15,4 @@ package.categories = ["data-structures", "memory-management", "rust-patterns"]
 package.keywords = ["index", "collection", "container", "vec", "slice"]
 
 [workspace.dependencies]
-indexland_derive = { version = "=0.2.1", path = "indexland_derive" }
+indexland_derive = { version = "=0.2.1", path = "indexland_derive", default-features = false }

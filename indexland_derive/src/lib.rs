@@ -36,7 +36,7 @@ fn compact_token_stream_stringify(res: &mut String, ts: TokenStream) {
                         | Prev::IdentOrLiteral
                         | Prev::ClosingAngleBracket
                 ) {
-                    res.push_str(" ");
+                    res.push(' ');
                 }
                 res.write_fmt(format_args!("{ident}")).unwrap();
                 prev = Prev::IdentOrLiteral;
@@ -53,19 +53,19 @@ fn compact_token_stream_stringify(res: &mut String, ts: TokenStream) {
             proc_macro2::TokenTree::Group(group) => {
                 match group.delimiter() {
                     proc_macro2::Delimiter::Parenthesis => {
-                        res.push_str("(");
+                        res.push('(');
                         compact_token_stream_stringify(res, group.stream());
-                        res.push_str(")");
+                        res.push(')');
                     }
                     proc_macro2::Delimiter::Brace => {
-                        res.push_str("{");
+                        res.push('{');
                         compact_token_stream_stringify(res, group.stream());
-                        res.push_str("}");
+                        res.push('}');
                     }
                     proc_macro2::Delimiter::Bracket => {
-                        res.push_str("[");
+                        res.push('[');
                         compact_token_stream_stringify(res, group.stream());
-                        res.push_str("]");
+                        res.push(']');
                     }
                     proc_macro2::Delimiter::None => {
                         compact_token_stream_stringify(res, group.stream())
@@ -75,7 +75,7 @@ fn compact_token_stream_stringify(res: &mut String, ts: TokenStream) {
             }
             proc_macro2::TokenTree::Literal(literal) => {
                 if prev == Prev::Comma || prev == Prev::IdentOrLiteral {
-                    res.push_str(" ");
+                    res.push(' ');
                 }
                 res.write_fmt(format_args!("{literal}")).unwrap();
                 prev = Prev::IdentOrLiteral;

@@ -116,7 +116,7 @@ impl Context {
                     let omit;
                     parenthesized!(omit in meta.input);
                     let variants = split_at_commas(omit.cursor().token_stream());
-                    while let Ok(_) = omit.parse::<TokenTree>() {}
+                    while omit.parse::<TokenTree>().is_ok() {}
 
                     if first_blacklist.is_none()  {
                         first_blacklist = Some(meta.path.span());
