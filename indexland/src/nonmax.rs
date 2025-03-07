@@ -91,16 +91,6 @@ impl<P: NonMaxPrimitive> NonMax<P> {
     pub const MIN: NonMax<P> = NonMax(P::NonMaxInner::MIN);
     pub const MAX: NonMax<P> = NonMax(P::NonMaxInner::MAX);
 
-    pub fn new(v: P) -> Option<Self> {
-        let inner = P::NonMaxInner::new(v)?;
-        Some(NonMax(inner))
-    }
-    /// # Safety
-    /// value must not be `MAX`
-    pub unsafe fn new_unchecked(v: P) -> Self {
-        NonMax(unsafe { P::NonMaxInner::new_unchecked(v) })
-    }
-
     pub fn wrapping_add(self, rhs: Self) -> Self {
         NonMax(self.0.wrapping_add(rhs.0))
     }
@@ -197,15 +187,15 @@ impl<P: NonMaxPrimitive> RemAssign for NonMax<P> {
 macro_rules! nonmax_impl {
     ($($primitive: ident),*) => {$(
         impl NonMax<$primitive> {
-            const fn new_const(v: $primitive) -> Option<Self> {
+            const fn new(v: $primitive) -> Option<Self> {
                 if v == $primitive::MAX {
                     return None;
                 }
-                Some(unsafe{Self::new_unchecked_const(v)})
+                Some(unsafe{Self::new_unchecked(v)})
             }
             /// # Safety
             #[doc = concat!("Must not be [`", stringify!($primitive), "::MAX`].")]
-            pub const unsafe fn new_unchecked_const(v: $primitive) -> Self {
+            pub const unsafe fn new_unchecked(v: $primitive) -> Self {
                 #[cfg(all(
                     debug_assertions,
                     not(feature = "disable_debuggable_nonmax")
@@ -233,10 +223,10 @@ macro_rules! nonmax_impl {
             type NonMaxInner = NonZero<$primitive>;
         }
         impl NonMaxInner<$primitive> for <$primitive as NonMaxPrimitive>::NonMaxInner {
-            const ZERO: Self = NonMax::<$primitive>::new_const(0).unwrap().0;
-            const ONE: Self = NonMax::<$primitive>::new_const(1).unwrap().0;
-            const MIN: Self = NonMax::<$primitive>::new_const($primitive::MIN).unwrap().0;
-            const MAX: Self = NonMax::<$primitive>::new_const($primitive::MAX - 1).unwrap().0;
+            const ZERO: Self = NonMax::<$primitive>::new(0).unwrap().0;
+            const ONE: Self = NonMax::<$primitive>::new(1).unwrap().0;
+            const MIN: Self = NonMax::<$primitive>::new($primitive::MIN).unwrap().0;
+            const MAX: Self = NonMax::<$primitive>::new($primitive::MAX - 1).unwrap().0;
 
             fn new(v: $primitive) -> Option<Self> {
                 if v == $primitive::MAX {
@@ -245,7 +235,7 @@ macro_rules! nonmax_impl {
                 Some(unsafe{Self::new_unchecked(v)})
             }
             unsafe fn new_unchecked(v: $primitive) -> Self {
-                unsafe { NonMax::<$primitive>::new_unchecked_const(v) }.0
+                unsafe { NonMax::<$primitive>::new_unchecked(v) }.0
             }
             fn get(self) -> $primitive {
                 #[cfg(all(
@@ -260,7 +250,10 @@ macro_rules! nonmax_impl {
                 ))]
                 self.get()
             }
+            // we could implement these wrapping functions wihtout unsafe
+            // but that would make them even more expensive in debug mode
             fn wrapping_add(self, rhs: Self) -> Self {
+
                 #[cfg(all(
                     debug_assertions,
                     not(feature = "disable_debuggable_nonmax")
@@ -323,7 +316,7 @@ macro_rules! nonmax_impl {
         impl TryFrom<$primitive> for NonMax<$primitive> {
             type Error = NonMaxOutOfRangeError;
             fn try_from(v: $primitive) -> Result<NonMax<$primitive>, NonMaxOutOfRangeError> {
-                NonMax::new(v).ok_or(NonMaxOutOfRangeError)
+                NonMax::<$primitive>::new(v).ok_or(NonMaxOutOfRangeError)
             }
         }
     )*};
@@ -339,7 +332,7 @@ macro_rules! nonmax_idx_impl {
             fn from_usize(v: usize) -> Self {
                 // TODO: maybe add features where we assert this?
                 #![allow(clippy::cast_possible_truncation)]
-                NonMax::new(v as $primitive).unwrap()
+                NonMax::<$primitive>::new(v as $primitive).unwrap()
             }
             fn into_usize(self) -> usize {
                 // TODO: maybe add features where we assert this?
