@@ -1,3 +1,4 @@
+#![allow(rustdoc::redundant_explicit_links)]
 #![doc = include_str!("../README.md")]
 
 mod context;
@@ -11,13 +12,13 @@ use proc_macro2::{Span, TokenStream};
 use syn::{Data, DeriveInput};
 
 /// Implements the following traits:
-/// - [`IdxNewtype`] + [`Idx`]
-/// - [`Default`]
-/// - [`Debug`] + [`Display`](core::fmt::Display)
-/// - [`Clone`] + [Copy]
-/// - [`PartialOrd`] + [`Ord`]
-/// - [`PartialEq`] + [`Eq`]
-/// - [`Hash`]
+/// - [`IdxNewtype`](indexland::idx::IdxNewtype) + [`Idx`](indexland::idx::Idx)
+/// - [`Default`](core::default::Default)
+/// - [`Debug`](core::fmt::Debug) + [`Display`](core::fmt::Display)
+/// - [`Clone`](core::clone::Clone) + [`Copy`](core::marker::Copy)
+/// - [`PartialOrd`](core::cmp::PartialOrd) + [`Ord`](core::cmp::Ord)
+/// - [`PartialEq`](core::cmp::PartialEq) + [`Eq`](core::cmp::Eq)
+/// - [`Hash`](core::hash::Hash)
 /// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
 /// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
 /// - [`From<usize>`](core::convert::From) + [`From<Self> for usize`](core::convert::From)
@@ -50,13 +51,13 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 }
 
 /// Implements the following traits:
-/// - [`IdxEnum`] + [`Idx`]
-/// - [`Default`] (uses first variant)
-/// - [`Debug`] + ( [`Display`](core::fmt::Display) intentionally omitted, implement as desired)
-/// - [`Clone`] + [`Copy`]
-/// - [`PartialOrd`] + [`Ord`]
-/// - [`PartialEq`] + [`Eq`]
-/// - [`Hash`]
+/// - [`IdxEnum`](indexland::idx::IdxEnum) + [`Idx`](indexland::idx::Idx)
+/// - [`Default`](core::default::Default) (uses first variant)
+/// - [`Debug`](core::fmt::Debug) + ( [`Display`](core::fmt::Display) intentionally omitted, implement as desired)
+/// - [`Clone`](core::clone::Clone) + [`Copy`](core::marker::Copy)
+/// - [`PartialOrd`](core::clone::Clone) + [`Ord`](core::cmp::Ord)
+/// - [`PartialEq`](core::clone::Clone) + [`Eq`](core::cmp::Eq)
+/// - [`Hash`](core::hash::Hash)
 /// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
 /// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
 /// - [`From<usize>`](core::convert::From) + [`From<Self> for usize`](core::convert::From)
