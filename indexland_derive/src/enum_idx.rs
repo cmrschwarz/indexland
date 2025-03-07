@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use proc_macro2::Ident;
 use proc_macro2::{Span, TokenStream};
-use quote::quote;
-use syn::{Data, DataEnum, DeriveInput, Fields, Generics};
+use quote::{quote, ToTokens};
+use syn::spanned::Spanned;
+use syn::{Data, DeriveInput, Fields, Generics};
 
 use crate::context::{Attrs, Context, ErrorList};
 
@@ -12,7 +13,6 @@ struct EnumCtx<'a> {
     attrs: Attrs,
     name: Ident,
     generics: &'a Generics,
-    enum_data: &'a DataEnum,
     idents: Vec<&'a Ident>,
     ident_strings: Vec<String>,
 }
@@ -157,7 +157,7 @@ fn enum_derive_sub(ctx: &EnumCtx) -> TokenStream {
         #[automatically_derived]
         impl ::core::ops::Sub for #name {
             type Output = Self;
-            fn add(self, rhs: Self) -> Self::Output {
+            fn sub(self, rhs: Self) -> Self::Output {
                 #indexland::Idx::from_usize(
                     #indexland::Idx::into_usize(self) - #indexland::Idx::into_usize(rhs),
                 )
@@ -183,7 +183,7 @@ fn enum_derive_sub_assign(ctx: &EnumCtx) -> TokenStream {
     quote! {
         #[automatically_derived]
         impl ::core::ops::SubAssign for #name {
-            fn add_assign(&mut self, rhs: Self) {
+            fn sub_assign(&mut self, rhs: Self) {
                 *self = *self - rhs;
             }
         }
@@ -239,47 +239,55 @@ fn enum_derive_eq(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn enum_derive_from_usize(ctx: &EnumCtx) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
         impl ::core::convert::From<usize> for #name {
             #[inline]
             fn from(v: usize) -> #name {
-                #name::from_usize(v)
+                #indexland::Idx::from_usize(v)
             }
         }
     }
 }
 
 fn enum_derive_from_enum(ctx: &EnumCtx) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
         impl ::core::convert::From<#name> for usize {
             #[inline]
             fn from(v: #name) -> usize {
-                v.into_usize()
+                #indexland::Idx::into_usize(v)
             }
         }
     }
 }
 
-fn derivation_list() -> HashMap<&'static str, EnumTraitDerivation> {
-    let mut derivations = HashMap::<&'static str, EnumTraitDerivation>::new();
-    derivations.insert("Idx", enum_derive_idx);
-    derivations.insert("IdxEnum", enum_derive_idx_enum);
-    derivations.insert("Default", enum_derive_default);
-    derivations.insert("Clone", enum_derive_clone);
-    derivations.insert("Copy", enum_derive_copy);
-    derivations.insert("Add", enum_derive_add);
-    derivations.insert("AddAssign", enum_derive_add_assign);
-    derivations.insert("Sub", enum_derive_sub);
-    derivations.insert("SubAssign", enum_derive_sub_assign);
-    derivations.insert("Hash", enum_derive_hash);
-    derivations.insert("PartialOrd", enum_derive_partial_ord);
-    derivations.insert("Ord", enum_derive_ord);
-    derivations.insert("PartialEq", enum_derive_partial_eq);
-    derivations.insert("Eq", enum_derive_eq);
+fn derivation_list(ctx: &EnumCtx) -> HashMap<String, EnumTraitDerivation> {
+    let mut derivations = HashMap::<String, EnumTraitDerivation>::new();
+    derivations.insert("Idx".to_string(), enum_derive_idx);
+    derivations.insert("IdxEnum".to_string(), enum_derive_idx_enum);
+    derivations.insert("Debug".to_string(), enum_derive_debug);
+    derivations.insert("Default".to_string(), enum_derive_default);
+    derivations.insert("Clone".to_string(), enum_derive_clone);
+    derivations.insert("Copy".to_string(), enum_derive_copy);
+    derivations.insert("Add".to_string(), enum_derive_add);
+    derivations.insert("AddAssign".to_string(), enum_derive_add_assign);
+    derivations.insert("Sub".to_string(), enum_derive_sub);
+    derivations.insert("SubAssign".to_string(), enum_derive_sub_assign);
+    derivations.insert("Hash".to_string(), enum_derive_hash);
+    derivations.insert("PartialOrd".to_string(), enum_derive_partial_ord);
+    derivations.insert("Ord".to_string(), enum_derive_ord);
+    derivations.insert("PartialEq".to_string(), enum_derive_partial_eq);
+    derivations.insert("Eq".to_string(), enum_derive_eq);
+    derivations.insert("From<usize>".to_string(), enum_derive_from_usize);
+    derivations.insert(
+        format!("From<{}> for usize", ctx.name).to_string(),
+        enum_derive_from_enum,
+    );
     derivations
 }
 
@@ -293,7 +301,7 @@ pub fn derive_idx_enum_inner(
         ));
     };
 
-    let mut ctx = Context::from_input(&ast);
+    let ctx = Context::from_input(&ast);
 
     let name = ast.ident;
     let generics = &ast.generics;
@@ -320,27 +328,23 @@ pub fn derive_idx_enum_inner(
         ));
     }
 
-    let mut enum_ctx = EnumCtx {
+    let enum_ctx = EnumCtx {
         error_list: ctx.error_list,
         attrs: ctx.attrs,
         name,
         generics,
-        enum_data,
         idents,
         ident_strings,
     };
 
-    let mut derivation_list = derivation_list();
+    let mut derivation_list = derivation_list(&enum_ctx);
 
     for entry in &enum_ctx.attrs.blacklist {
-        let descr = entry.to_string();
+        let descr = entry.to_token_stream().to_string();
         if derivation_list.remove(&*descr).is_none() {
             enum_ctx.error_list.error(
                 entry.span(),
-                format!(
-                    "{} does not name a trait that will be derived",
-                    entry
-                ),
+                format!("{descr} does not name a trait that will be derived"),
             );
         }
     }
@@ -349,7 +353,7 @@ pub fn derive_idx_enum_inner(
 
     if enum_ctx.attrs.whitelist_active {
         for entry in &enum_ctx.attrs.whitelist {
-            let descr = entry.to_string();
+            let descr = entry.to_token_stream().to_string();
             match derivation_list.get(&*descr) {
                 Some(deriv) => {
                     derivations.push(deriv(&enum_ctx));
@@ -357,8 +361,7 @@ pub fn derive_idx_enum_inner(
                 None => enum_ctx.error_list.error(
                     entry.span(),
                     format!(
-                        "{} does not name a trait that will be derived",
-                        entry
+                        "{descr} does not name a trait that will be derived"
                     ),
                 ),
             }

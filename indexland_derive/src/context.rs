@@ -20,9 +20,9 @@ pub struct ErrorList {
 }
 pub struct Attrs {
     pub indexland_path: syn::Path,
-    pub blacklist: Vec<syn::Ident>,
-    pub whitelist: Vec<syn::Ident>,
-    pub blacklist_active: bool,
+    pub blacklist: Vec<syn::Expr>,
+    pub whitelist: Vec<syn::Expr>,
+    // could be active despite being empty
     pub whitelist_active: bool,
 }
 
@@ -145,7 +145,6 @@ impl Context {
                 indexland_path,
                 whitelist,
                 blacklist,
-                blacklist_active: first_blacklist.is_some(),
                 whitelist_active: first_whitelist.is_some(),
             },
         }

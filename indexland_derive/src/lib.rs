@@ -21,7 +21,8 @@ use syn::{Data, DeriveInput};
 /// - [`Hash`](core::hash::Hash)
 /// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
 /// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
-/// - [`From<usize>`](core::convert::From) + [`From<Self> for usize`](core::convert::From)
+/// - [`From<usize>`](core::convert::From)
+/// - [`From<Self> for usize`](core::convert::From)
 ///
 /// ## Example
 /// ```
@@ -60,7 +61,8 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 /// - [`Hash`](core::hash::Hash)
 /// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
 /// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
-/// - [`From<usize>`](core::convert::From) + [`From<Self> for usize`](core::convert::From)
+/// - [`From<usize>`](core::convert::From)
+/// - [`From<Self> for usize`](core::convert::From)
 ///
 ///
 /// ## Example
