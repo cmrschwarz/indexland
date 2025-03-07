@@ -29,7 +29,7 @@ pub enum GetDisjointMutError {
     OverlappingIndices,
 }
 
-/// `IndexSlice` version of the [`std::slice::get_disjoint_mut`] API
+/// `IndexSlice` version of the [`slice::get_disjoint_mut`] API
 /// # Safety
 /// If `is_in_bounds()` returns `true` it must be safe to index the slice with
 /// the indices.

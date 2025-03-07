@@ -5,7 +5,7 @@
 //! meaning that you cannot iterate over a `Range<IdxNewtype>`.
 //!
 //! [`IdxRange`] implements iteration for `Idx` implementors and adds
-//! convenient conversions to and from [`Range`](core::ops::Range).
+//! convenient conversions to and from [`Range`].
 
 #![allow(clippy::inline_always)]
 use core::ops::{Bound, Range, RangeBounds, RangeInclusive};

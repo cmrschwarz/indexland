@@ -19,7 +19,6 @@ Increased type safety and code readability without runtime overhead.
 
 ## Newtype Indices
 ```rust
-# #[cfg(feature = "alloc")] {
 use indexland::{Idx, IndexVec};
 
 #[derive(Idx)]
@@ -34,7 +33,6 @@ struct Node<T> {
 struct DoublyLinkedList<T> {
     nodes: IndexVec<NodeId, Node<T>>,
 }
-# }
 ```
 
 ## Enums as Indices
