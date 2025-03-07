@@ -3,7 +3,9 @@ resolver = "2"
 
 members = ["indexland", "indexland_derive"]
 
+# remember to update dependency version on indexland_derive below aswell
 package.version = "0.2.1"
+
 package.license = "MIT"
 package.authors = ["Christian Schwarz <cmrs@cmrs.io>"]
 package.repository = "https://github.com/cmrschwarz/indexland"
@@ -11,3 +13,6 @@ package.edition = "2021"
 package.rust-version = "1.80"
 package.categories = ["data-structures", "memory-management", "rust-patterns"]
 package.keywords = ["index", "collection", "container", "vec", "slice"]
+
+[workspace.dependencies]
+indexland_derive = { version = "=0.2.1", path = "indexland_derive" }

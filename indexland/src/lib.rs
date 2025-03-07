@@ -97,6 +97,19 @@ pub use index_small_vec::IndexSmallVec;
 #[doc(inline)]
 pub use {index_hash_map::IndexHashMap, index_hash_set::IndexHashSet};
 
+// re-export the utility crates that we bundle
+#[cfg(feature = "arrayvec")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arrayvec")))]
+pub use arrayvec;
+
+#[cfg(feature = "smallvec")]
+#[cfg_attr(docsrs, doc(cfg(feature = "smallvec")))]
+pub use smallvec;
+
+#[cfg(feature = "indexmap")]
+#[cfg_attr(docsrs, doc(cfg(feature = "indexmap")))]
+pub use indexmap;
+
 // used in macros, not public api
 #[doc(hidden)]
 pub mod __private {
