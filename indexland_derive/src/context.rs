@@ -1,10 +1,11 @@
 use std::{cell::RefCell, fmt::Display};
 
-use proc_macro2::Span;
+use proc_macro2::TokenTree;
+use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
 use syn::{
     parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput,
-    Ident, PathSegment, Token,
+    Ident, PathSegment,
 };
 
 const INDEXLAND: &str = "indexland";
@@ -20,8 +21,8 @@ pub struct ErrorList {
 }
 pub struct Attrs {
     pub indexland_path: syn::Path,
-    pub blacklist: Vec<syn::Expr>,
-    pub whitelist: Vec<syn::Expr>,
+    pub blacklist: Vec<TokenStream>,
+    pub whitelist: Vec<TokenStream>,
     // could be active despite being empty
     pub whitelist_active: bool,
 }
@@ -60,6 +61,28 @@ impl Drop for ErrorList {
     }
 }
 
+fn split_at_commas(tokens: TokenStream) -> Vec<TokenStream> {
+    let mut groups = Vec::new();
+    let mut current_group = TokenStream::new();
+
+    for token in tokens {
+        if let TokenTree::Punct(punct) = &token {
+            if punct.as_char() == ',' {
+                groups.push(current_group);
+                current_group = TokenStream::new();
+                continue;
+            }
+        }
+        current_group.extend(Some(token));
+    }
+
+    if !current_group.is_empty() {
+        groups.push(current_group);
+    }
+
+    groups
+}
+
 impl Context {
     pub fn from_input(ast: &DeriveInput) -> Context {
         let errs = ErrorList::default();
@@ -93,7 +116,9 @@ impl Context {
                     // #[indexland(omit(Display))]
                     let omit;
                     parenthesized!(omit in meta.input);
-                    let idents = omit.parse_terminated(|p| p.parse(), Token![,])?;
+                    let variants = split_at_commas(omit.cursor().token_stream());
+                    while let Ok(_) = omit.parse::<TokenTree>() {}
+
                     if first_blacklist.is_none()  {
                         first_blacklist = Some(meta.path.span());
                         if let Some(first) = first_whitelist {
@@ -103,13 +128,13 @@ impl Context {
                     if first_whitelist.is_some() {
                         errs.error(meta.path.span(), WHITELIST_AND_BLACKLIST_ERROR);
                     }
-                    blacklist.extend(idents);
+                    blacklist.extend(variants);
                 }
                 else if meta.path.is_ident(ONLY) {
                     // #[indexland(only(Idx))]
                     let only;
                     parenthesized!(only in meta.input);
-                    let idents = only.parse_terminated(|p| p.parse(), Token![,])?;
+                    let elements = split_at_commas(only.cursor().token_stream());
                     if first_whitelist.is_none()  {
                         first_whitelist = Some(meta.path.span());
                         if let Some(first) = first_blacklist {
@@ -119,7 +144,7 @@ impl Context {
                     if first_blacklist.is_some() {
                         errs.error(meta.path.span(), WHITELIST_AND_BLACKLIST_ERROR);
                     }
-                    whitelist.extend(idents);
+                    whitelist.extend(elements);
                 }
                 else {
                     errs.push(meta.error(format!(

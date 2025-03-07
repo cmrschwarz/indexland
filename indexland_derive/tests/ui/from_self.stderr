@@ -1,0 +1,5 @@
+error: Use `From<Self>` instead of `From<Bar>`
+ --> tests/ui/from_self.rs:5:22
+  |
+5 |     #[indexland(omit(From<Bar>))]
+  |                      ^^^^

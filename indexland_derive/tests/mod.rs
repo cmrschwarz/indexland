@@ -51,6 +51,30 @@ fn derive_enum_omit() {
 }
 
 #[test]
+fn derive_enum_omit_from() {
+    #[derive(Idx, Default)]
+    #[indexland(omit(From<Self> for usize, Default))]
+    pub enum Bar {
+        A,
+        #[default]
+        B,
+    }
+
+    impl From<Bar> for usize {
+        fn from(value: Bar) -> Self {
+            Idx::into_usize(value)
+        }
+    }
+
+    let foo: EnumIndexArray<Bar, i32> = enum_index_array![
+        Bar::A => 1,
+        Bar::B => 2,
+    ];
+
+    assert_eq!(foo[Bar::default()], 2);
+}
+
+#[test]
 fn ui() {
     let t = trybuild::TestCases::new();
     t.compile_fail("tests/ui/**/*.rs");
