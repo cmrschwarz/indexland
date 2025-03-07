@@ -89,6 +89,8 @@ pub fn derive_idx_newtype_inner(
 
     let idx_derivation = derive_idx_for_struct(&mut ctx, &ast, struct_data)?;
 
+    ctx.check()?;
+
     let indexland = &ctx.attrs.indexland_path;
 
     let output = quote! {
@@ -183,6 +185,6 @@ pub fn derive_idx_newtype_inner(
         }
         #idx_derivation
     };
+
     Ok(output)
-    // Err(syn::Error::new(Span::call_site(), output.to_string()))
 }

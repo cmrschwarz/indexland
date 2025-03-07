@@ -16,15 +16,16 @@ pub struct ErrorList {
 }
 pub struct Attrs {
     pub indexland_path: syn::Path,
+    //TODO: implement black and whitelist of traits to implement
 }
 
 pub struct Context {
-    pub errors: ErrorList,
+    pub error_list: ErrorList,
     pub attrs: Attrs,
 }
 
 impl ErrorList {
-    pub fn push_error(&mut self, e: syn::Error) {
+    pub fn push(&mut self, e: syn::Error) {
         self.errors.push(e);
     }
     pub fn error_spanned_by(
@@ -110,15 +111,15 @@ impl Context {
                         indexland_path = Some(path);
                     }
                 } else {
-                    errs.push_error(meta.error(format!(
-                        "unknown indexland attribute {}",
+                    errs.push(meta.error(format!(
+                        "unknown {INDEXLAND} attribute {}",
                         meta.path.to_token_stream().to_string()
                     )));
                 }
                 Ok(())
             });
             if let Err(e) = res {
-                errs.push_error(e);
+                errs.push(e);
             }
         }
 
@@ -132,8 +133,30 @@ impl Context {
         });
 
         Context {
-            errors: errs,
+            error_list: errs,
             attrs: Attrs { indexland_path },
         }
+    }
+
+    pub fn check(&mut self) -> syn::Result<()> {
+        let mut errors =
+            std::mem::take(&mut self.error_list.errors).into_iter();
+
+        let mut combined = match errors.next() {
+            Some(first) => first,
+            None => return Ok(()),
+        };
+
+        for rest in errors {
+            combined.combine(rest);
+        }
+
+        Err(combined)
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        assert!(self.error_list.errors.is_empty())
     }
 }

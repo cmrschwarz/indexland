@@ -17,7 +17,7 @@ pub fn derive_idx_for_enum(
 
     for variant in &enum_data.variants {
         if !matches!(variant.fields, Fields::Unit) {
-            ctx.errors.push_error(syn::Error::new(
+            ctx.error_list.push(syn::Error::new(
                 Span::call_site(),
                 "This macro does not support enum variants with payload.",
             ));
@@ -91,6 +91,8 @@ pub fn derive_idx_enum_inner(
     let count = idents.len();
 
     let idx_derivation = derive_idx_for_enum(&mut ctx, &ast, enum_data)?;
+
+    ctx.check()?;
 
     let indexland = &ctx.attrs.indexland_path;
 
@@ -170,6 +172,6 @@ pub fn derive_idx_enum_inner(
         }
         #idx_derivation
     };
+
     Ok(output)
-    // Err(syn::Error::new(Span::call_site(), output.to_string()))
 }
