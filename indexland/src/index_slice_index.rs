@@ -5,11 +5,17 @@ use crate::{
     Idx, IdxRange, IdxRangeInclusive, IndexSlice,
 };
 
+/// # Safety
+/// if the input of `get_unchecked(_mut)` was a valid pointer, so must be the output
 pub unsafe trait IndexSliceIndex<S: ?Sized> {
     type Output: ?Sized;
     fn get(self, slice: &S) -> Option<&Self::Output>;
     fn get_mut(self, slice: &mut S) -> Option<&mut Self::Output>;
+    /// # Safety
+    /// `slice` must be a valid pointer for the expected range
     unsafe fn get_unchecked(self, slice: *const S) -> *const Self::Output;
+    /// # Safety
+    /// `slice` must be a valid pointer for the expected range
     unsafe fn get_unchecked_mut(self, slice: *mut S) -> *mut Self::Output;
     fn index(self, slice: &S) -> &Self::Output;
     fn index_mut(self, slice: &mut S) -> &mut Self::Output;
@@ -108,7 +114,7 @@ unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>>
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn index(self, slice: &IndexSlice<I, T>) -> &IndexSlice<I, T> {
         IndexSlice::from_slice(&slice.as_slice()[self.usize_range()])
     }
@@ -150,7 +156,7 @@ macro_rules! index_slice_partial_range_impl {
                 slice: *const IndexSlice<I, T>,
             ) -> *const IndexSlice<I, T> {
                 let slice = slice as *mut [T];
-                let range = self.as_usize_range((slice as *const [T]).len());
+                let range = self.as_usize_range(slice.len());
                 unsafe {
                     core::ptr::slice_from_raw_parts(
                         slice.cast::<T>().add(range.start),
@@ -164,7 +170,7 @@ macro_rules! index_slice_partial_range_impl {
                 slice: *mut IndexSlice<I, T>,
             ) -> *mut IndexSlice<I, T> {
                 let slice = slice as *mut [T];
-                let range = self.as_usize_range((slice as *const [T]).len());
+                let range = self.as_usize_range(slice.len());
                 unsafe {
                     core::ptr::slice_from_raw_parts_mut(
                         slice.cast::<T>().add(range.start),
@@ -222,7 +228,7 @@ unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for IdxRange<I> {
     ) -> *mut IndexSlice<I, T> {
         unsafe { Range::from(self).get_unchecked_mut(slice) }
     }
-    #[inline(always)]
+    #[inline]
     fn index(self, slice: &IndexSlice<I, T>) -> &IndexSlice<I, T> {
         Range::from(self).index(slice)
     }

@@ -166,6 +166,7 @@ impl<I: Idx, T> IndexSlice<I, T> {
     /// # Safety
     /// Calling this method with overlapping keys is undefined behavior
     /// even if the resulting references are not used.
+    #[allow(clippy::needless_pass_by_value)]
     pub unsafe fn get_disjoint_unchecked_mut<
         ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
         const N: usize,
@@ -191,6 +192,7 @@ impl<I: Idx, T> IndexSlice<I, T> {
         }
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     pub fn get_disjoint_mut<
         ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
         const N: usize,

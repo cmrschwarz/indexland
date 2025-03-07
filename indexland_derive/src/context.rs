@@ -113,7 +113,7 @@ impl Context {
                 } else {
                     errs.push(meta.error(format!(
                         "unknown {INDEXLAND} attribute {}",
-                        meta.path.to_token_stream().to_string()
+                        meta.path.to_token_stream()
                     )));
                 }
                 Ok(())

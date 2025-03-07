@@ -71,7 +71,7 @@ impl<I: Copy> IdxRangeInclusive<I> {
 
 /// we cannot implement the reverse,
 /// `impl<I: Idx> From<IdxRangeInclusive<I>> for RangeInclusive<I>`
-/// because there's no way to construct a RangeInclusive in it's exhausted
+/// because there's no way to construct a [`RangeInclusive`] in it's exhausted
 /// state for non [`Step`](core::iter::Step) indices
 impl<I: Idx> From<RangeInclusive<I>> for IdxRangeInclusive<I> {
     fn from(r: RangeInclusive<I>) -> Self {
@@ -112,17 +112,17 @@ impl<I: Idx> RangeAsIdxRange<I> for Range<I> {
 pub trait RangeInclusiveAsIdxRangeInclusive<I> {
     fn idx_range_inclusive(self) -> IdxRangeInclusive<I>;
 }
-impl<I: Idx> RangeInclusiveAsIdxRangeInclusive<I> for IdxRangeInclusive<I> {
+impl<I: Idx> RangeInclusiveAsIdxRangeInclusive<I> for RangeInclusive<I> {
     fn idx_range_inclusive(self) -> IdxRangeInclusive<I> {
         IdxRangeInclusive::from(self)
     }
 }
 
 pub trait UsizeRangeIntoIdxRange: Sized {
-    fn into_idx_range<I: Idx>(&self) -> IdxRange<I>;
+    fn into_idx_range<I: Idx>(self) -> IdxRange<I>;
 }
 impl UsizeRangeIntoIdxRange for Range<usize> {
-    fn into_idx_range<I: Idx>(&self) -> IdxRange<I> {
+    fn into_idx_range<I: Idx>(self) -> IdxRange<I> {
         IdxRange::from(Range {
             start: I::from_usize(self.start),
             end: I::from_usize(self.start),
