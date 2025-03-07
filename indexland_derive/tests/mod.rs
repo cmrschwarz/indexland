@@ -1,7 +1,8 @@
 use std::ops::Add;
 
 use indexland::{
-    enum_index_array, EnumIndexArray, Idx, IdxEnum, IndexArray, IndexArrayVec,
+    enum_index_array, index_array, EnumIndexArray, Idx, IdxEnum, IdxNewtype,
+    IndexArray, IndexArrayVec,
 };
 
 #[test]
@@ -72,6 +73,24 @@ fn derive_enum_omit_from() {
     ];
 
     assert_eq!(foo[Bar::default()], 2);
+}
+
+#[test]
+fn derive_newtype_omit() {
+    #[derive(Idx)]
+    #[indexland(omit(Add))]
+    pub struct FooId(u32);
+
+    impl Add for FooId {
+        type Output = Self;
+        fn add(self, rhs: Self) -> Self::Output {
+            FooId(self.0 + rhs.0)
+        }
+    }
+
+    let arr: IndexArray<FooId, FooId, 3> =
+        index_array![FooId::ONE, FooId::ONE, FooId::ONE];
+    assert_eq!(arr.into_iter().fold(FooId::ZERO, Add::add), FooId::new(3));
 }
 
 #[test]

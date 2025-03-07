@@ -20,7 +20,7 @@ struct EnumCtx<'a> {
 
 type EnumTraitDerivation = fn(&EnumCtx) -> TokenStream;
 
-fn enum_derive_idx(ctx: &EnumCtx) -> TokenStream {
+fn derive_idx(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
 
@@ -57,7 +57,7 @@ fn enum_derive_idx(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
+fn derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     let (impl_generics, ty_generics, where_clause) =
@@ -74,7 +74,7 @@ fn enum_derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_default(ctx: &EnumCtx) -> TokenStream {
+fn derive_default(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
@@ -87,7 +87,7 @@ fn enum_derive_default(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_clone(ctx: &EnumCtx) -> TokenStream {
+fn derive_clone(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
@@ -99,7 +99,7 @@ fn enum_derive_clone(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_copy(ctx: &EnumCtx) -> TokenStream {
+fn derive_copy(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
@@ -107,7 +107,7 @@ fn enum_derive_copy(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_hash(ctx: &EnumCtx) -> TokenStream {
+fn derive_hash(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
@@ -119,7 +119,7 @@ fn enum_derive_hash(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_debug(ctx: &EnumCtx) -> TokenStream {
+fn derive_debug(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.name;
     let idents = &ctx.idents;
     let ident_strings = &ctx.ident_strings;
@@ -135,7 +135,7 @@ fn enum_derive_debug(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_add(ctx: &EnumCtx) -> TokenStream {
+fn derive_add(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
@@ -151,7 +151,7 @@ fn enum_derive_add(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_sub(ctx: &EnumCtx) -> TokenStream {
+fn derive_sub(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
@@ -167,7 +167,7 @@ fn enum_derive_sub(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_add_assign(ctx: &EnumCtx) -> TokenStream {
+fn derive_add_assign(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
@@ -179,7 +179,7 @@ fn enum_derive_add_assign(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_sub_assign(ctx: &EnumCtx) -> TokenStream {
+fn derive_sub_assign(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
@@ -191,7 +191,7 @@ fn enum_derive_sub_assign(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_partial_ord(ctx: &EnumCtx) -> TokenStream {
+fn derive_partial_ord(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
@@ -205,7 +205,7 @@ fn enum_derive_partial_ord(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_ord(ctx: &EnumCtx) -> TokenStream {
+fn derive_ord(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
@@ -219,7 +219,7 @@ fn enum_derive_ord(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
+fn derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
@@ -231,7 +231,7 @@ fn enum_derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_eq(ctx: &EnumCtx) -> TokenStream {
+fn derive_eq(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
@@ -239,7 +239,7 @@ fn enum_derive_eq(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_from_usize(ctx: &EnumCtx) -> TokenStream {
+fn derive_from_usize(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
@@ -253,7 +253,7 @@ fn enum_derive_from_usize(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn enum_derive_from_enum(ctx: &EnumCtx) -> TokenStream {
+fn derive_from_self_for_usize(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
@@ -269,23 +269,23 @@ fn enum_derive_from_enum(ctx: &EnumCtx) -> TokenStream {
 
 fn derivation_list() -> HashMap<&'static str, EnumTraitDerivation> {
     let mut derivations = HashMap::<&'static str, EnumTraitDerivation>::new();
-    derivations.insert("Idx", enum_derive_idx);
-    derivations.insert("IdxEnum", enum_derive_idx_enum);
-    derivations.insert("Debug", enum_derive_debug);
-    derivations.insert("Default", enum_derive_default);
-    derivations.insert("Clone", enum_derive_clone);
-    derivations.insert("Copy", enum_derive_copy);
-    derivations.insert("Add", enum_derive_add);
-    derivations.insert("AddAssign", enum_derive_add_assign);
-    derivations.insert("Sub", enum_derive_sub);
-    derivations.insert("SubAssign", enum_derive_sub_assign);
-    derivations.insert("Hash", enum_derive_hash);
-    derivations.insert("PartialOrd", enum_derive_partial_ord);
-    derivations.insert("Ord", enum_derive_ord);
-    derivations.insert("PartialEq", enum_derive_partial_eq);
-    derivations.insert("Eq", enum_derive_eq);
-    derivations.insert("From<usize>", enum_derive_from_usize);
-    derivations.insert("From<Self> for usize", enum_derive_from_enum);
+    derivations.insert("Idx", derive_idx);
+    derivations.insert("IdxEnum", derive_idx_enum);
+    derivations.insert("Debug", derive_debug);
+    derivations.insert("Default", derive_default);
+    derivations.insert("Clone", derive_clone);
+    derivations.insert("Copy", derive_copy);
+    derivations.insert("Add", derive_add);
+    derivations.insert("AddAssign", derive_add_assign);
+    derivations.insert("Sub", derive_sub);
+    derivations.insert("SubAssign", derive_sub_assign);
+    derivations.insert("Hash", derive_hash);
+    derivations.insert("PartialOrd", derive_partial_ord);
+    derivations.insert("Ord", derive_ord);
+    derivations.insert("PartialEq", derive_partial_eq);
+    derivations.insert("Eq", derive_eq);
+    derivations.insert("From<usize>", derive_from_usize);
+    derivations.insert("From<Self> for usize", derive_from_self_for_usize);
     derivations
 }
 
@@ -353,7 +353,6 @@ pub fn derive_idx_enum_inner(
     };
 
     let mut derivation_list = derivation_list();
-
     for entry in &enum_ctx.attrs.blacklist {
         let descr = token_stream_to_compact_string(entry);
         if derivation_list.remove(&*descr).is_none() {
@@ -362,7 +361,6 @@ pub fn derive_idx_enum_inner(
     }
 
     let mut derivations = Vec::new();
-
     if enum_ctx.attrs.whitelist_active {
         for entry in &enum_ctx.attrs.whitelist {
             let descr = token_stream_to_compact_string(entry);
