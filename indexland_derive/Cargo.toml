@@ -20,6 +20,7 @@ proc-macro = true
 proc-macro2 = { version = "1.0.93" }
 syn = { version = "2.0.98", features = ["parsing"] }
 quote = "1.0.38"
+trybuild = "1.0.104"
 
 [dev-dependencies]
-indexland = { path = "../indexland" }
+indexland = { path = "../indexland", features = ["derive"] }

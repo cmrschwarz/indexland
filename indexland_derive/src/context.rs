@@ -3,8 +3,8 @@ use std::{cell::RefCell, fmt::Display};
 use proc_macro2::Span;
 use quote::ToTokens;
 use syn::{
-    punctuated::Punctuated, spanned::Spanned, DeriveInput, Ident, PathSegment,
-    Token,
+    parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput,
+    Ident, PathSegment, Token,
 };
 
 const INDEXLAND: &str = "indexland";
@@ -91,7 +91,9 @@ impl Context {
                 }
                 else if meta.path.is_ident(OMIT) {
                     // #[indexland(omit(Display))]
-                    let idents = meta.input.parse_terminated(|p| p.parse(), Token![,])?;
+                    let omit;
+                    parenthesized!(omit in meta.input);
+                    let idents = omit.parse_terminated(|p| p.parse(), Token![,])?;
                     if first_blacklist.is_none()  {
                         first_blacklist = Some(meta.path.span());
                         if let Some(first) = first_whitelist {
@@ -105,7 +107,9 @@ impl Context {
                 }
                 else if meta.path.is_ident(ONLY) {
                     // #[indexland(only(Idx))]
-                    let idents = meta.input.parse_terminated(|p| p.parse(), Token![,])?;
+                    let only;
+                    parenthesized!(only in meta.input);
+                    let idents = only.parse_terminated(|p| p.parse(), Token![,])?;
                     if first_whitelist.is_none()  {
                         first_whitelist = Some(meta.path.span());
                         if let Some(first) = first_blacklist {

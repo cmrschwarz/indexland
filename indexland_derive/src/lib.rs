@@ -31,7 +31,7 @@ use syn::{Data, DeriveInput};
 /// #[derive(IdxNewtype)]
 /// struct FooId(u32);
 /// ```
-#[proc_macro_derive(IdxNewtype)]
+#[proc_macro_derive(IdxNewtype, attributes(indexland))]
 pub fn derive_idx_newtype(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
@@ -76,7 +76,7 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 ///     Blue,
 /// };
 /// ```
-#[proc_macro_derive(IdxEnum)]
+#[proc_macro_derive(IdxEnum, attributes(indexland))]
 pub fn derive_idx_enum(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
@@ -101,7 +101,7 @@ pub fn derive_idx_enum(
 ///     Blue,
 /// };
 /// ```
-#[proc_macro_derive(Idx)]
+#[proc_macro_derive(Idx, attributes(indexland))]
 pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_idx_inner(syn::parse_macro_input!(input as DeriveInput))
         .unwrap_or_else(|e| e.to_compile_error())

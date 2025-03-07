@@ -328,6 +328,8 @@ pub fn derive_idx_enum_inner(
         ));
     }
 
+    ctx.error_list.check()?;
+
     let enum_ctx = EnumCtx {
         error_list: ctx.error_list,
         attrs: ctx.attrs,
@@ -344,7 +346,9 @@ pub fn derive_idx_enum_inner(
         if derivation_list.remove(&*descr).is_none() {
             enum_ctx.error_list.error(
                 entry.span(),
-                format!("{descr} does not name a trait that will be derived"),
+                format!(
+                    "`{descr}` does not name a trait that will be derived"
+                ),
             );
         }
     }
@@ -361,7 +365,7 @@ pub fn derive_idx_enum_inner(
                 None => enum_ctx.error_list.error(
                     entry.span(),
                     format!(
-                        "{descr} does not name a trait that will be derived"
+                        "`{descr}` does not name a trait that will be derived"
                     ),
                 ),
             }
@@ -371,6 +375,8 @@ pub fn derive_idx_enum_inner(
             derivations.push(deriv(&enum_ctx));
         }
     }
+
+    enum_ctx.error_list.check()?;
 
     let output = quote! {
         #(#derivations)*

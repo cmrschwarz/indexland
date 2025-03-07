@@ -1,0 +1,11 @@
+error: omit and only are mutually exclusive
+ --> tests/ui/omit_and_only.rs:5:17
+  |
+5 |     #[indexland(omit(Default), only(Add))]
+  |                 ^^^^
+
+error: omit and only are mutually exclusive
+ --> tests/ui/omit_and_only.rs:5:32
+  |
+5 |     #[indexland(omit(Default), only(Add))]
+  |                                ^^^^
