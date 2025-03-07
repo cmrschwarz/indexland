@@ -197,6 +197,12 @@ impl<P: NonMaxPrimitive> RemAssign for NonMax<P> {
 macro_rules! nonmax_impl {
     ($($primitive: ident),*) => {$(
         impl NonMax<$primitive> {
+            const fn new_const(v: $primitive) -> Option<Self> {
+                if v == $primitive::MAX {
+                    return None;
+                }
+                Some(unsafe{Self::new_unchecked_const(v)})
+            }
             /// # Safety
             #[doc = concat!("Must not be [`", stringify!($primitive), "::MAX`].")]
             pub const unsafe fn new_unchecked_const(v: $primitive) -> Self {
@@ -227,20 +233,11 @@ macro_rules! nonmax_impl {
             type NonMaxInner = NonZero<$primitive>;
         }
         impl NonMaxInner<$primitive> for <$primitive as NonMaxPrimitive>::NonMaxInner {
-            const ZERO: Self =
-                unsafe { NonMax::<$primitive>::new_unchecked_const(0) }.0;
+            const ZERO: Self = NonMax::<$primitive>::new_const(0).unwrap().0;
+            const ONE: Self = NonMax::<$primitive>::new_const(1).unwrap().0;
+            const MIN: Self = NonMax::<$primitive>::new_const($primitive::MIN).unwrap().0;
+            const MAX: Self = NonMax::<$primitive>::new_const($primitive::MAX - 1).unwrap().0;
 
-            const ONE: Self =
-                unsafe { NonMax::<$primitive>::new_unchecked_const(1) }.0;
-
-            const MIN: Self = unsafe {
-                NonMax::<$primitive>::new_unchecked_const($primitive::MIN)
-            }
-            .0;
-            const MAX: Self = unsafe {
-                NonMax::<$primitive>::new_unchecked_const($primitive::MAX - 1)
-            }
-            .0;
             fn new(v: $primitive) -> Option<Self> {
                 if v == $primitive::MAX {
                     return None;
@@ -357,3 +354,17 @@ nonmax_idx_impl![u8, u16, u32, u64, usize];
 
 nonmax_impl![u8, u16, u32, u64, usize];
 nonmax_impl![i8, i16, i32, i64, isize];
+
+#[cfg(test)]
+mod test {
+    use super::NonMax;
+    #[test]
+    fn nonmax_constants() {
+        assert_eq!(NonMax::<u32>::ZERO.get(), 0);
+        assert_eq!(NonMax::<u32>::ONE.get(), 1);
+        assert_eq!(NonMax::<u32>::MIN.get(), 0);
+        assert_eq!(NonMax::<i32>::MIN.get(), i32::MIN);
+        assert_eq!(NonMax::<u32>::MAX.get(), u32::MAX - 1);
+        assert_eq!(NonMax::<u32>::new(u32::MAX), None);
+    }
+}
