@@ -93,7 +93,7 @@ pub fn derive_idx_enum_inner(
 
     let idx_derivation = derive_idx_for_enum(&mut ctx, &ast, enum_data)?;
 
-    ctx.check()?;
+    ctx.error_list.check()?;
 
     let indexland = &ctx.attrs.indexland_path;
 

@@ -90,7 +90,7 @@ pub fn derive_idx_newtype_inner(
 
     let idx_derivation = derive_idx_for_struct(&mut ctx, &ast, struct_data)?;
 
-    ctx.check()?;
+    ctx.error_list.check()?;
 
     let indexland = &ctx.attrs.indexland_path;
 
