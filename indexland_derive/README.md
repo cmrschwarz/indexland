@@ -5,7 +5,7 @@ Provides derive macros for `indexland`. For better ergonomics add the
 
 ## Example
 ```rust
-// [`indexland_derive::Idx`](indexland_derive::Idx) is re-exported by indexland
+// `indexland_derive::Idx` is re-exported as `indexland::Idx`
 use indexland::Idx;
 
 #[derive(Idx)]
