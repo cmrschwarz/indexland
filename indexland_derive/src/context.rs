@@ -123,16 +123,10 @@ impl Context {
         }
 
         let indexland_path = indexland_path.unwrap_or_else(|| {
-            let name = if std::env::var("CARGO_PKG_NAME").ok().as_deref()
-                == Some(INDEXLAND)
-            {
-                CRATE
-            } else {
-                INDEXLAND
-            };
-            let ps: PathSegment = Ident::new(name, Span::call_site()).into();
+            let ps: PathSegment =
+                Ident::new(INDEXLAND, Span::call_site()).into();
             syn::Path {
-                leading_colon: None,
+                leading_colon: Some(Default::default()),
                 segments: Punctuated::from_iter([ps]),
             }
         });
