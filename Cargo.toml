@@ -3,7 +3,7 @@ resolver = "2"
 
 members = ["indexland", "indexland_derive"]
 
-package.version = "0.2.0"
+package.version = "0.2.1"
 package.license = "MIT"
 package.authors = ["Christian Schwarz <cmrs@cmrs.io>"]
 package.repository = "https://github.com/cmrschwarz/indexland"
