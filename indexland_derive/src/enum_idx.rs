@@ -44,6 +44,7 @@ pub fn derive_idx_for_enum(
     let indexland = &ctx.attrs.indexland_path;
 
     let output = quote! {
+        #[automatically_derived]
         impl #impl_generics #indexland::Idx for #name #ty_generics #where_clause {
             const ZERO: Self = #name::#var_zero;
             const ONE: Self = #name::#var_one;
@@ -97,23 +98,31 @@ pub fn derive_idx_enum_inner(
     let indexland = &ctx.attrs.indexland_path;
 
     let output = quote! {
+        #[automatically_derived]
         impl ::core::default::Default for #name {
             fn default() -> Self {
                 #indexland::Idx::ZERO
             }
         }
-        #[allow(clippy::expl_impl_clone_on_copy)]
+
+        #[automatically_derived]
+        impl ::core::marker::Copy for #name {}
+
+        #[automatically_derived]
         impl ::core::clone::Clone for #name {
             fn clone(&self) -> Self {
-                #indexland::Idx::from_usize(#indexland::Idx::into_usize(*self))
+               *self
             }
         }
-        impl ::core::marker::Copy for #name {}
+
+        #[automatically_derived]
         impl core::hash::Hash for #name {
             fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
                 core::mem::discriminant(self).hash(state);
             }
         }
+
+        #[automatically_derived]
         impl ::core::fmt::Debug for #name {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 match self {
@@ -121,6 +130,8 @@ pub fn derive_idx_enum_inner(
                 }
             }
         }
+
+        #[automatically_derived]
         impl ::core::ops::Add for #name {
             type Output = Self;
             fn add(self, rhs: Self) -> Self::Output {
@@ -129,6 +140,8 @@ pub fn derive_idx_enum_inner(
                 )
             }
         }
+
+        #[automatically_derived]
         impl ::core::ops::Sub for #name {
             type Output = Self;
             fn sub(self, rhs: Self) -> Self::Output {
@@ -137,34 +150,48 @@ pub fn derive_idx_enum_inner(
                 )
             }
         }
+
+        #[automatically_derived]
         impl ::core::ops::AddAssign for #name {
             fn add_assign(&mut self, rhs: Self) {
                 *self = *self + rhs;
             }
         }
+
+        #[automatically_derived]
         impl ::core::ops::SubAssign for #name {
             fn sub_assign(&mut self, rhs: Self) {
                 *self = *self - rhs;
             }
         }
+
+        #[automatically_derived]
         impl ::core::cmp::PartialOrd for #name {
             fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
                 #indexland::Idx::into_usize(*self)
                     .partial_cmp(&#indexland::Idx::into_usize(*other))
             }
         }
+
+        #[automatically_derived]
         impl ::core::cmp::Ord for #name {
             fn cmp(&self, other: &Self) -> core::cmp::Ordering {
                 #indexland::Idx::into_usize(*self)
                     .cmp(&#indexland::Idx::into_usize(*other))
             }
         }
+
+        #[automatically_derived]
         impl ::core::cmp::PartialEq for #name {
             fn eq(&self, other: &Self) -> bool {
                 core::mem::discriminant(self) == core::mem::discriminant(other)
             }
         }
+
+        #[automatically_derived]
         impl ::core::cmp::Eq for #name {}
+
+        #[automatically_derived]
         impl #impl_generics #indexland::IdxEnum for #name #ty_generics #where_clause {
             const COUNT: usize = #count;
             type EnumIndexArray<T> = #indexland::index_array::IndexArray<Self, T, #count>;

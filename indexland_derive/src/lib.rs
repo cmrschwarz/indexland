@@ -84,7 +84,7 @@ pub fn derive_idx_enum(
 
 /// For structs this is equivalent to [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
 /// for enums to [`#[derive(IdxEnum)]`](crate::IdxEnum).
-/// //! ## Example
+/// ## Example
 /// ```
 /// use indexland::Idx;
 ///

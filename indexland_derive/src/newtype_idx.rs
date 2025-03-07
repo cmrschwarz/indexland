@@ -43,6 +43,7 @@ fn derive_idx_for_struct(
     let indexland = &ctx.attrs.indexland_path;
 
     let output = quote! {
+        #[automatically_derived]
         impl #impl_generics #indexland::Idx for #name #ty_generics #where_clause {
             const ZERO: Self = #name(<#base_type as #indexland::Idx>::ZERO);
             const ONE: Self = #name(<#base_type as #indexland::Idx>::ONE);
@@ -94,84 +95,116 @@ pub fn derive_idx_newtype_inner(
     let indexland = &ctx.attrs.indexland_path;
 
     let output = quote! {
+        #[automatically_derived]
         impl ::core::default::Default for #name {
             fn default() -> Self {
                 #indexland::Idx::ZERO
             }
         }
-        #[allow(clippy::expl_impl_clone_on_copy)]
+
+        #[automatically_derived]
+        impl ::core::marker::Copy for #name {}
+
+        #[automatically_derived]
         impl ::core::clone::Clone for #name {
             fn clone(&self) -> Self {
-                #name(self.0)
+                *self
             }
         }
-        impl ::core::marker::Copy for #name {}
+
+        #[automatically_derived]
         impl ::core::hash::Hash for #name {
             #[inline]
             fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
                 self.0.hash(state);
             }
         }
+
+        #[automatically_derived]
         impl ::core::convert::From<usize> for #name {
             #[inline]
             fn from(v: usize) -> #name {
                 #name(<#base_type as #indexland::Idx>::from_usize(v))
             }
         }
+
+        #[automatically_derived]
         impl ::core::convert::From<#name> for usize {
             #[inline]
             fn from(v: #name) -> usize {
                 <#base_type as #indexland::Idx>::into_usize(v.0)
             }
         }
+
+        #[automatically_derived]
         impl ::core::fmt::Debug for #name {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 core::fmt::Debug::fmt(&self.0, f)
             }
         }
+
+        #[automatically_derived]
         impl ::core::fmt::Display for #name {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 core::fmt::Display::fmt(&self.0, f)
             }
         }
+
+        #[automatically_derived]
         impl ::core::ops::Add for #name {
             type Output = Self;
             fn add(self, rhs: Self) -> Self::Output {
                 #name(self.0 + rhs.0)
             }
         }
+
+        #[automatically_derived]
         impl ::core::ops::Sub for #name {
             type Output = Self;
             fn sub(self, rhs: Self) -> Self::Output {
                 #name(self.0 - rhs.0)
             }
         }
+
+        #[automatically_derived]
         impl ::core::ops::AddAssign for #name {
             fn add_assign(&mut self, rhs: Self) {
                 *self = *self + rhs;
             }
         }
+
+        #[automatically_derived]
         impl ::core::ops::SubAssign for #name {
             fn sub_assign(&mut self, rhs: Self) {
                 *self = *self - rhs;
             }
         }
+
+        #[automatically_derived]
         impl ::core::cmp::PartialOrd for #name {
             fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
                 core::cmp::PartialOrd::partial_cmp(&self.0, &other.0)
             }
         }
+
+        #[automatically_derived]
         impl ::core::cmp::Ord for #name {
             fn cmp(&self, other: &Self) -> core::cmp::Ordering {
                 core::cmp::Ord::cmp(&self.0, &other.0)
             }
         }
+
+        #[automatically_derived]
         impl ::core::cmp::PartialEq for #name {
             fn eq(&self, other: &Self) -> bool {
                 self.0 == other.0
             }
         }
+
+        #[automatically_derived]
         impl ::core::cmp::Eq for #name {}
+
+        #[automatically_derived]
         impl #impl_generics #indexland::IdxNewtype for #name #ty_generics #where_clause {
             type Base = #base_type;
             #[inline]
