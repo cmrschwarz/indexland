@@ -1,7 +1,6 @@
 use std::{cell::RefCell, fmt::Display};
 
-use proc_macro2::TokenTree;
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::ToTokens;
 use syn::{
     parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput,

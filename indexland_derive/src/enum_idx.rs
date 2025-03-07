@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use proc_macro2::Ident;
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::spanned::Spanned;
-use syn::{Data, DeriveInput, Fields, Generics};
+use syn::{spanned::Spanned, Data, DeriveInput, Fields, Generics};
 
-use crate::context::{Attrs, Context, ErrorList};
-use crate::token_stream_to_compact_string;
+use crate::{
+    context::{Attrs, Context, ErrorList},
+    token_stream_to_compact_string,
+};
 
 struct EnumCtx<'a> {
     error_list: ErrorList,
