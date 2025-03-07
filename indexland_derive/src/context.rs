@@ -2,9 +2,16 @@ use std::fmt::Display;
 
 use proc_macro2::Span;
 use quote::ToTokens;
-use syn::{punctuated::Punctuated, DeriveInput, Ident, PathSegment};
+use syn::{
+    punctuated::Punctuated, spanned::Spanned, DeriveInput, Ident, PathSegment,
+    Token,
+};
 
 const CRATE: &str = "crate";
+const ONLY: &str = "only";
+const OMIT: &str = "omit";
+const WHITELIST_AND_BLACKLIST_ERROR: &str =
+    "omit and only are mutually exclusive";
 const INDEXLAND: &str = "indexland";
 
 #[derive(Default)]
@@ -13,7 +20,8 @@ pub struct ErrorList {
 }
 pub struct Attrs {
     pub indexland_path: syn::Path,
-    //TODO: implement black and whitelist of traits to implement
+    pub blacklist: Vec<syn::Ident>,
+    pub whitelist: Vec<syn::Ident>,
 }
 
 pub struct Context {
@@ -35,13 +43,6 @@ impl ErrorList {
     fn error(&mut self, span: Span, message: impl Display) {
         self.push(syn::Error::new(span, message));
     }
-    pub fn error_spanned_by(
-        &mut self,
-        pos: impl ToTokens,
-        message: impl Display,
-    ) {
-        self.push(syn::Error::new_spanned(pos, message));
-    }
     pub fn check(&mut self) -> syn::Result<()> {
         match self.errors.take() {
             Some(e) => Err(e),
@@ -54,10 +55,15 @@ impl Context {
     pub fn from_input(ast: &DeriveInput) -> Context {
         let mut errs = ErrorList::default();
         let mut indexland_path = None;
+        let mut blacklist = Vec::new();
+        let mut first_blacklist = None;
+        let mut whitelist = Vec::new();
+        let mut first_whitelist = None;
         for attr in &ast.attrs {
             if !attr.path().is_ident(INDEXLAND) {
                 continue;
             }
+
             let res = attr.parse_nested_meta(|meta| {
                 if meta.path.is_ident(CRATE) {
                     // #[indexland(crate = path::to::indexland)]
@@ -73,7 +79,36 @@ impl Context {
                         );
                     }
                     indexland_path = Some(path);
-                } else {
+                }
+                else if meta.path.is_ident(OMIT) {
+                    // #[indexland(omit(Display))]
+                    let idents = meta.input.parse_terminated(|p| p.parse(), Token![,])?;
+                    if first_blacklist.is_none()  {
+                        first_blacklist = Some(meta.path.span());
+                        if let Some(first) = first_whitelist {
+                            errs.error(first, WHITELIST_AND_BLACKLIST_ERROR);
+                        }
+                    }
+                    if first_whitelist.is_some() {
+                        errs.error(meta.path.span(), WHITELIST_AND_BLACKLIST_ERROR);
+                    }
+                    blacklist.extend(idents);
+                }
+                else if meta.path.is_ident(ONLY) {
+                    // #[indexland(only(Idx))]
+                    let idents = meta.input.parse_terminated(|p| p.parse(), Token![,])?;
+                    if first_whitelist.is_none()  {
+                        first_whitelist = Some(meta.path.span());
+                        if let Some(first) = first_blacklist {
+                            errs.error(first, WHITELIST_AND_BLACKLIST_ERROR);
+                        }
+                    }
+                    if first_blacklist.is_some() {
+                        errs.error(meta.path.span(), WHITELIST_AND_BLACKLIST_ERROR);
+                    }
+                    whitelist.extend(idents);
+                }
+                else {
                     errs.push(meta.error(format!(
                         "unknown {INDEXLAND} attribute {}",
                         meta.path.to_token_stream()
@@ -97,7 +132,11 @@ impl Context {
 
         Context {
             error_list: errs,
-            attrs: Attrs { indexland_path },
+            attrs: Attrs {
+                indexland_path,
+                whitelist,
+                blacklist,
+            },
         }
     }
 }
