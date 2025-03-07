@@ -12,10 +12,11 @@
 [msrv]: https://img.shields.io/crates/msrv/indexland?logo=rust
 [docs-rs]: https://img.shields.io/badge/docs.rs-indexland-66c2a5?logo=docs.rs
 
-Wrappers for common collection types based on newtype indices.
-Increased type safety and code readability without runtime overhead.
+Wrappers for the basic collection types using on Newtype Indices.
 
+Increased type safety and readability for almost zero runtime overhead.
 
+Escape hatches to the base collection types are always there when needed.
 
 ## Newtype Indices
 ```rust
