@@ -4,12 +4,15 @@ use core::{
     fmt::Debug,
     hash::{BuildHasher, Hash},
     marker::PhantomData,
-    ops::Index,
+    ops::{Index, RangeBounds},
 };
 
 use indexmap::{map::Slice, Equivalent, IndexMap};
 
-use super::{idx::Idx, idx_range::IdxRange};
+use super::{
+    idx::Idx,
+    idx_range::{IdxRange, RangeBoundsAsRange},
+};
 
 /// Create an [`IndexHashMap`] containing the arguments.
 ///
@@ -150,27 +153,24 @@ impl<I, K, V> IndexHashMap<I, K, V> {
     }
 }
 
-impl<I: Idx, K: Hash + Eq, V, S: BuildHasher> IndexHashMap<I, K, V, S> {
+impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn with_capacity_and_hasher(cap: usize, hasher: S) -> Self {
         Self {
             data: IndexMap::with_capacity_and_hasher(cap, hasher),
             _phantom: PhantomData,
         }
     }
-    pub fn reserve(&mut self, additional: I) {
-        self.data.reserve(additional.into_usize());
+    pub fn with_hasher(hasher: S) -> Self {
+        Self {
+            data: IndexMap::with_hasher(hasher),
+            _phantom: PhantomData,
+        }
     }
-    pub fn reserve_len(&mut self, additional: usize) {
-        self.data.reserve(additional);
+    pub fn capacity(&self) -> usize {
+        self.data.capacity()
     }
-    pub fn insert(&mut self, key: K, value: V) -> Option<V> {
-        self.data.insert(key, value)
-    }
-    pub fn clear(&mut self) {
-        self.data.clear();
-    }
-    pub fn is_empty(&self) -> bool {
-        self.data.is_empty()
+    pub fn hasher(&self) -> &S {
+        self.data.hasher()
     }
     pub fn len(&self) -> usize {
         self.data.len()
@@ -181,23 +181,14 @@ impl<I: Idx, K: Hash + Eq, V, S: BuildHasher> IndexHashMap<I, K, V, S> {
     pub fn last_idx(&self) -> Option<I> {
         self.len().checked_sub(1).map(I::from_usize)
     }
-    pub fn truncate(&mut self, end: I) {
-        self.data.truncate(end.into_usize());
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
     }
-    pub fn truncate_len(&mut self, len: usize) {
-        self.data.truncate(len);
+    pub fn iter(&self) -> indexmap::map::Iter<K, V> {
+        self.data.iter()
     }
-    pub fn swap_remove<Q: ?Sized + Hash + Equivalent<K>>(
-        &mut self,
-        key: &Q,
-    ) -> Option<V> {
-        self.data.swap_remove(key)
-    }
-    pub fn as_index_map(&self) -> &IndexMap<K, V, S> {
-        &self.data
-    }
-    pub fn as_index_map_mut(&mut self) -> &mut IndexMap<K, V, S> {
-        &mut self.data
+    pub fn iter_mut(&mut self) -> indexmap::map::IterMut<K, V> {
+        self.data.iter_mut()
     }
     pub fn iter_enumerated(
         &self,
@@ -214,19 +205,120 @@ impl<I: Idx, K: Hash + Eq, V, S: BuildHasher> IndexHashMap<I, K, V, S> {
     ) -> IdxEnumerate<I, indexmap::map::IntoIter<K, V>> {
         IdxEnumerate::new(I::ZERO, self.data)
     }
+    pub fn keys(&self) -> indexmap::map::Keys<K, V> {
+        self.data.keys()
+    }
+    pub fn keys_enumerated(
+        &self,
+    ) -> IdxEnumerate<I, indexmap::map::Keys<K, V>> {
+        IdxEnumerate::new(I::ZERO, self.data.keys())
+    }
+    pub fn into_keys(self) -> indexmap::map::IntoKeys<K, V> {
+        self.data.into_keys()
+    }
+    pub fn into_keys_enumerated(
+        self,
+    ) -> IdxEnumerate<I, indexmap::map::IntoKeys<K, V>> {
+        IdxEnumerate::new(I::ZERO, self.data.into_keys())
+    }
+    pub fn values(&self) -> indexmap::map::Values<K, V> {
+        self.data.values()
+    }
+    pub fn values_enumerated(
+        &self,
+    ) -> IdxEnumerate<I, indexmap::map::Values<K, V>> {
+        IdxEnumerate::new(I::ZERO, self.data.values())
+    }
+    pub fn values_mut(&mut self) -> indexmap::map::ValuesMut<K, V> {
+        self.data.values_mut()
+    }
+    pub fn values_mut_enumerated(
+        &mut self,
+    ) -> IdxEnumerate<I, indexmap::map::ValuesMut<K, V>> {
+        IdxEnumerate::new(I::ZERO, self.data.values_mut())
+    }
+    pub fn into_values(self) -> indexmap::map::IntoValues<K, V> {
+        self.data.into_values()
+    }
+    pub fn into_values_emumerated(
+        self,
+    ) -> IdxEnumerate<I, indexmap::map::IntoValues<K, V>> {
+        IdxEnumerate::new(I::ZERO, self.data.into_values())
+    }
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
+    pub fn truncate(&mut self, end: I) {
+        self.data.truncate(end.into_usize());
+    }
+    pub fn truncate_len(&mut self, len: usize) {
+        self.data.truncate(len);
+    }
+    pub fn drain<R: RangeBounds<I>>(
+        &mut self,
+        range: R,
+    ) -> indexmap::map::Drain<K, V> {
+        self.data.drain(range.as_usize_range(self.len()))
+    }
+    pub fn drain_len<R: RangeBounds<usize>>(
+        &mut self,
+        range: R,
+    ) -> indexmap::map::Drain<K, V> {
+        self.data.drain(range)
+    }
+    pub fn split_off(&mut self, at: I) -> Self
+    where
+        S: Clone,
+    {
+        Self::from(self.data.split_off(at.into_usize()))
+    }
+    pub fn split_off_len(&mut self, at: usize) -> Self
+    where
+        S: Clone,
+    {
+        Self::from(self.data.split_off(at))
+    }
+    pub fn reserve(&mut self, additional: I) {
+        self.data.reserve(additional.into_usize());
+    }
+    pub fn reserve_len(&mut self, additional: usize) {
+        self.data.reserve(additional);
+    }
+    pub fn insert(&mut self, key: K, value: V) -> Option<V>
+    where
+        K: Hash + Eq,
+        S: BuildHasher,
+    {
+        self.data.insert(key, value)
+    }
+
+    pub fn swap_remove<Q: ?Sized + Hash + Equivalent<K>>(
+        &mut self,
+        key: &Q,
+    ) -> Option<V>
+    where
+        S: BuildHasher,
+    {
+        self.data.swap_remove(key)
+    }
+    pub fn as_index_map(&self) -> &IndexMap<K, V, S> {
+        &self.data
+    }
+    pub fn as_index_map_mut(&mut self) -> &mut IndexMap<K, V, S> {
+        &mut self.data
+    }
+
     pub fn indices(&self) -> IdxRange<I> {
         IdxRange::new(I::ZERO..self.len_idx())
     }
-    pub fn capacity(&self) -> usize {
-        self.data.capacity()
+
+    pub fn entry(&mut self, key: K) -> indexmap::map::Entry<'_, K, V>
+    where
+        K: Hash + Eq,
+        S: BuildHasher,
+    {
+        self.data.entry(key)
     }
-    pub fn iter(&self) -> indexmap::map::Iter<K, V> {
-        self.data.iter()
-    }
-    pub fn iter_mut(&mut self) -> indexmap::map::IterMut<K, V> {
-        self.data.iter_mut()
-    }
-    // TODO: wrap more indexmap stuff
 }
 
 impl<'a, Idx, K, V, S> Extend<(&'a K, &'a V)> for IndexHashMap<Idx, K, V, S>
