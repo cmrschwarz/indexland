@@ -91,17 +91,24 @@ fn token_stream_to_compact_string(path: &TokenStream) -> String {
 }
 
 /// Implements the following traits:
-/// - [`IdxNewtype`](indexland::idx::IdxNewtype) + [`Idx`](indexland::idx::Idx)
+/// - [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
+/// - [`indexland::IdxNewtype`](https://docs.rs/indexland/latest/indexland/trait.IdxNewtype.html)
 /// - [`Default`](core::default::Default)
-/// - [`Debug`](core::fmt::Debug) + [`Display`](core::fmt::Display)
-/// - [`Clone`](core::clone::Clone) + [`Copy`](core::marker::Copy)
-/// - [`PartialOrd`](core::cmp::PartialOrd) + [`Ord`](core::cmp::Ord)
-/// - [`PartialEq`](core::cmp::PartialEq) + [`Eq`](core::cmp::Eq)
+/// - [`Debug`](core::fmt::Debug) +
+///   [`Display`](core::fmt::Display)
+/// - [`Clone`](core::clone::Clone) +
+///   [`Copy`](core::marker::Copy)
+/// - [`PartialOrd`](core::cmp::PartialOrd) +
+///   [`Ord`](core::cmp::Ord)
+/// - [`PartialEq`](core::cmp::PartialEq) +
+///   [`Eq`](core::cmp::Eq)
 /// - [`Hash`](core::hash::Hash)
-/// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
-/// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
-/// - [`From<usize>`](core::convert::From)
-/// - [`From<Self> for usize`](core::convert::From)
+/// - [`Add`](core::ops::Add) +
+///   [`AddAssign`](core::ops::AddAssign)
+/// - [`Sub`](core::ops::Sub) +
+///   [`SubAssign`](core::ops::SubAssign)
+/// - [`From<usize>`](core::convert::From) +
+///   [`From<Self> for usize`](core::convert::From)
 ///
 /// ## Example
 /// ```
@@ -131,17 +138,24 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 }
 
 /// Implements the following traits:
-/// - [`IdxEnum`](indexland::idx::IdxEnum) + [`Idx`](indexland::idx::Idx)
+/// - [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
+/// - [`indexland::IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html)
 /// - [`Default`](core::default::Default) (uses first variant)
-/// - [`Debug`](core::fmt::Debug) + ( [`Display`](core::fmt::Display) intentionally omitted, implement as desired)
-/// - [`Clone`](core::clone::Clone) + [`Copy`](core::marker::Copy)
-/// - [`PartialOrd`](core::clone::Clone) + [`Ord`](core::cmp::Ord)
-/// - [`PartialEq`](core::clone::Clone) + [`Eq`](core::cmp::Eq)
+/// - [`Debug`](core::fmt::Debug)
+///   (intentionally not [`Display`](core::fmt::Display), implement as desired)
+/// - [`Clone`](core::clone::Clone) +
+///   [`Copy`](core::marker::Copy)
+/// - [`PartialOrd`](core::clone::Clone) +
+///   [`Ord`](core::cmp::Ord)
+/// - [`PartialEq`](core::clone::Clone)
+///   [`Eq`](core::cmp::Eq) +
 /// - [`Hash`](core::hash::Hash)
-/// - [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign)
-/// - [`Sub`](core::ops::Sub) + [`SubAssign`](core::ops::SubAssign)
-/// - [`From<usize>`](core::convert::From)
-/// - [`From<Self> for usize`](core::convert::From)
+/// - [`Add`](core::ops::Add) +
+///   [`AddAssign`](core::ops::AddAssign)
+/// - [`Sub`](core::ops::Sub) +
+///   [`SubAssign`](core::ops::SubAssign)
+/// - [`From<usize>`](core::convert::From) +
+///   [`From<Self> for usize`](core::convert::From)
 ///
 ///
 /// ## Example
