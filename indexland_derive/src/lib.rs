@@ -213,6 +213,8 @@ pub fn derive_idx_enum(
 /// ```
 /// use indexland as foobar;
 ///
+/// use foobar::Idx;
+///
 /// #[derive(Idx)]
 /// #[indexland(crate = foobar)]
 /// #[indexland(omit(Debug, From<Self> for usize))]
