@@ -11,13 +11,11 @@
 //!
 //! `IdxRangeTo`, and `IdxRangeToInclusive`
 //! would not be iterable anyways so there's no reason for them to exist.
-//!
 use crate::Idx;
 use core::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive};
 
 /// Mirror of [`core::ops::Range`].
 /// See this module's [documentation](self) for justification.
-///
 pub struct IdxRange<I> {
     pub start: I,
     pub end: I,
@@ -25,7 +23,6 @@ pub struct IdxRange<I> {
 
 /// Mirror of [`core::ops::RangeInclusive`].
 /// See this module's [documentation](self) for justification.
-///
 pub struct IdxRangeInclusive<I> {
     pub start: I,
     pub end: I,
@@ -137,7 +134,7 @@ impl<I: Idx> RangeAsUsizeRange for IdxRange<I> {
 ///
 /// # Example
 /// ```
-/// use indexland::{Idx, idx_range::RangeAsIdxRange};
+/// use indexland::{idx_range::RangeAsIdxRange, Idx};
 ///
 /// #[derive(Idx)]
 /// struct FooId(u32);
@@ -158,7 +155,7 @@ impl<I: Idx> RangeAsIdxRange<I> for Range<I> {
 ///
 /// # Example
 /// ```
-/// use indexland::{Idx, idx_range::RangeInclusiveAsIdxRangeInclusive};
+/// use indexland::{idx_range::RangeInclusiveAsIdxRangeInclusive, Idx};
 ///
 /// #[derive(Idx)]
 /// struct FooId(u32);
@@ -179,7 +176,7 @@ impl<I: Idx> RangeInclusiveAsIdxRangeInclusive<I> for RangeInclusive<I> {
 ///
 /// # Example
 /// ```
-/// use indexland::{Idx, idx_range::RangeFromAsIdxRangeFrom};
+/// use indexland::{idx_range::RangeFromAsIdxRangeFrom, Idx};
 ///
 /// #[derive(Idx)]
 /// struct FooId(u32);
@@ -200,7 +197,7 @@ impl<I: Idx> RangeFromAsIdxRangeFrom<I> for RangeFrom<I> {
 ///
 /// # Example
 /// ```
-/// use indexland::{Idx, idx_range::UsizeRangeIntoIdxRange};
+/// use indexland::{idx_range::UsizeRangeIntoIdxRange, Idx};
 ///
 /// #[derive(Idx)]
 /// struct FooId(u32);

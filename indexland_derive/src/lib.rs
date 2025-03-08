@@ -174,8 +174,6 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 ///     Green,
 ///     Blue,
 /// };
-///
-///
 /// ```
 #[proc_macro_derive(IdxEnum, attributes(indexland))]
 pub fn derive_idx_enum(
@@ -218,10 +216,10 @@ pub fn derive_idx_enum(
 /// #[derive(Idx)]
 /// #[indexland(crate = foobar)]
 /// #[indexland(omit(Debug, From<Self> for usize))]
-/// enum Foo{
+/// enum Foo {
 ///     A,
 ///     B,
-///     C
+///     C,
 /// }
 /// ```
 #[proc_macro_derive(Idx, attributes(indexland))]
