@@ -206,8 +206,8 @@ pub fn derive_idx_enum(
 ///
 /// - `#[indexland(crate = ..)]`: Change the crate name used within the derive
 ///    macro. The default value is `::indexland`.
-/// - `#[indexland(omit(..))]`: Suppress the derivation of certain traits.
-/// - `#[indexland(only(..))]`: Suppress the derivation of all traits except the specified ones.
+/// - `#[indexland(omit(..))]`: Suppress the derivation of certain traits (blacklist).
+/// - `#[indexland(only(..))]`: Suppress the derivation of all traits except the specified ones (whitelist).
 ///
 /// ## Attributes Example
 /// ```
