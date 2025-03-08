@@ -90,7 +90,10 @@ fn token_stream_to_compact_string(path: &TokenStream) -> String {
     res
 }
 
-/// Implements the following traits:
+/// Derives `IdxNewtype` and associated traits.
+/// See [`#[derive[Idx]]`](crate::Idx) the attributes explanation.
+///
+/// ## Implemented Traits
 /// - [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
 /// - [`indexland::IdxNewtype`](https://docs.rs/indexland/latest/indexland/trait.IdxNewtype.html)
 /// - [`Default`](core::default::Default)
@@ -137,7 +140,10 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     }
 }
 
-/// Implements the following traits:
+/// Derives `IdxEnum` and associated traits.
+/// See [`#[derive[Idx]]`](crate::Idx) for the attributes explanation.
+///
+/// ## Implemented Traits
 /// - [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
 /// - [`indexland::IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html)
 /// - [`Default`](core::default::Default) (uses first variant)
@@ -168,6 +174,8 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 ///     Green,
 ///     Blue,
 /// };
+///
+///
 /// ```
 #[proc_macro_derive(IdxEnum, attributes(indexland))]
 pub fn derive_idx_enum(
@@ -180,7 +188,8 @@ pub fn derive_idx_enum(
 
 /// For structs this is equivalent to [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
 /// for enums to [`#[derive(IdxEnum)]`](crate::IdxEnum).
-/// ## Example
+///
+/// ## Basic Usage
 /// ```
 /// use indexland::Idx;
 ///
@@ -193,6 +202,27 @@ pub fn derive_idx_enum(
 ///     Green,
 ///     Blue,
 /// };
+/// ```
+///
+/// ## Attributes
+///
+/// - `#[indexland(crate = ..)]`: Change the crate name used within the derive
+///    macro. The default value is `::indexland`.
+/// - `#[indexland(omit(..))]`: Suppress the derivation of certain traits.
+/// - `#[indexland(only(..))]`: Suppress the derivation of all traits except the specified ones.
+///
+/// ## Attributes Example
+/// ```
+/// use indexland as foobar;
+///
+/// #[derive(Idx)]
+/// #[indexland(crate = foobar)]
+/// #[indexland(omit(Debug, From<Self> for usize))]
+/// enum Foo{
+///     A,
+///     B,
+///     C
+/// }
 /// ```
 #[proc_macro_derive(Idx, attributes(indexland))]
 pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
