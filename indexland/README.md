@@ -94,9 +94,9 @@ let message = STATUS_MESSAGE[Status::Running];
 
 - First class embedded support though `#[no_std]` and even optional `alloc`.
 
-- [`serde`](::serde) implementations for all Collections.
+- [`Idx`](crate::Idx) compatible [`NonMax<T>`](crate::nonmax) Integer Types for Niche Optimizations
 
-- [`Idx`](crate::Idx) compatible `NonMax<T>` Integer Types for Niche Optimizations
+- [`serde`](::serde) implementations for all Collections.
 
 - All crate dependencies optional through feature flags.
 
