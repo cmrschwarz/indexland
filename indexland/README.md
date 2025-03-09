@@ -12,13 +12,24 @@
 [msrv]: https://img.shields.io/crates/msrv/indexland?logo=rust
 [docs-rs]: https://img.shields.io/badge/docs.rs-indexland-66c2a5?logo=docs.rs
 
-Wrappers for the basic collection types using on Newtype Indices.
+Newtype Index Support for Rust Collection Types.
 
-Increased type safety and readability for almost zero runtime overhead.
+## Features
+- Strongly typed indices prevent accidental mix-ups at compile time.
 
-Escape hatches to the base collection types are always there when needed.
+  Let's not make `usize` be the new `void*` !
 
-## Newtype Indices
+- Readable, self-documenting code through explicit indexing semantics.
+
+  No more ```// indexed by `NodeId` ``` comments.
+
+- Underlying APIs available and working with `Idx` Types.
+
+  No need to learn a new collections API.
+
+
+## Examples
+### Newtype Indices
 ```rust
 use indexland::{Idx, IndexVec};
 
@@ -36,45 +47,59 @@ struct DoublyLinkedList<T> {
 }
 ```
 
-## Enums as Indices
+### Enums as Indices
 ```rust
-use indexland::{enum_index_array, EnumIndexArray, Idx};
+use indexland::{Idx, EnumIndexArray, enum_index_array};
 
 #[derive(Idx)]
-enum PrimaryColor {
-    Red,
-    Green,
-    Blue,
-}
+enum Status { Idle, Running, Done }
 
-const COLOR_MAPPING: EnumIndexArray<PrimaryColor, u32> = enum_index_array![
-    PrimaryColor::Red => 0xFF0000,
-    PrimaryColor::Green => 0x00FF00,
-    PrimaryColor::Blue => 0x0000FF,
+const STATUS_MESSAGE: EnumIndexArray<Status, &str> = enum_index_array![
+    Status::Idle => "Waiting for input...",
+    Status::Running => "Processing your request...",
+    Status::Done => "Operation complete!",
 ];
 
-let my_color = COLOR_MAPPING[PrimaryColor::Red];
+let message = STATUS_MESSAGE[Status::Running];
 ```
 
-## Support for most common Array Based Collections
+## Indexable Collection Wrappers
 - [`IndexSlice<I, T>`](crate::IndexSlice)
   wrapping [`&[T]`](std::slice)
 - [`IndexArray<I, T, LEN>`](crate::IndexArray)
-  wrapping [`[T; LEN]`](std::array)
+  wrapping [`[T; LEN]`](std::array) (Convenience alias [`EnumIndexArray<E, T>`](crate::EnumIndexArray))
 - [`IndexVec<I, T>`](crate::IndexVec)
   wrapping [`Vec<T>`](alloc::vec::Vec)
 - [`IndexVecDeque<I, T>`](crate::IndexVecDeque)
   wrapping[`VecDeque<T>`](std::collections::VecDeque)
 - [`IndexSmallVec<I, T, CAP>`](crate::IndexSmallVec)
-  wrapping [`SmallVec<[T;CAP]>`](smallvec::SmallVec) (Optional)
+  wrapping [`SmallVec<[T;CAP]>`](smallvec::SmallVec)
 - [`IndexArrayVec<I, T, CAP>`](crate::IndexArrayVec)
-  wrapping [`ArrayVec<T, CAP>`](arrayvec::ArrayVec) (Optional)
+  wrapping [`ArrayVec<T, CAP>`](arrayvec::ArrayVec)
 - [`IndexHashMap<I, K, V>`](crate::IndexHashMap)
-  wrapping [`IndexMap<K, V>`](indexmap::IndexMap) (Optional)
+  wrapping [`IndexMap<K, V>`](indexmap::IndexMap)
 - [`IndexHashSet<I, T>`](crate::IndexHashSet)
-  wrapping [`IndexSet<T>`](indexmap::IndexSet) (Optional)
-- [`NonMax<T>`](crate::nonmax) Integer Types for Niche Optimizations (Optional)
-- [`serde`](::serde) support for all Collections (Optional)
+  wrapping [`IndexSet<T>`](indexmap::IndexSet)
+
+
+## Additional Features
+
+- Cheaply convert to/from underlying collections when necessary.
+
+  Never feel boxed in by this dependency.
+
+- All basic integer types implement `Idx`.
+
+  No complaints if your main usecase is `IndexVec<u32, T>`.
+
+- First class embedded support though `#[no_std]` and even optional `alloc`.
+
+- [`serde`](::serde) implementations for all Collections.
+
+- [`Idx`](crate::Idx) compatible `NonMax<T>` Integer Types for Niche Optimizations
+
+- All crate dependencies optional through feature flags.
+
 
 ## License
 [MIT](../../LICENSE)
