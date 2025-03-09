@@ -1,12 +1,10 @@
-use std::collections::HashMap;
-
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{spanned::Spanned, Data, DeriveInput, Fields, Generics};
 
 use crate::{
     context::{Attrs, Context, ErrorList},
-    token_stream_to_compact_string,
+    utils::{token_stream_to_compact_string, Derivations},
 };
 
 struct EnumCtx<'a> {
@@ -353,24 +351,8 @@ fn derive_sub_assign_usize(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-#[derive(Default)]
-struct Derivations {
-    catalog: HashMap<&'static str, EnumTraitDerivation>,
-    default_derivations: Vec<&'static str>,
-}
-
-impl Derivations {
-    pub fn add(&mut self, name: &'static str, f: EnumTraitDerivation) {
-        self.catalog.insert(name, f);
-    }
-    pub fn add_default(&mut self, name: &'static str, f: EnumTraitDerivation) {
-        self.catalog.insert(name, f);
-        self.default_derivations.push(name);
-    }
-}
-
-fn derivation_list() -> Derivations {
-    let mut derivs = Derivations::default();
+fn derivation_list() -> Derivations<EnumTraitDerivation> {
+    let mut derivs = Derivations::<EnumTraitDerivation>::default();
     derivs.add_default("Idx", derive_idx);
     derivs.add_default("IdxEnum", derive_idx_enum);
     derivs.add_default("Debug", derive_debug);
