@@ -41,8 +41,11 @@ use crate::Idx;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NonMax<P: NonMaxPrimitive>(P::NonMaxInner);
 
-#[derive(Debug)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct NonMaxOutOfRangeError;
+
+#[cfg(feature = "std")]
+impl std::error::Error for NonMaxOutOfRangeError {}
 
 pub trait NonMaxPrimitive:
     Debug
@@ -184,7 +187,7 @@ impl<P: NonMaxPrimitive> RemAssign for NonMax<P> {
     }
 }
 
-macro_rules! nonmax_impl {
+macro_rules! impl_nonmax {
     ($($primitive: ident),*) => {$(
         impl NonMax<$primitive> {
             const fn new(v: $primitive) -> Option<Self> {
@@ -323,7 +326,7 @@ macro_rules! nonmax_impl {
     )*};
 }
 
-macro_rules! nonmax_idx_impl {
+macro_rules! impl_nonmax_idx {
     ($($primitive: ident),*) => {$(
         impl Idx for NonMax<$primitive> {
             const ZERO: Self = NonMax::<$primitive>::ZERO;
@@ -331,13 +334,21 @@ macro_rules! nonmax_idx_impl {
             const MAX: Self = NonMax::<$primitive>::MAX;
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
-                // TODO: maybe add features where we assert this?
+                NonMax::<$primitive>::try_from(v).unwrap()
+            }
+            #[inline(always)]
+            fn into_usize(self) -> usize {
+                usize::try_from(self.get()).unwrap()
+            }
+            #[inline(always)]
+            fn from_usize_unchecked(v: usize) -> Self {
+                //TODO: wrap instead
                 #![allow(clippy::cast_possible_truncation)]
                 NonMax::<$primitive>::new(v as $primitive).unwrap()
             }
             #[inline(always)]
-            fn into_usize(self) -> usize {
-                // TODO: maybe add features where we assert this?
+            fn into_usize_unchecked(self) -> usize {
+                //TODO: wrap instead
                 #![allow(clippy::cast_possible_truncation)]
                 self.get() as usize
             }
@@ -345,11 +356,42 @@ macro_rules! nonmax_idx_impl {
     )*};
 }
 
-nonmax_idx_impl![u8, u16, u32, u64, usize];
-nonmax_idx_impl![i8, i16, i32, i64, isize];
+impl_nonmax![u8, u16, u32, u64, u128, usize];
+impl_nonmax![i8, i16, i32, i64, i128, isize];
 
-nonmax_impl![u8, u16, u32, u64, usize];
-nonmax_impl![i8, i16, i32, i64, isize];
+impl_nonmax_idx![u8, u16, u32, u64, u128, usize];
+impl_nonmax_idx![i8, i16, i32, i64, u128, isize];
+
+// https://doc.rust-lang.org/1.47.0/src/core/convert/num.rs.html#383-407
+macro_rules! impl_nonmax_from {
+    ( $($small: ty => $large: ty),* ) => {
+        impl From<NonMax<$small>> for NonMax<$large> {
+            #[inline]
+            fn from(small: $small) -> Self {
+                // SAFETY: smaller input type guarantees the value is non-max
+                unsafe { Self::new_unchecked(small.get().into()) }
+            }
+        }
+    };
+}
+
+// NonMax<Unsigned> => NonMax<Unsigned>
+impl_nonmax_from![u8 => u16, u8 => u32, u8 => u64, u8 => u128, u8 => usize];
+impl_nonmax_from![u16 => u32, u16 => u64, u16 => u128, u16 => usize];
+impl_nonmax_from![u32 => u64, u32 => u128];
+impl_nonmax_from![u64 => u128];
+
+// NonMax<Signed> => NonMax<Signed>
+impl_nonmax_from![i8 => i16, i8 => i32, i8 => i64, i8 => i128, i8 => isize];
+impl_nonmax_from![i16 => i32, i16 => i64, i16 => i128, i16 => isize];
+impl_nonmax_from![i32 => i64, i32 => i128];
+impl_nonmax_from![i64 => i128];
+
+// NonMax<Unsigned> => NonMax<Signed>
+impl_nonmax_from![u8 => i16, u8 => i32, u8 => i64, u8 => i128, u8 => isize];
+impl_nonmax_from![u16 => i32, u16 => i64, u16 => i128, u16 => isize];
+impl_nonmax_from![u32 => i64, u32 => i128];
+impl_nonmax_from![u64 => i128];
 
 #[cfg(test)]
 mod test {
@@ -362,5 +404,16 @@ mod test {
         assert_eq!(NonMax::<i32>::MIN.get(), i32::MIN);
         assert_eq!(NonMax::<u32>::MAX.get(), u32::MAX - 1);
         assert_eq!(NonMax::<u32>::new(u32::MAX), None);
+    }
+
+    #[test]
+    fn nonmax_idx() {
+        NonMax::<u8>::from_usize(254).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn nonmax_oob() {
+        NonMax::<u8>::from_usize(255).unwrap();
     }
 }
