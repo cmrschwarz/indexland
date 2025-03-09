@@ -295,26 +295,104 @@ fn derive_from_self_for_usize(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derivation_list() -> HashMap<&'static str, EnumTraitDerivation> {
-    let mut derivations = HashMap::<&'static str, EnumTraitDerivation>::new();
-    derivations.insert("Idx", derive_idx);
-    derivations.insert("IdxEnum", derive_idx_enum);
-    derivations.insert("Debug", derive_debug);
-    derivations.insert("Default", derive_default);
-    derivations.insert("Clone", derive_clone);
-    derivations.insert("Copy", derive_copy);
-    derivations.insert("Add", derive_add);
-    derivations.insert("AddAssign", derive_add_assign);
-    derivations.insert("Sub", derive_sub);
-    derivations.insert("SubAssign", derive_sub_assign);
-    derivations.insert("Hash", derive_hash);
-    derivations.insert("PartialOrd", derive_partial_ord);
-    derivations.insert("Ord", derive_ord);
-    derivations.insert("PartialEq", derive_partial_eq);
-    derivations.insert("Eq", derive_eq);
-    derivations.insert("From<usize>", derive_from_usize);
-    derivations.insert("From<Self> for usize", derive_from_self_for_usize);
-    derivations
+fn derive_add_usize(ctx: &EnumCtx) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Add<usize> for #name {
+            type Output = Self;
+            fn add(self, rhs: usize) -> Self::Output {
+                #indexland::Idx::from_usize(
+                    #indexland::Idx::into_usize(self) + rhs,
+                )
+            }
+        }
+    }
+}
+
+fn derive_sub_usize(ctx: &EnumCtx) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Sub<usize> for #name {
+            type Output = Self;
+            fn sub(self, rhs: Self) -> Self::Output {
+                #indexland::Idx::from_usize(
+                    #indexland::Idx::into_usize(self) - rhs,
+                )
+            }
+        }
+    }
+}
+
+fn derive_add_assign_usize(ctx: &EnumCtx) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::AddAssign<usize> for #name {
+            fn add_assign(&mut self, rhs: usize) {
+                *self = *self + <#name as #indexland::Idx>::from_usize(rhs);
+            }
+        }
+    }
+}
+
+fn derive_sub_assign_usize(ctx: &EnumCtx) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::SubAssign<usize> for #name {
+            fn sub_assign(&mut self, rhs: usize) {
+                *self = *self -  <#name as #indexland::Idx>::from_usize(rhs);
+            }
+        }
+    }
+}
+
+#[derive(Default)]
+struct Derivations {
+    catalog: HashMap<&'static str, EnumTraitDerivation>,
+    default_derivations: Vec<&'static str>,
+}
+
+impl Derivations {
+    pub fn add(&mut self, name: &'static str, f: EnumTraitDerivation) {
+        self.catalog.insert(name, f);
+    }
+    pub fn add_default(&mut self, name: &'static str, f: EnumTraitDerivation) {
+        self.catalog.insert(name, f);
+        self.default_derivations.push(name);
+    }
+}
+
+fn derivation_list() -> Derivations {
+    let mut derivs = Derivations::default();
+    derivs.add_default("Idx", derive_idx);
+    derivs.add_default("IdxEnum", derive_idx_enum);
+    derivs.add_default("Debug", derive_debug);
+    derivs.add_default("Default", derive_default);
+    derivs.add_default("Clone", derive_clone);
+    derivs.add_default("Copy", derive_copy);
+    derivs.add_default("Add", derive_add);
+    derivs.add_default("AddAssign", derive_add_assign);
+    derivs.add_default("Sub", derive_sub);
+    derivs.add_default("SubAssign", derive_sub_assign);
+    derivs.add_default("Hash", derive_hash);
+    derivs.add_default("PartialOrd", derive_partial_ord);
+    derivs.add_default("Ord", derive_ord);
+    derivs.add_default("PartialEq", derive_partial_eq);
+    derivs.add_default("Eq", derive_eq);
+    derivs.add_default("From<usize>", derive_from_usize);
+    derivs.add_default("From<Self> for usize", derive_from_self_for_usize);
+    derivs.add("Add<usize>", derive_add_usize);
+    derivs.add("Sub<usize>", derive_sub_usize);
+    derivs.add("AddAssign<usize>", derive_add_assign_usize);
+    derivs.add("SubAssign<usize>", derive_sub_assign_usize);
+    derivs
 }
 
 fn push_unknown_entry_error(ctx: &EnumCtx, entry: &TokenStream, descr: &str) {
@@ -380,10 +458,10 @@ pub fn derive_idx_enum_inner(
         ident_strings,
     };
 
-    let mut derivation_list = derivation_list();
+    let mut derivs_list = derivation_list();
     for entry in &enum_ctx.attrs.blacklist {
         let descr = token_stream_to_compact_string(entry);
-        if derivation_list.remove(&*descr).is_none() {
+        if derivs_list.catalog.remove(&*descr).is_none() {
             push_unknown_entry_error(&enum_ctx, entry, &descr);
         }
     }
@@ -392,7 +470,7 @@ pub fn derive_idx_enum_inner(
     if enum_ctx.attrs.whitelist_active {
         for entry in &enum_ctx.attrs.whitelist {
             let descr = token_stream_to_compact_string(entry);
-            match derivation_list.get(&*descr) {
+            match derivs_list.catalog.get(&*descr) {
                 Some(deriv) => {
                     derivations.push(deriv(&enum_ctx));
                 }
@@ -400,8 +478,10 @@ pub fn derive_idx_enum_inner(
             }
         }
     } else {
-        for deriv in derivation_list.values() {
-            derivations.push(deriv(&enum_ctx));
+        for deriv_descr in derivs_list.default_derivations {
+            if let Some(deriv) = derivs_list.catalog.get(deriv_descr) {
+                derivations.push(deriv(&enum_ctx));
+            }
         }
     }
 
