@@ -1,0 +1,5 @@
+error: expected `,`
+ --> tests/ui/arg_to_disable_bounds_checks.rs:5:39
+  |
+5 |     #[indexland(disable_bounds_checks = true)]
+  |                                       ^

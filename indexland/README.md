@@ -73,13 +73,13 @@ let message = STATUS_MESSAGE[Status::Running];
 - [`IndexVecDeque<I, T>`](crate::IndexVecDeque)
   wrapping[`VecDeque<T>`](std::collections::VecDeque)
 - [`IndexSmallVec<I, T, CAP>`](crate::IndexSmallVec)
-  wrapping [`SmallVec<[T;CAP]>`](smallvec::SmallVec)
+  wrapping [`smallvec::SmallVec<[T; CAP]>`](smallvec::SmallVec) (optional)
 - [`IndexArrayVec<I, T, CAP>`](crate::IndexArrayVec)
-  wrapping [`ArrayVec<T, CAP>`](arrayvec::ArrayVec)
+  wrapping [`arrayvec::ArrayVec<T, CAP>`](arrayvec::ArrayVec) (optional)
 - [`IndexHashMap<I, K, V>`](crate::IndexHashMap)
-  wrapping [`IndexMap<K, V>`](indexmap::IndexMap)
+  wrapping [`indexmap::IndexMap<K, V>`](indexmap::IndexMap) (optional)
 - [`IndexHashSet<I, T>`](crate::IndexHashSet)
-  wrapping [`IndexSet<T>`](indexmap::IndexSet)
+  wrapping [`indexmap::IndexSet<T>`](indexmap::IndexSet) (optional)
 
 
 ## Additional Features
@@ -99,6 +99,45 @@ let message = STATUS_MESSAGE[Status::Running];
 - [`serde`](::serde) implementations for all Collections.
 
 - All crate dependencies optional through feature flags.
+
+## FAQ
+
+### Why?
+Using indices instead of references or smart pointers like `Box` or `Rc`
+is an incredibly powerful idiom, especially in Rust.
+They avoid borrow checker issues around cycles and can even increase
+performance due to their smaller size, better locality and fewer allocations.
+
+Code that makes heavy use of this pattern can suffer in readability though,
+because instead of `&Node` the code now just reads `usize`. Using type aliases like
+`type NodeId = usize` solves half of this problem, but does not provide type
+safety, as `NodeId` is fundamentally still `usize`. This can lead do subtle
+bugs, especially for functions that take in multiple ids as parameters.
+Using newtypes solves these issues, but introduces ergonomic problems.
+This crate is an attempt to solve these.
+
+
+### Why not use [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
+- Ergonomic newtype indices require support for all standard collections in one place.
+  Sometimes an index is used for multiple datastructures.
+  Sometimes you want to switch from a `Vec` to a `VecDeque`.
+
+- Unlike `index_vec`, we don't implicitly implement `Add<usize> for Idx`,
+  which we believe breaks the type safety that's the whole point of this.
+  We support it as an opt-in configuration though.
+
+- Our `Idx` derivation syntax is significantly nicer.
+
+### Is there a runtime cost to this?
+- There is very litle runtime overhead. The core index wrapper functions are marked `#[inline(always)]`,
+so the compiler can reliably eliminate them, even in debug mode.
+
+- By default, conversions from `usize` to index base types smaller than `usize`
+will be bounds checked. We carefully avoid these checks where possible.
+They can also be fully disabled on a per type basis through
+`#[indexland(disable_bounds_checks)]`, in which case the indices
+will silently wrap around, just like `my_usize as u32` would.
+
 
 
 ## License

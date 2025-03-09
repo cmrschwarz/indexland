@@ -30,19 +30,44 @@ fn derive_idx(ctx: &NewtypeCtx) -> TokenStream {
 
     let base_type = &ctx.base_type;
 
+    let checked_conversions = if ctx.attrs.disable_checks {
+        quote! {
+            #[inline(always)]
+            fn from_usize(v: usize) -> Self {
+                #name(<#base_type as #indexland::Idx>::from_usize_unchecked(v))
+            }
+            #[inline(always)]
+            fn into_usize(self) -> usize {
+                <#base_type as #indexland::Idx>::into_usize_unchecked(self.0)
+            }
+        }
+    } else {
+        quote! {
+            #[inline(always)]
+            fn from_usize(v: usize) -> Self {
+                #name(<#base_type as #indexland::Idx>::from_usize(v))
+            }
+            #[inline(always)]
+            fn into_usize(self) -> usize {
+                <#base_type as #indexland::Idx>::into_usize(self.0)
+            }
+        }
+    };
+
     quote! {
         #[automatically_derived]
         impl #impl_generics #indexland::Idx for #name #ty_generics #where_clause {
             const ZERO: Self = #name(<#base_type as #indexland::Idx>::ZERO);
             const ONE: Self = #name(<#base_type as #indexland::Idx>::ONE);
             const MAX: Self = #name(<#base_type as #indexland::Idx>::MAX);
+            #checked_conversions
             #[inline(always)]
-            fn into_usize(self) -> usize {
-                <#base_type as #indexland::Idx>::into_usize(self.0)
+            fn from_usize_unchecked(v: usize) -> Self {
+                #name(<#base_type as #indexland::Idx>::from_usize_unchecked(v))
             }
             #[inline(always)]
-            fn from_usize(v: usize) -> Self {
-                #name(<#base_type as #indexland::Idx>::from_usize(v))
+            fn into_usize_unchecked(self) -> usize {
+                <#base_type as #indexland::Idx>::into_usize_unchecked(self.0)
             }
             fn wrapping_add(self, other: Self) -> Self {
                 #name(<#base_type as #indexland::Idx>::wrapping_add(self.0, other.0))

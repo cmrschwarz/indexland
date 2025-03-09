@@ -33,8 +33,29 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
     let var_one = &idents[1];
     let var_max = &idents[count - 1];
 
-    let indices = 0..count;
+    let indices_1 = 0..count;
     let indices_2 = 0..count;
+    let indices_3 = 0..count;
+
+    let from_usize = if ctx.attrs.disable_checks {
+        quote! {
+            #[inline(always)]
+            fn from_usize(v: usize) -> Self {
+                Self::from_usize_unchecked(v)
+            }
+        }
+    } else {
+        let panic_str = format!("index {{}} is out of bounds for {name}");
+        quote! {
+            #[inline(always)]
+            fn from_usize(v: usize) -> Self {
+                match v {
+                    #(#indices_1 => #name::#idents,)*
+                    _ => panic!(#panic_str , v)
+                }
+            }
+        }
+    };
 
     quote! {
         #[automatically_derived]
@@ -42,16 +63,23 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
             const ZERO: Self = #name::#var_zero;
             const ONE: Self = #name::#var_one;
             const MAX: Self = #name::#var_max;
-            fn from_usize(v: usize) -> Self {
+            #[inline(always)]
+            fn from_usize_unchecked(v: usize) -> Self {
                 match v {
-                    #(#indices => #name::#idents,)*
-                    _ => panic!("enum index out of bounds"),
+                    #(#indices_2 => #name::#idents,)*
+                    _ => #name::#var_zero
                 }
             }
-            fn into_usize(self) -> usize  {
+            #from_usize
+            #[inline(always)]
+            fn into_usize_unchecked(self) -> usize  {
                 match self {
-                    #(#name::#idents => #indices_2),*
+                    #(#name::#idents => #indices_3),*
                 }
+            }
+            #[inline(always)]
+            fn into_usize(self) -> usize  {
+                Self::into_usize_unchecked(self)
             }
         }
     }

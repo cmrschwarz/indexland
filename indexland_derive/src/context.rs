@@ -11,6 +11,7 @@ const INDEXLAND: &str = "indexland";
 const CRATE: &str = "crate";
 const ONLY: &str = "only";
 const OMIT: &str = "omit";
+const DISABLE_BOUNDS_CHECKS: &str = "disable_bounds_checks";
 const WHITELIST_AND_BLACKLIST_ERROR: &str =
     "omit and only are mutually exclusive";
 
@@ -24,6 +25,7 @@ pub struct Attrs {
     pub whitelist: Vec<TokenStream>,
     // could be active despite being empty
     pub whitelist_active: bool,
+    pub disable_checks: bool,
 }
 
 pub struct Context {
@@ -90,6 +92,7 @@ impl Context {
         let mut first_blacklist = None;
         let mut whitelist = Vec::new();
         let mut first_whitelist = None;
+        let mut disable_checks = false;
         for attr in &ast.attrs {
             if !attr.path().is_ident(INDEXLAND) {
                 continue;
@@ -100,52 +103,51 @@ impl Context {
                     // #[indexland(crate = path::to::indexland)]
                     let v = meta.value()?;
                     let path = v.parse()?;
-                    if !v.is_empty() {
-                        errs.error(
-                            v.span(),
-                            format!(
-                                "unexpected suffix `{}` after indexland crate path",
-                                v
-                            ),
-                        );
-                    }
                     indexland_path = Some(path);
-                }
-                else if meta.path.is_ident(OMIT) {
+                } else if meta.path.is_ident(DISABLE_BOUNDS_CHECKS) {
+                    // #[indexland(disable_bounds_checks)]
+                    disable_checks = true;
+                } else if meta.path.is_ident(OMIT) {
                     // #[indexland(omit(Display))]
                     let omit;
                     parenthesized!(omit in meta.input);
-                    let variants = split_at_commas(omit.cursor().token_stream());
+                    let variants =
+                        split_at_commas(omit.cursor().token_stream());
                     while omit.parse::<TokenTree>().is_ok() {}
 
-                    if first_blacklist.is_none()  {
+                    if first_blacklist.is_none() {
                         first_blacklist = Some(meta.path.span());
                         if let Some(first) = first_whitelist {
                             errs.error(first, WHITELIST_AND_BLACKLIST_ERROR);
                         }
                     }
                     if first_whitelist.is_some() {
-                        errs.error(meta.path.span(), WHITELIST_AND_BLACKLIST_ERROR);
+                        errs.error(
+                            meta.path.span(),
+                            WHITELIST_AND_BLACKLIST_ERROR,
+                        );
                     }
                     blacklist.extend(variants);
-                }
-                else if meta.path.is_ident(ONLY) {
+                } else if meta.path.is_ident(ONLY) {
                     // #[indexland(only(Idx))]
                     let only;
                     parenthesized!(only in meta.input);
-                    let elements = split_at_commas(only.cursor().token_stream());
-                    if first_whitelist.is_none()  {
+                    let elements =
+                        split_at_commas(only.cursor().token_stream());
+                    if first_whitelist.is_none() {
                         first_whitelist = Some(meta.path.span());
                         if let Some(first) = first_blacklist {
                             errs.error(first, WHITELIST_AND_BLACKLIST_ERROR);
                         }
                     }
                     if first_blacklist.is_some() {
-                        errs.error(meta.path.span(), WHITELIST_AND_BLACKLIST_ERROR);
+                        errs.error(
+                            meta.path.span(),
+                            WHITELIST_AND_BLACKLIST_ERROR,
+                        );
                     }
                     whitelist.extend(elements);
-                }
-                else {
+                } else {
                     errs.push(meta.error(format!(
                         "unknown {INDEXLAND} attribute {}",
                         meta.path.to_token_stream()
@@ -174,6 +176,7 @@ impl Context {
                 whitelist,
                 blacklist,
                 whitelist_active: first_whitelist.is_some(),
+                disable_checks,
             },
         }
     }

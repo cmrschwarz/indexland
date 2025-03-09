@@ -17,6 +17,9 @@ fn declarative_idx_newtype() {
 
     let foo = IndexArrayVec::<FooId, i32, 3>::from_iter([0, 1, 2]);
     assert_eq!(foo[FooId::ONE], 1);
+
+    let bar = IndexArrayVec::<BazId, i32, 3>::from_iter([42]);
+    assert_eq!(bar[BazId::ZERO], 42);
 }
 
 #[test]
@@ -44,7 +47,13 @@ fn derive_idx_newtype_manual() {
         fn from_usize(v: usize) -> Self {
             FooIdx(v as u32)
         }
+        fn from_usize_unchecked(v: usize) -> Self {
+            FooIdx(v as u32)
+        }
         fn into_usize(self) -> usize {
+            self.0 as usize
+        }
+        fn into_usize_unchecked(self) -> usize {
             self.0 as usize
         }
     }
@@ -73,7 +82,17 @@ fn derive_idx_enum_manual() {
                 _ => panic!(),
             }
         }
+        fn from_usize_unchecked(v: usize) -> Self {
+            match v {
+                0 => Foo::A,
+                1 => Foo::B,
+                _ => Foo::A,
+            }
+        }
         fn into_usize(self) -> usize {
+            self as usize
+        }
+        fn into_usize_unchecked(self) -> usize {
             self as usize
         }
     }

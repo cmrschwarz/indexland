@@ -237,6 +237,7 @@ macro_rules! nonmax_impl {
             unsafe fn new_unchecked(v: $primitive) -> Self {
                 unsafe { NonMax::<$primitive>::new_unchecked(v) }.0
             }
+            #[inline(always)]
             fn get(self) -> $primitive {
                 #[cfg(all(
                     debug_assertions,
@@ -328,12 +329,13 @@ macro_rules! nonmax_idx_impl {
             const ZERO: Self = NonMax::<$primitive>::ZERO;
             const ONE: Self = NonMax::<$primitive>::ONE;
             const MAX: Self = NonMax::<$primitive>::MAX;
-
+            #[inline(always)]
             fn from_usize(v: usize) -> Self {
                 // TODO: maybe add features where we assert this?
                 #![allow(clippy::cast_possible_truncation)]
                 NonMax::<$primitive>::new(v as $primitive).unwrap()
             }
+            #[inline(always)]
             fn into_usize(self) -> usize {
                 // TODO: maybe add features where we assert this?
                 #![allow(clippy::cast_possible_truncation)]

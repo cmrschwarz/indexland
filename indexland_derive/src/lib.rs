@@ -207,6 +207,11 @@ pub fn derive_idx_enum(
 /// #### `#[indexland(crate = ..)]`
 /// Change the crate name used within the derive macro. The default value is `::indexland`.
 ///
+/// #### `#[indexland(disable_bounds_checks)]`
+/// Disable bounds checking on conversion from your `Idx` to and from `usize`
+/// for increased performance. The index will wrap around instead.
+/// This is meaningless for indices that wrap usize in the first place.
+///
 /// #### `#[indexland(omit(..))]`
 /// Suppress the derivation of certain traits (blacklist).
 ///
@@ -220,13 +225,9 @@ pub fn derive_idx_enum(
 /// use foobar::Idx;
 ///
 /// #[derive(Idx)]
-/// #[indexland(crate = foobar)]
+/// #[indexland(crate = foobar, disable_bounds_checks)]
 /// #[indexland(omit(Debug, From<Self> for usize))]
-/// enum Foo {
-///     A,
-///     B,
-///     C,
-/// }
+/// struct Foo(u32);
 /// ```
 #[proc_macro_derive(Idx, attributes(indexland))]
 pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

@@ -29,8 +29,13 @@ pub trait Idx:
     // We also can't have a blanket impl of this trait for types that implement
     // `From<usize>` because then we can't add any manual ones (orphan rule
     // again).
+
     fn from_usize(v: usize) -> Self;
+    fn from_usize_unchecked(v: usize) -> Self;
+
     fn into_usize(self) -> usize;
+    fn into_usize_unchecked(self) -> usize;
+
     fn wrapping_add(self, other: Self) -> Self {
         Self::from_usize(
             self.into_usize().wrapping_add(other.into_usize())
@@ -71,7 +76,35 @@ pub trait IdxNewtype: Idx {
     fn into_inner(self) -> Self::Base;
 }
 
-macro_rules! primitive_idx_implemenation {
+impl Idx for usize {
+    const ZERO: usize = 0;
+    const ONE: usize = 1;
+    const MAX: usize = usize::MAX;
+    #[inline(always)]
+    fn into_usize(self) -> usize {
+        self as usize
+    }
+    #[inline(always)]
+    fn from_usize(v: usize) -> Self {
+        v
+    }
+    #[inline(always)]
+    fn into_usize_unchecked(self) -> usize {
+        self
+    }
+    #[inline(always)]
+    fn from_usize_unchecked(v: usize) -> Self {
+        v
+    }
+    fn wrapping_add(self, other: usize) -> usize {
+        self.wrapping_add(other)
+    }
+    fn wrapping_sub(self, other: Self) -> Self {
+        self.wrapping_sub(other)
+    }
+}
+
+macro_rules! primitive_idx_implemenation_unsized {
     ($($primitive: ident),*) => {$(
         impl Idx for $primitive {
             const ZERO: $primitive = 0;
@@ -83,9 +116,26 @@ macro_rules! primitive_idx_implemenation {
             }
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
-                // TODO: maybe add a feature where we assert this?
-                #![allow(clippy::cast_possible_truncation)]
-                v as Self
+                assert!(v < $primitive::MAX as usize);
+                v as $primitive
+            }
+            #[inline(always)]
+            fn into_usize_unchecked(self) -> usize {
+                #![allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_sign_loss,
+                    clippy::cast_possible_wrap
+                )]
+                self as usize
+            }
+            #[inline(always)]
+            fn from_usize_unchecked(v: usize) -> Self {
+                #![allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_sign_loss,
+                    clippy::cast_possible_wrap
+                )]
+                v as $primitive
             }
             fn wrapping_add(self, other: Self) -> Self {
                 $primitive::wrapping_add(self, other)
@@ -97,8 +147,52 @@ macro_rules! primitive_idx_implemenation {
     )*};
 }
 
-primitive_idx_implemenation![usize, u8, u16, u32, u64];
-primitive_idx_implemenation![isize, i8, i16, i32, i64];
+macro_rules! primitive_idx_implemenation_sized {
+    ($($primitive: ident),*) => {$(
+        impl Idx for $primitive {
+            const ZERO: $primitive = 0;
+            const ONE: $primitive = 1;
+            const MAX: $primitive = $primitive::MAX;
+            #[inline(always)]
+            fn into_usize(self) -> usize {
+                assert!(self >= 0);
+                self as usize
+            }
+            #[inline(always)]
+            fn from_usize(v: usize) -> Self {
+                assert!(v < $primitive::MAX as usize);
+                v as $primitive
+            }
+            #[inline(always)]
+            fn into_usize_unchecked(self) -> usize {
+                #![allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_sign_loss,
+                    clippy::cast_possible_wrap
+                )]
+                self as usize
+            }
+             #[inline(always)]
+            fn from_usize_unchecked(v: usize) -> Self {
+                #![allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_sign_loss,
+                    clippy::cast_possible_wrap
+                )]
+                v as $primitive
+            }
+            fn wrapping_add(self, other: Self) -> Self {
+                $primitive::wrapping_add(self, other)
+            }
+            fn wrapping_sub(self, other: Self) -> Self {
+                $primitive::wrapping_sub(self, other)
+            }
+        }
+    )*};
+}
+
+primitive_idx_implemenation_unsized![u8, u16, u32, u64];
+primitive_idx_implemenation_sized![isize, i8, i16, i32, i64];
 
 /// Declarative alternative to [`#[derive(IdxNewtype)]`](indexland_derive::IdxNewtype).
 ///
@@ -126,12 +220,20 @@ macro_rules! idx_newtype {
             const ONE: Self = $name(<$base_type as $crate::Idx>::ONE);
             const MAX: Self = $name(<$base_type as $crate::Idx>::MAX);
             #[inline(always)]
+            fn from_usize(v: usize) -> Self {
+                $name(<$base_type as $crate::Idx>::from_usize(v))
+            }
+            #[inline(always)]
             fn into_usize(self) -> usize {
                 <$base_type as $crate::Idx>::into_usize(self.0)
             }
             #[inline(always)]
-            fn from_usize(v: usize) -> Self {
-                $name(<$base_type as $crate::Idx>::from_usize(v))
+            fn from_usize_unchecked(v: usize) -> Self {
+                $name(<$base_type as $crate::Idx>::from_usize_unchecked(v))
+            }
+            #[inline(always)]
+            fn into_usize_unchecked(self) -> usize {
+                <$base_type as $crate::Idx>::into_usize_unchecked(self.0)
             }
             fn wrapping_add(self, other: Self) -> Self {
                $name(<$base_type as  $crate::Idx>::wrapping_add(self.0, other.0))
