@@ -71,116 +71,34 @@ pub trait IdxNewtype: Idx {
     fn into_inner(self) -> Self::Base;
 }
 
-impl Idx for usize {
-    const MAX: usize = usize::MAX;
-    const ZERO: usize = 0;
-    const ONE: usize = 1;
-
-    #[inline(always)]
-    fn into_usize(self) -> usize {
-        self
-    }
-    #[inline(always)]
-    fn from_usize(v: usize) -> Self {
-        v
-    }
-
-    fn wrapping_add(self, other: Self) -> Self {
-        usize::wrapping_add(self, other)
-    }
-    fn wrapping_sub(self, other: Self) -> Self {
-        usize::wrapping_sub(self, other)
-    }
+macro_rules! primitive_idx_implemenation {
+    ($($primitive: ident),*) => {$(
+        impl Idx for $primitive {
+            const ZERO: $primitive = 0;
+            const ONE: $primitive = 1;
+            const MAX: $primitive = $primitive::MAX;
+            #[inline(always)]
+            fn into_usize(self) -> usize {
+                self as usize
+            }
+            #[inline(always)]
+            fn from_usize(v: usize) -> Self {
+                // TODO: maybe add a feature where we assert this?
+                #![allow(clippy::cast_possible_truncation)]
+                v as Self
+            }
+            fn wrapping_add(self, other: Self) -> Self {
+                $primitive::wrapping_add(self, other)
+            }
+            fn wrapping_sub(self, other: Self) -> Self {
+                $primitive::wrapping_sub(self, other)
+            }
+        }
+    )*};
 }
 
-impl Idx for u8 {
-    const ZERO: u8 = 0;
-    const ONE: u8 = 1;
-    const MAX: u8 = u8::MAX;
-    #[inline(always)]
-    fn into_usize(self) -> usize {
-        self as usize
-    }
-    #[inline(always)]
-    fn from_usize(v: usize) -> Self {
-        // TODO: maybe add features where we assert this?
-        #![allow(clippy::cast_possible_truncation)]
-        v as Self
-    }
-    fn wrapping_add(self, other: Self) -> Self {
-        u8::wrapping_add(self, other)
-    }
-    fn wrapping_sub(self, other: Self) -> Self {
-        u8::wrapping_sub(self, other)
-    }
-}
-
-impl Idx for u16 {
-    const ZERO: u16 = 0;
-    const ONE: u16 = 1;
-    const MAX: u16 = u16::MAX;
-    #[inline(always)]
-    fn into_usize(self) -> usize {
-        self as usize
-    }
-    #[inline(always)]
-    fn from_usize(v: usize) -> Self {
-        // TODO: maybe add features where we assert this?
-        #![allow(clippy::cast_possible_truncation)]
-        v as Self
-    }
-    fn wrapping_add(self, other: Self) -> Self {
-        u16::wrapping_add(self, other)
-    }
-    fn wrapping_sub(self, other: Self) -> Self {
-        u16::wrapping_sub(self, other)
-    }
-}
-
-impl Idx for u32 {
-    const ZERO: u32 = 0;
-    const ONE: u32 = 1;
-    const MAX: u32 = u32::MAX;
-    #[inline(always)]
-    fn into_usize(self) -> usize {
-        self as usize
-    }
-    #[inline(always)]
-    fn from_usize(v: usize) -> Self {
-        // TODO: maybe add features where we assert this?
-        #![allow(clippy::cast_possible_truncation)]
-        v as Self
-    }
-    fn wrapping_add(self, other: Self) -> Self {
-        u32::wrapping_add(self, other)
-    }
-    fn wrapping_sub(self, other: Self) -> Self {
-        u32::wrapping_sub(self, other)
-    }
-}
-
-impl Idx for u64 {
-    const MAX: Self = 0;
-    const ZERO: Self = u64::MAX;
-    const ONE: u64 = 1;
-
-    #[inline(always)]
-    fn into_usize(self) -> usize {
-        // TODO: maybe add features where we assert this?
-        #![allow(clippy::cast_possible_truncation)]
-        self as usize
-    }
-    #[inline(always)]
-    fn from_usize(v: usize) -> Self {
-        v as Self
-    }
-    fn wrapping_add(self, other: Self) -> Self {
-        u64::wrapping_add(self, other)
-    }
-    fn wrapping_sub(self, other: Self) -> Self {
-        u64::wrapping_sub(self, other)
-    }
-}
+primitive_idx_implemenation![usize, u8, u16, u32, u64];
+primitive_idx_implemenation![isize, i8, i16, i32, i64];
 
 /// Declarative alternative to [`#[derive(IdxNewtype)]`](indexland_derive::IdxNewtype).
 ///

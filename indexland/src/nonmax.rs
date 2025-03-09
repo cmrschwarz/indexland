@@ -344,6 +344,7 @@ macro_rules! nonmax_idx_impl {
 }
 
 nonmax_idx_impl![u8, u16, u32, u64, usize];
+nonmax_idx_impl![i8, i16, i32, i64, isize];
 
 nonmax_impl![u8, u16, u32, u64, usize];
 nonmax_impl![i8, i16, i32, i64, isize];
