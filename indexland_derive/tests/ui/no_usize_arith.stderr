@@ -1,0 +1,10 @@
+error[E0308]: mismatched types
+ --> tests/ui/no_usize_arith.rs:9:12
+  |
+9 |     idx += 1 as usize;
+  |            ^^^^^^^^^^ expected `Foo`, found `usize`
+  |
+help: call `Into::into` on this expression to convert `usize` into `Foo`
+  |
+9 |     idx += (1 as usize).into();
+  |            +          ++++++++

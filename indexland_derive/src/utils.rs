@@ -93,11 +93,10 @@ impl<F> Default for Derivations<F> {
 }
 
 impl<F> Derivations<F> {
-    pub fn add(&mut self, name: &'static str, f: F) {
+    pub fn add(&mut self, default: bool, name: &'static str, f: F) {
         self.catalog.insert(name, f);
-    }
-    pub fn add_default(&mut self, name: &'static str, f: F) {
-        self.catalog.insert(name, f);
-        self.default_derivations.push(name);
+        if default {
+            self.default_derivations.push(name);
+        }
     }
 }

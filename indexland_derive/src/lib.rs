@@ -70,7 +70,7 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 /// - [`indexland::IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html)
 /// - [`Default`](core::default::Default) (uses first variant)
 /// - [`Debug`](core::fmt::Debug)
-///   (intentionally not [`Display`](core::fmt::Display), implement as desired)
+///   (enable [`Display`](core::fmt::Display) through `#[indexland(extra(Display))]`)
 /// - [`Clone`](core::clone::Clone) +
 ///   [`Copy`](core::marker::Copy)
 /// - [`PartialOrd`](core::clone::Clone) +
@@ -134,6 +134,16 @@ pub fn derive_idx_enum(
 /// for increased performance. The index will wrap around instead.
 /// This is meaningless for indices that wrap usize in the first place.
 ///
+/// #### `#[indexland(usize_arith)]`
+/// Implement [`Add<usize>`](core::ops::Add),
+/// [`Sub<usize>`](core::ops::Sub), [`AddAssign<usize>`](core::ops::AddAssign),
+/// and [`SubAssign<usize>`](core::ops::SubAssign).
+///
+/// #### `#[indexland(extra(..))]`
+/// Enable the derivation of optional traits, see
+/// [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
+/// and [`#[derive(IdxEnum)]`](crate::IdxEnum) for options.
+///
 /// #### `#[indexland(omit(..))]`
 /// Suppress the derivation of certain traits (blacklist).
 ///
@@ -150,6 +160,18 @@ pub fn derive_idx_enum(
 /// #[indexland(crate = foobar, disable_bounds_checks)]
 /// #[indexland(omit(Debug, From<Self> for usize))]
 /// struct Foo(u32);
+///
+/// #[derive(Idx)]
+/// #[indexland(crate = foobar)]
+/// #[indexland(extra(Display))]
+/// enum Bar{
+///     A,
+///     B,
+///     C
+/// };
+///
+///
+/// println!("{}", Bar::A);
 /// ```
 #[proc_macro_derive(Idx, attributes(indexland))]
 pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

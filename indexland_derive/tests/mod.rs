@@ -94,6 +94,37 @@ fn derive_newtype_omit() {
 }
 
 #[test]
+#[should_panic]
+fn bounds_checks() {
+    #[derive(Idx)]
+    struct FooId(u32);
+
+    FooId::from_usize(usize::MAX);
+}
+
+#[test]
+fn disable_bounds_checks() {
+    #[derive(Idx)]
+    #[indexland(disable_bounds_checks)]
+    struct FooId(u32);
+
+    assert_eq!(FooId::from_usize(u32::MAX as usize + 2).into_usize(), 1);
+}
+
+#[test]
+fn usize_arith() {
+    #[derive(Idx)]
+    #[indexland(usize_arith)]
+    struct FooId(u32);
+
+    let mut idx = FooId(12);
+
+    idx += 1 as usize;
+
+    assert_eq!(idx.into_usize(), 13);
+}
+
+#[test]
 fn ui() {
     let t = trybuild::TestCases::new();
     t.compile_fail("tests/ui/**/*.rs");

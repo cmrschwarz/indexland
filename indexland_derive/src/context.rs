@@ -11,9 +11,10 @@ const INDEXLAND: &str = "indexland";
 const CRATE: &str = "crate";
 const ONLY: &str = "only";
 const OMIT: &str = "omit";
+const EXTRA: &str = "extra";
 const DISABLE_BOUNDS_CHECKS: &str = "disable_bounds_checks";
-const WHITELIST_AND_BLACKLIST_ERROR: &str =
-    "omit and only are mutually exclusive";
+
+const USIZE_ARITH: &str = "usize_arith";
 
 #[derive(Default)]
 pub struct ErrorList {
@@ -23,9 +24,11 @@ pub struct Attrs {
     pub indexland_path: syn::Path,
     pub blacklist: Vec<TokenStream>,
     pub whitelist: Vec<TokenStream>,
+    pub extra_list: Vec<TokenStream>,
     // could be active despite being empty
     pub whitelist_active: bool,
     pub disable_checks: bool,
+    pub enable_usize_arith: bool,
 }
 
 pub struct Context {
@@ -92,7 +95,10 @@ impl Context {
         let mut first_blacklist = None;
         let mut whitelist = Vec::new();
         let mut first_whitelist = None;
+        let mut extra_list = Vec::new();
+        let mut first_extra_list = None;
         let mut disable_checks = false;
+        let mut enable_usize_arith = false;
         for attr in &ast.attrs {
             if !attr.path().is_ident(INDEXLAND) {
                 continue;
@@ -107,46 +113,51 @@ impl Context {
                 } else if meta.path.is_ident(DISABLE_BOUNDS_CHECKS) {
                     // #[indexland(disable_bounds_checks)]
                     disable_checks = true;
+                } else if meta.path.is_ident(USIZE_ARITH) {
+                    // #[indexland(usize_arith)]
+                    enable_usize_arith = true;
                 } else if meta.path.is_ident(OMIT) {
-                    // #[indexland(omit(Display))]
+                    // e.g. #[indexland(omit(Display))]
                     let omit;
                     parenthesized!(omit in meta.input);
                     let variants =
                         split_at_commas(omit.cursor().token_stream());
+
+                    // the cursor above is a copy
                     while omit.parse::<TokenTree>().is_ok() {}
 
                     if first_blacklist.is_none() {
                         first_blacklist = Some(meta.path.span());
-                        if let Some(first) = first_whitelist {
-                            errs.error(first, WHITELIST_AND_BLACKLIST_ERROR);
-                        }
-                    }
-                    if first_whitelist.is_some() {
-                        errs.error(
-                            meta.path.span(),
-                            WHITELIST_AND_BLACKLIST_ERROR,
-                        );
                     }
                     blacklist.extend(variants);
                 } else if meta.path.is_ident(ONLY) {
-                    // #[indexland(only(Idx))]
+                    // e.g. #[indexland(only(Idx))]
                     let only;
                     parenthesized!(only in meta.input);
                     let elements =
                         split_at_commas(only.cursor().token_stream());
+
+                    // the cursor above is a copy
+                    while only.parse::<TokenTree>().is_ok() {}
+
                     if first_whitelist.is_none() {
                         first_whitelist = Some(meta.path.span());
-                        if let Some(first) = first_blacklist {
-                            errs.error(first, WHITELIST_AND_BLACKLIST_ERROR);
-                        }
-                    }
-                    if first_blacklist.is_some() {
-                        errs.error(
-                            meta.path.span(),
-                            WHITELIST_AND_BLACKLIST_ERROR,
-                        );
                     }
                     whitelist.extend(elements);
+                } else if meta.path.is_ident(EXTRA) {
+                    // e.g. #[indexland(extra(Display))]
+                    let extra;
+                    parenthesized!(extra in meta.input);
+                    let elements =
+                        split_at_commas(extra.cursor().token_stream());
+
+                    // the cursor above is a copy
+                    while extra.parse::<TokenTree>().is_ok() {}
+
+                    if first_extra_list.is_none() {
+                        first_extra_list = Some(meta.path.span());
+                    }
+                    extra_list.extend(elements);
                 } else {
                     errs.push(meta.error(format!(
                         "unknown {INDEXLAND} attribute {}",
@@ -169,6 +180,12 @@ impl Context {
             }
         });
 
+        if let (Some(wl), Some(bl)) = (first_blacklist, first_whitelist) {
+            for span in [wl, bl] {
+                errs.error(span, "omit() and only() are mutually exclusive");
+            }
+        }
+
         Context {
             error_list: errs,
             attrs: Attrs {
@@ -176,7 +193,9 @@ impl Context {
                 whitelist,
                 blacklist,
                 whitelist_active: first_whitelist.is_some(),
+                extra_list,
                 disable_checks,
+                enable_usize_arith,
             },
         }
     }

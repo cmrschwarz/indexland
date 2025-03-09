@@ -161,6 +161,22 @@ fn derive_debug(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
+fn derive_display(ctx: &EnumCtx) -> TokenStream {
+    let name = &ctx.name;
+    let idents = &ctx.idents;
+    let ident_strings = &ctx.ident_strings;
+    quote! {
+        #[automatically_derived]
+        impl ::core::fmt::Display for #name {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                match self {
+                    #(#name::#idents => f.write_str(#ident_strings)),*
+                }
+            }
+        }
+    }
+}
+
 fn derive_add(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
@@ -316,7 +332,7 @@ fn derive_sub_usize(ctx: &EnumCtx) -> TokenStream {
         #[automatically_derived]
         impl ::core::ops::Sub<usize> for #name {
             type Output = Self;
-            fn sub(self, rhs: Self) -> Self::Output {
+            fn sub(self, rhs: usize) -> Self::Output {
                 #indexland::Idx::from_usize(
                     #indexland::Idx::into_usize(self) - rhs,
                 )
@@ -351,29 +367,31 @@ fn derive_sub_assign_usize(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derivation_list() -> Derivations<EnumTraitDerivation> {
+fn derivation_list(ctx: &EnumCtx) -> Derivations<EnumTraitDerivation> {
+    let usize_arith = ctx.attrs.enable_usize_arith;
     let mut derivs = Derivations::<EnumTraitDerivation>::default();
-    derivs.add_default("Idx", derive_idx);
-    derivs.add_default("IdxEnum", derive_idx_enum);
-    derivs.add_default("Debug", derive_debug);
-    derivs.add_default("Default", derive_default);
-    derivs.add_default("Clone", derive_clone);
-    derivs.add_default("Copy", derive_copy);
-    derivs.add_default("Add", derive_add);
-    derivs.add_default("AddAssign", derive_add_assign);
-    derivs.add_default("Sub", derive_sub);
-    derivs.add_default("SubAssign", derive_sub_assign);
-    derivs.add_default("Hash", derive_hash);
-    derivs.add_default("PartialOrd", derive_partial_ord);
-    derivs.add_default("Ord", derive_ord);
-    derivs.add_default("PartialEq", derive_partial_eq);
-    derivs.add_default("Eq", derive_eq);
-    derivs.add_default("From<usize>", derive_from_usize);
-    derivs.add_default("From<Self> for usize", derive_from_self_for_usize);
-    derivs.add("Add<usize>", derive_add_usize);
-    derivs.add("Sub<usize>", derive_sub_usize);
-    derivs.add("AddAssign<usize>", derive_add_assign_usize);
-    derivs.add("SubAssign<usize>", derive_sub_assign_usize);
+    derivs.add(true, "Idx", derive_idx);
+    derivs.add(true, "IdxEnum", derive_idx_enum);
+    derivs.add(true, "Debug", derive_debug);
+    derivs.add(false, "Display", derive_display);
+    derivs.add(true, "Default", derive_default);
+    derivs.add(true, "Clone", derive_clone);
+    derivs.add(true, "Copy", derive_copy);
+    derivs.add(true, "Add", derive_add);
+    derivs.add(true, "AddAssign", derive_add_assign);
+    derivs.add(true, "Sub", derive_sub);
+    derivs.add(true, "SubAssign", derive_sub_assign);
+    derivs.add(true, "Hash", derive_hash);
+    derivs.add(true, "PartialOrd", derive_partial_ord);
+    derivs.add(true, "Ord", derive_ord);
+    derivs.add(true, "PartialEq", derive_partial_eq);
+    derivs.add(true, "Eq", derive_eq);
+    derivs.add(true, "From<usize>", derive_from_usize);
+    derivs.add(true, "From<Self> for usize", derive_from_self_for_usize);
+    derivs.add(usize_arith, "Add<usize>", derive_add_usize);
+    derivs.add(usize_arith, "Sub<usize>", derive_sub_usize);
+    derivs.add(usize_arith, "AddAssign<usize>", derive_add_assign_usize);
+    derivs.add(usize_arith, "SubAssign<usize>", derive_sub_assign_usize);
     derivs
 }
 
@@ -387,7 +405,7 @@ fn push_unknown_entry_error(ctx: &EnumCtx, entry: &TokenStream, descr: &str) {
     } else {
         ctx.error_list.error(
             entry.span(),
-            format!("`{descr}` does not name a trait that will be derived"),
+            format!("`{descr}` does not name a trait that can be derived"),
         );
     }
 }
@@ -440,7 +458,7 @@ pub fn derive_idx_enum_inner(
         ident_strings,
     };
 
-    let mut derivs_list = derivation_list();
+    let mut derivs_list = derivation_list(&enum_ctx);
     for entry in &enum_ctx.attrs.blacklist {
         let descr = token_stream_to_compact_string(entry);
         if derivs_list.catalog.remove(&*descr).is_none() {
@@ -464,6 +482,16 @@ pub fn derive_idx_enum_inner(
             if let Some(deriv) = derivs_list.catalog.get(deriv_descr) {
                 derivations.push(deriv(&enum_ctx));
             }
+        }
+    }
+
+    for entry in &enum_ctx.attrs.extra_list {
+        let descr = token_stream_to_compact_string(entry);
+        match derivs_list.catalog.get(&*descr) {
+            Some(deriv) => {
+                derivations.push(deriv(&enum_ctx));
+            }
+            None => push_unknown_entry_error(&enum_ctx, entry, &descr),
         }
     }
 
