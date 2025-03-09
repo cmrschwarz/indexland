@@ -49,6 +49,12 @@ pub struct NonMaxOutOfRangeError;
 #[cfg(feature = "std")]
 impl std::error::Error for NonMaxOutOfRangeError {}
 
+impl core::fmt::Display for NonMaxOutOfRangeError {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(fmt, "value out of range for NonMax integer type")
+    }
+}
+
 pub trait NonMaxPrimitive:
     Debug
     + Display
@@ -193,7 +199,7 @@ macro_rules! impl_nonmax {
     ($($primitive: ty),*) => {$(
         impl NonMax<$primitive> {
             const fn new(v: $primitive) -> Option<Self> {
-                if v == $primitive::MAX {
+                if v == <$primitive>::MAX {
                     return None;
                 }
                 Some(unsafe{Self::new_unchecked(v)})
@@ -211,7 +217,7 @@ macro_rules! impl_nonmax {
                     not(debug_assertions),
                     feature = "disable_debuggable_nonmax"
                 ))]
-                NonMax(unsafe { NonZero::new_unchecked(v ^ $primitive::MAX) })
+                NonMax(unsafe { NonZero::new_unchecked(v ^ <$primitive>::MAX) })
             }
         }
         impl NonMaxPrimitive for $primitive {
@@ -230,11 +236,11 @@ macro_rules! impl_nonmax {
         impl NonMaxInner<$primitive> for <$primitive as NonMaxPrimitive>::NonMaxInner {
             const ZERO: Self = NonMax::<$primitive>::new(0).unwrap().0;
             const ONE: Self = NonMax::<$primitive>::new(1).unwrap().0;
-            const MIN: Self = NonMax::<$primitive>::new($primitive::MIN).unwrap().0;
-            const MAX: Self = NonMax::<$primitive>::new($primitive::MAX - 1).unwrap().0;
+            const MIN: Self = NonMax::<$primitive>::new(<$primitive>::MIN).unwrap().0;
+            const MAX: Self = NonMax::<$primitive>::new(<$primitive>::MAX - 1).unwrap().0;
 
             fn new(v: $primitive) -> Option<Self> {
-                if v == $primitive::MAX {
+                if v == <$primitive>::MAX {
                     return None;
                 }
                 Some(unsafe{Self::new_unchecked(v)})
@@ -264,7 +270,7 @@ macro_rules! impl_nonmax {
                     debug_assertions,
                     not(feature = "disable_debuggable_nonmax")
                 ))]
-                let mut res = $primitive::wrapping_add(self, rhs);
+                let mut res = <$primitive>::wrapping_add(self, rhs);
 
                 #[cfg(any(
                     not(debug_assertions),
@@ -272,7 +278,7 @@ macro_rules! impl_nonmax {
                 ))]
                 let mut res = self.get().wrapping_add(rhs.get());
 
-                if res == $primitive::MAX {
+                if res == <$primitive>::MAX {
                     res = 0;
                 }
                 unsafe { Self::new_unchecked(res) }
@@ -282,7 +288,7 @@ macro_rules! impl_nonmax {
                     debug_assertions,
                     not(feature = "disable_debuggable_nonmax")
                 ))]
-                let mut res = $primitive::wrapping_sub(self, rhs);
+                let mut res = <$primitive>::wrapping_sub(self, rhs);
 
                 #[cfg(any(
                     not(debug_assertions),
@@ -290,7 +296,7 @@ macro_rules! impl_nonmax {
                 ))]
                 let mut res = self.get().wrapping_sub(rhs.get());
 
-                if res == $primitive::MAX {
+                if res == <$primitive>::MAX {
                     res = 0;
                 }
                 unsafe { Self::new_unchecked(res) }
@@ -300,7 +306,7 @@ macro_rules! impl_nonmax {
                     debug_assertions,
                     not(feature = "disable_debuggable_nonmax")
                 ))]
-                let mut res = $primitive::wrapping_mul(self, rhs);
+                let mut res = <$primitive>::wrapping_mul(self, rhs);
 
                 #[cfg(any(
                     not(debug_assertions),
@@ -308,7 +314,7 @@ macro_rules! impl_nonmax {
                 ))]
                 let mut res = self.get().wrapping_mul(rhs.get());
 
-                if res == $primitive::MAX {
+                if res == <$primitive>::MAX {
                     res = 0;
                 }
                 unsafe { Self::new_unchecked(res) }
@@ -362,57 +368,55 @@ impl_nonmax![u8, u16, u32, u64, u128, usize];
 impl_nonmax![i8, i16, i32, i64, i128, isize];
 
 impl_nonmax_idx![u8, u16, u32, u64, u128, usize];
-impl_nonmax_idx![i8, i16, i32, i64, u128, isize];
+impl_nonmax_idx![i8, i16, i32, i64, i128, isize];
 
 // unchecked A => NonMax<B> & NonMax<A> => NonMax<B>
 macro_rules! impl_from_unchecked {
-    ( $source: ty => $($target: ty),* ) => {
+    ( $source: ty => $($target: ty),* ) => {$(
         impl From<$source> for NonMax<$target> {
             #[inline]
             fn from(src: $source) -> Self {
-                // SAFETY: smaller input type guarantees the value is non-max
-                unsafe { Self::new_unchecked(src.into()) }
+                unsafe { Self::new_unchecked(src as $target) }
             }
         }
-        impl TryFrom<$source> for NonMax<$target> {
-            type Error = NonMaxOutOfRangeError;
-            #[inline]
-            fn try_from(src: $source) -> Result<Self, Self::Error> {
-                Ok(Self::from(src))
-            }
-        }
+        //impl TryFrom<$source> for NonMax<$target> {
+        //    type Error = NonMaxOutOfRangeError;
+        //    #[inline]
+        //    fn try_from(src: $source) -> Result<Self, Self::Error> {
+        //        unsafe { Self::new_unchecked(src.get() as $target) }
+        //    }
+        //}
         impl From<NonMax<$source>> for NonMax<$target> {
             #[inline]
             fn from(src: NonMax<$source>) -> Self {
-                // SAFETY: smaller input type guarantees the value is non-max
-                unsafe { Self::new_unchecked(src.get().into()) }
+                unsafe { Self::new_unchecked(src.get() as $target) }
             }
         }
-        impl TryFrom<$source> for NonMax<$target> {
-            type Error = NonMaxOutOfRangeError;
-            #[inline]
-            fn try_from(src: NonMax<$source>) -> Result<Self, Self::Error> {
-                Ok(Self::from(src))
-            }
-        }
-    };
+        //impl TryFrom<NonMax<$source>> for NonMax<$target> {
+        //    type Error = NonMaxOutOfRangeError;
+        //    #[inline]
+        //    fn try_from(src: NonMax<$source>) -> Result<Self, Self::Error> {
+        //        unsafe { Self::new_unchecked(src.get() as $target) }
+        //    }
+        //}
+    )*};
 }
 
 // Unsigned => Larger Unsigned
-impl_from_unchecked![u8 => u16, u32, u64, u128, usize];
-impl_from_unchecked![u16 => u32, u64, u128, usize];
+impl_from_unchecked![u8 => u16, u32, u64, u128];
+impl_from_unchecked![u16 => u32, u64, u128];
 impl_from_unchecked![u32 => u64, u128];
 impl_from_unchecked![u64 => u128];
 
 // Signed => Larger Signed
-impl_from_unchecked![i8 => i16, i32, i64, i128, isize];
-impl_from_unchecked![i16 => i32, i64, i128, isize];
+impl_from_unchecked![i8 => i16, i32, i64, i128];
+impl_from_unchecked![i16 => i32, i64, i128];
 impl_from_unchecked![i32 => i64, i128];
 impl_from_unchecked![i64 => i128];
 
 // Unsigned => Larger Signed
-impl_from_unchecked![u8 => i16, i32, i64, i128, isize];
-impl_from_unchecked![u16 => i32, i64, i128, isize];
+impl_from_unchecked![u8 => i16, i32, i64, i128];
+impl_from_unchecked![u16 => i32, i64, i128];
 impl_from_unchecked![u32 => i64, i128];
 impl_from_unchecked![u64 => i128];
 
@@ -445,11 +449,6 @@ macro_rules! impl_try_from_check_gte_0 {
     )*}
 }
 
-// Signed => Larger Unsigned
-impl_try_from_check_gte_0![i8 => u16, u32, u64, u128, usize];
-impl_try_from_check_gte_0![i16 => u32, u64, u128];
-impl_try_from_check_gte_0![i32 => u64, u128];
-
 // Signed => Smaller Unsigned, Same Size Unsigned
 impl_try_from_check_gte_0!(i8 => u8, u16, u32, u64, u128);
 impl_try_from_check_gte_0!(i16 => u16, u32, u64, u128);
@@ -457,30 +456,27 @@ impl_try_from_check_gte_0!(i32 => u32, u64, u128);
 impl_try_from_check_gte_0!(i64 => u64, u128);
 impl_try_from_check_gte_0!(i128 => u128);
 
-// isize => usize
-impl_try_from_check_gte_0!(isize => usize);
-
 // A => NonMax<B> & NonMax<A> => NonMax<B>  if A < B::MAX
 macro_rules! impl_try_from_check_lt_max {
     ($source:ty => $($target:ty),+) => {$(
         impl TryFrom<$source> for NonMax<$target> {
-            type Error = TryFromIntError;
+            type Error = NonMaxOutOfRangeError;
             #[inline]
             fn try_from(src: $source) -> Result<Self, Self::Error> {
-                if src < $target::MAX as $source {
-                    unsafe { Self::new_unchecked(src as $target) }
+                if src < <$target>::MAX as $source {
+                    Ok(unsafe { Self::new_unchecked(src as $target) })
                 } else {
                     Err(NonMaxOutOfRangeError)
                 }
             }
         }
         impl TryFrom<NonMax<$source>> for NonMax<$target> {
-            type Error = TryFromIntError;
+            type Error = NonMaxOutOfRangeError;
             #[inline]
             fn try_from(src: NonMax<$source>) -> Result<Self, Self::Error> {
                 let src = src.get();
-                if src < $target::MAX as $source {
-                    unsafe { Self::new_unchecked(src as $target) }
+                if src < <$target>::MAX as $source {
+                    Ok(unsafe { Self::new_unchecked(src as $target) })
                 } else {
                     Err(NonMaxOutOfRangeError)
                 }
@@ -502,32 +498,29 @@ impl_try_from_check_lt_max![u32 => u8, u16];
 impl_try_from_check_lt_max![u64 => u8, u16, u32];
 impl_try_from_check_lt_max![u128 => u8, u16, u32, u64];
 
-// usize => isize
-impl_try_from_check_lt_max!(usize => isize);
-
 // A => NonMax<B> & NonMax<A> => NonMax<B>  if A >= B::MIN && A < B::MAX
 macro_rules! impl_try_from_check_gte_min_lt_max {
     ($source:ty => $($target:ty),+) => {$(
         impl TryFrom<$source> for NonMax<$target> {
-            type Error = TryFromIntError;
+            type Error = NonMaxOutOfRangeError;
 
             #[inline]
             fn try_from(src: $source) -> Result<Self, Self::Error> {
-                if src >= ($target::MIN as $source) || src < ($target::MAX as $source) {
-                    unsafe { Self::new_unchecked(src as $target) }
+                if src >= (<$target>::MIN as $source) || src < (<$target>::MAX as $source) {
+                    Ok(unsafe { Self::new_unchecked(src as $target) })
                 } else {
                     Err(NonMaxOutOfRangeError)
                 }
             }
         }
         impl TryFrom<NonMax<$source>> for NonMax<$target> {
-            type Error = TryFromIntError;
+            type Error = NonMaxOutOfRangeError;
 
             #[inline]
             fn try_from(src: NonMax<$source>) -> Result<Self, Self::Error> {
                 let src = src.get();
-                if src >= ($target::MIN as $source) || src < ($target::MAX as $source) {
-                    unsafe { Self::new_unchecked(src as $target) }
+                if src >= (<$target>::MIN as $source) || src < (<$target>::MAX as $source) {
+                    Ok(unsafe { Self::new_unchecked(src as $target) })
                 } else {
                     Err(NonMaxOutOfRangeError)
                 }
@@ -547,6 +540,67 @@ impl_try_from_check_gte_min_lt_max![i16 => u8];
 impl_try_from_check_gte_min_lt_max![i32 => u8, u16];
 impl_try_from_check_gte_min_lt_max![i64 => u8, u16, u32];
 impl_try_from_check_gte_min_lt_max![i128 => u8, u16, u32, u64];
+
+macro_rules! impl_try_from_target_dependant {
+    ($source:ty => $($target:ty),+) => {$(
+        impl TryFrom<$source> for NonMax<$target> {
+            type Error = NonMaxOutOfRangeError;
+
+            #[inline]
+            fn try_from(src: $source) -> Result<Self, Self::Error> {
+                if let Ok(src) = <$target>::try_from(src) {
+                    if src != <$target>::MAX {
+                        return Ok(unsafe { Self::new_unchecked(src) });
+                    }
+                }
+                Err(NonMaxOutOfRangeError)
+            }
+        }
+        impl TryFrom<NonMax<$source>> for NonMax<$target> {
+            type Error = NonMaxOutOfRangeError;
+
+            #[inline]
+            fn try_from(src: NonMax<$source>) -> Result<Self, Self::Error> {
+                if let Ok(src) = <$target>::try_from(src.get()) {
+                    if src != <$target>::MAX {
+                        return Ok(unsafe { Self::new_unchecked(src) });
+                    }
+                }
+                Err(NonMaxOutOfRangeError)
+            }
+        }
+    )*}
+}
+
+macro_rules! rev {
+    ($mac:ident, $($target:ty),+ => $source:ty) => {$(
+        $mac!($target => $source);
+    )*}
+}
+
+// usize => xx
+impl_try_from_check_lt_max![usize => u8, u16];
+impl_try_from_check_lt_max!(usize => i8, i16, isize);
+impl_try_from_target_dependant![usize => u32, u64, u128];
+impl_try_from_target_dependant![usize => i32, i64, i128];
+
+// xx => usize
+rev![impl_from_unchecked, u8, u16 => usize];
+rev![impl_try_from_check_gte_0, i8, i16 => usize];
+rev![impl_try_from_target_dependant, u32, u64, u128 => usize];
+rev![impl_try_from_target_dependant, i32, i64, i128 => usize];
+
+// isize => xx
+impl_try_from_check_gte_0!(isize => usize);
+impl_try_from_target_dependant![isize => u16, u32, u64, u128];
+impl_try_from_target_dependant![isize => i16, i32, i64, i128];
+
+// xx => isize
+rev![impl_from_unchecked, u8 => isize];
+rev![impl_try_from_check_lt_max, u16 => isize];
+rev![impl_from_unchecked, i8, i16 => isize];
+rev![impl_try_from_target_dependant, u32, u64, u128 => isize];
+rev![impl_try_from_target_dependant, i32, i64, i128 => isize];
 
 #[cfg(test)]
 mod test {
