@@ -132,11 +132,11 @@ This crate is an attempt to solve these.
 - There is very litle runtime overhead. The core index wrapper functions are marked `#[inline(always)]`,
 so the compiler can reliably eliminate them, even in debug mode.
 
-- By default, conversions from `usize` to index base types smaller than `usize`
-will be bounds checked. We carefully avoid these checks where possible.
-They can also be fully disabled on a per type basis through
-`#[indexland(disable_bounds_checks)]`, in which case the indices
-will silently wrap around, just like `my_usize as u32` would.
+- By default, index conversions that might overflow will be bounds checked.
+  This only affects index types smaller than `usize`.
+  It can also be fully disabled through `#[indexland(disable_bounds_checks)]`,
+  in which case the indices will silently wrap around, just like
+  `my_usize as u32` would.
 
 
 

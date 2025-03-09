@@ -112,12 +112,11 @@ macro_rules! primitive_idx_implemenation_unsized {
             const MAX: $primitive = $primitive::MAX;
             #[inline(always)]
             fn into_usize(self) -> usize {
-                self as usize
+                ::core::convert::TryInto::<usize>::try_into(self).unwrap()
             }
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
-                assert!(v < $primitive::MAX as usize);
-                v as $primitive
+                ::core::convert::TryInto::<$primitive>::try_into(v).unwrap()
             }
             #[inline(always)]
             fn into_usize_unchecked(self) -> usize {
@@ -155,13 +154,11 @@ macro_rules! primitive_idx_implemenation_sized {
             const MAX: $primitive = $primitive::MAX;
             #[inline(always)]
             fn into_usize(self) -> usize {
-                assert!(self >= 0);
-                self as usize
+                ::core::convert::TryInto::<usize>::try_into(self).unwrap()
             }
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
-                assert!(v < $primitive::MAX as usize);
-                v as $primitive
+                ::core::convert::TryInto::<$primitive>::try_into(v).unwrap()
             }
             #[inline(always)]
             fn into_usize_unchecked(self) -> usize {

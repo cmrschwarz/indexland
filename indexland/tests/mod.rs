@@ -70,7 +70,6 @@ fn derive_idx_enum_manual() {
         A,
         B,
     }
-
     impl Idx for Foo {
         const ZERO: Self = Foo::A;
         const ONE: Self = Foo::B;
@@ -188,4 +187,22 @@ fn nested_enum_idx_array() {
     ];
 
     assert_eq!(foo[Foo::B][Bar::Y], 4);
+}
+
+#[test]
+#[should_panic]
+fn bounds_checks() {
+    #[derive(Idx)]
+    struct FooId(u32);
+
+    FooId::from_usize(usize::MAX);
+}
+
+#[test]
+fn disable_bounds_checks() {
+    #[derive(Idx)]
+    #[indexland(disable_bounds_checks)]
+    struct FooId(u32);
+
+    assert_eq!(FooId::from_usize(u32::MAX as usize + 2).into_usize(), 1);
 }
