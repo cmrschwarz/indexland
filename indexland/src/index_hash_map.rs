@@ -1,4 +1,4 @@
-use crate::index_enumerate::IndexEnumerate;
+use crate::{index_enumerate::IndexEnumerate, index_range::IndexRangeBounds};
 use alloc::boxed::Box;
 use core::{
     fmt::Debug,
@@ -9,10 +9,7 @@ use core::{
 
 use indexmap::{map::Slice, Equivalent, IndexMap};
 
-use super::{
-    idx::Idx,
-    index_range::{IndexRange, RangeBoundsAsRange},
-};
+use super::{idx::Idx, index_range::IndexRange};
 
 /// Create an [`IndexHashMap`] containing the arguments.
 ///
@@ -254,11 +251,12 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
-    pub fn drain<R: RangeBounds<I>>(
+    pub fn drain<R: IndexRangeBounds<I>>(
         &mut self,
         range: R,
     ) -> indexmap::map::Drain<K, V> {
-        self.data.drain(range.as_usize_range(self.len()))
+        self.data
+            .drain(range.canonicalize(self.len()).usize_range())
     }
     pub fn drain_len<R: RangeBounds<usize>>(
         &mut self,

@@ -1,8 +1,11 @@
 use core::ops::{Index, IndexMut, Range};
 
 use crate::{
-    index_range::{RangeAsUsizeRange, RangeBoundsAsRange},
-    Idx, IndexRange, IndexRangeInclusive, IndexSlice,
+    index_range::{
+        IndexRangeBounds, IndexRangeFrom, IndexRangeFull, IndexRangeInclusive,
+        IndexRangeTo, IndexRangeToInclusive,
+    },
+    Idx, IndexRange, IndexSlice,
 };
 
 /// # Safety
@@ -136,8 +139,9 @@ macro_rules! index_slice_partial_range_impl {
             type Output = IndexSlice<I, T>;
             #[inline]
             fn get(self, slice: &IndexSlice<I, T>) -> Option<&IndexSlice<I, T>> {
+                let range = IndexRangeBounds::<I>::canonicalize(self, slice.len());
                 Some(IndexSlice::from_slice(
-                    slice.as_slice().get(self.as_usize_range(slice.len()))?,
+                    slice.as_slice().get(range)?,
                 ))
             }
             #[inline]
@@ -145,7 +149,7 @@ macro_rules! index_slice_partial_range_impl {
                 self,
                 slice: &mut IndexSlice<I, T>,
             ) -> Option<&mut IndexSlice<I, T>> {
-                let range = self.as_usize_range(slice.len());
+                let range = IndexRangeBounds::<I>::canonicalize(self, slice.len());
                 Some(IndexSlice::from_slice_mut(
                     slice.as_slice_mut().get_mut(range)?,
                 ))
@@ -156,7 +160,7 @@ macro_rules! index_slice_partial_range_impl {
                 slice: *const IndexSlice<I, T>,
             ) -> *const IndexSlice<I, T> {
                 let slice = slice as *mut [T];
-                let range = self.as_usize_range(slice.len());
+                let range = IndexRangeBounds::<I>::canonicalize(self, slice.len());
                 unsafe {
                     core::ptr::slice_from_raw_parts(
                         slice.cast::<T>().add(range.start),
@@ -170,7 +174,7 @@ macro_rules! index_slice_partial_range_impl {
                 slice: *mut IndexSlice<I, T>,
             ) -> *mut IndexSlice<I, T> {
                 let slice = slice as *mut [T];
-                let range = self.as_usize_range(slice.len());
+                let range = IndexRangeBounds::<I>::canonicalize(self, slice.len());
                 unsafe {
                     core::ptr::slice_from_raw_parts_mut(
                         slice.cast::<T>().add(range.start),
@@ -180,11 +184,12 @@ macro_rules! index_slice_partial_range_impl {
             }
             #[inline(always)]
             fn index(self, slice: &IndexSlice<I, T>) -> &IndexSlice<I, T> {
-                IndexSlice::from_slice(&slice.as_slice()[self.as_usize_range(slice.len())])
+                let range = IndexRangeBounds::<I>::canonicalize(self, slice.len());
+                IndexSlice::from_slice(&slice.as_slice()[range])
             }
             #[inline]
             fn index_mut(self, slice: &mut IndexSlice<I, T>) -> &mut IndexSlice<I, T> {
-                let range = self.as_usize_range(slice.len());
+                let range = IndexRangeBounds::<I>::canonicalize(self, slice.len());
                 IndexSlice::from_slice_mut(&mut slice.as_slice_mut()[range])
             }
         }
@@ -198,7 +203,12 @@ index_slice_partial_range_impl![
     core::ops::RangeFrom<I>,
     core::ops::RangeTo<I>,
     core::ops::RangeToInclusive<I>,
-    IndexRangeInclusive<I>
+    core::ops::RangeFull,
+    IndexRangeInclusive<I>,
+    IndexRangeFrom<I>,
+    IndexRangeTo<I>,
+    IndexRangeToInclusive<I>,
+    IndexRangeFull
 ];
 
 unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for IndexRange<I> {

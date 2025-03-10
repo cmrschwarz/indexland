@@ -26,6 +26,7 @@ fn declarative_idx_newtype() {
 fn derive_idx_newtype_manual() {
     #[derive(
         Default,
+        Debug,
         Add,
         Sub,
         AddAssign,
@@ -64,7 +65,9 @@ fn derive_idx_newtype_manual() {
 
 #[test]
 fn derive_idx_enum_manual() {
-    #[derive(Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+    #[derive(
+        Default, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord,
+    )]
     enum Foo {
         #[default]
         A,

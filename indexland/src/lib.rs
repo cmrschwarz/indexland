@@ -59,7 +59,7 @@ pub mod index_hash_set;
 pub use crate::{
     idx::{Idx, IdxEnum, IdxNewtype},
     index_range::IndexRange,
-    index_range::IndexRangeInclusive,
+    index_range::IndexRangeBounds,
 };
 
 #[doc(inline)]

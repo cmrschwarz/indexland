@@ -1,11 +1,9 @@
-use crate::{index_enumerate::IndexEnumerate, index_range::RangeBoundsAsRange};
+use crate::index_enumerate::IndexEnumerate;
+
 use core::{
     fmt::Debug,
     marker::PhantomData,
-    ops::{
-        Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeInclusive,
-        RangeTo, RangeToInclusive,
-    },
+    ops::{Deref, DerefMut, Index, IndexMut, Range},
 };
 
 use alloc::{boxed::Box, vec::Vec};
@@ -281,27 +279,6 @@ impl<I: Idx, T> IndexMut<Range<I>> for IndexVec<I, T> {
         )
     }
 }
-
-macro_rules! slice_index_impl {
-    ($($range_type: ident),+) => {$(
-        impl<I: Idx, T> Index<$range_type<I>> for IndexVec<I, T> {
-            type Output = IndexSlice<I, T>;
-            #[inline]
-            fn index(&self, rb: $range_type<I>) -> &Self::Output {
-                IndexSlice::from_slice(&self.data[rb.as_usize_range(self.len())])
-            }
-        }
-
-        impl<I: Idx, T> IndexMut<$range_type<I>> for IndexVec<I, T> {
-            #[inline]
-            fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
-                let range = rb.as_usize_range(self.len());
-                IndexSlice::from_slice_mut(&mut self.data[range])
-            }
-        }
-    )*};
-}
-slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

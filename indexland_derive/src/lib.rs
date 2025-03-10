@@ -156,7 +156,7 @@ pub fn derive_idx_enum(
 ///
 /// use foobar::Idx;
 ///
-/// #[derive(Idx)]
+/// #[derive(Idx, Debug)]
 /// #[indexland(crate = foobar, disable_bounds_checks)]
 /// #[indexland(omit(Debug, From<Self> for usize))]
 /// struct Foo(u32);

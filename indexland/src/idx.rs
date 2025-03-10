@@ -1,6 +1,7 @@
 #![allow(clippy::inline_always)]
 
 use core::{
+    fmt::Debug,
     hash::Hash,
     ops::{Add, AddAssign, Sub, SubAssign},
 };
@@ -9,6 +10,7 @@ use crate::{index_range::IndexRangeInclusive, IndexRange};
 
 pub trait Idx:
     Default
+    + Debug
     + Clone
     + Copy
     + PartialEq

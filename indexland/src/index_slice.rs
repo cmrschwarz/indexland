@@ -1,5 +1,7 @@
 use super::Idx;
-use crate::{index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex};
+use crate::{
+    index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex,
+};
 
 use core::{
     fmt::Debug,

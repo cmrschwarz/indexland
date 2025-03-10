@@ -8,11 +8,21 @@
 //! This means that you cannot iterate over a [`Range<Idx>`].
 //! [`IndexRange`] implements iteration for [`Idx`] implementors and adds
 //! conversions to and from [`Range`].
-//!
-//! `IndexRangeTo`, and `IndexRangeToInclusive`
-//! would not be iterable anyways so there's no reason for them to exist.
 use crate::Idx;
-use core::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive};
+use core::ops::{
+    Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo,
+    RangeToInclusive,
+};
+
+pub trait IndexRangeBounds<I>: RangeBounds<I> {
+    type BaseRange: IndexRangeBounds<I>;
+    type IndexRange: IndexRangeBounds<I>;
+    type UsizeRange: IndexRangeBounds<usize>;
+    fn base_range(self) -> Self::BaseRange;
+    fn index_range(self) -> Self::IndexRange;
+    fn usize_range(self) -> Self::UsizeRange;
+    fn canonicalize(self, len: usize) -> Range<usize>;
+}
 
 /// Mirror of [`core::ops::Range`].
 /// See this module's [documentation](self) for justification.
@@ -48,6 +58,22 @@ pub struct IndexRangeFrom<I> {
     pub start: I,
 }
 
+/// Mirror of [`core::ops::RangeTo`].
+/// See this module's [documentation](self) for justification.
+pub struct IndexRangeTo<I> {
+    pub end: I,
+}
+
+/// Mirror of [`core::ops::RangeToInclusive`].
+/// See this module's [documentation](self) for justification.
+pub struct IndexRangeToInclusive<I> {
+    pub end: I,
+}
+
+/// Mirror of [`core::ops::RangeFull`].
+/// See this module's [documentation](self) for justification.
+pub struct IndexRangeFull;
+
 impl<I> IndexRange<I> {
     pub fn new(r: Range<I>) -> Self {
         Self {
@@ -73,8 +99,11 @@ impl<I> From<IndexRange<I>> for Range<I> {
     }
 }
 
-impl<I: Copy> IndexRangeInclusive<I> {
-    pub fn new(r: RangeInclusive<I>) -> Self {
+impl<I> IndexRangeInclusive<I> {
+    pub fn new(r: RangeInclusive<I>) -> Self
+    where
+        I: Copy,
+    {
         Self {
             start: *r.start(),
             end: *r.end(),
@@ -93,7 +122,7 @@ impl<I: Idx> From<RangeInclusive<I>> for IndexRangeInclusive<I> {
 }
 
 impl<I> IndexRangeFrom<I> {
-    pub fn new(r: Range<I>) -> Self {
+    pub fn new(r: RangeFrom<I>) -> Self {
         Self { start: r.start }
     }
 }
@@ -108,179 +137,55 @@ impl<I> From<IndexRangeFrom<I>> for RangeFrom<I> {
     }
 }
 
-// From<IndexRange<I>> for Range<usize> would be overlapping
-pub trait RangeAsUsizeRange: Sized {
-    fn usize_range(&self) -> Range<usize>;
-}
-
-impl<I: Idx> RangeAsUsizeRange for Range<I> {
-    fn usize_range(&self) -> Range<usize> {
-        Range {
-            start: self.start.into_usize(),
-            end: self.end.into_usize(),
-        }
+impl<I> IndexRangeTo<I> {
+    pub fn new(r: RangeTo<I>) -> Self {
+        Self { end: r.end }
     }
 }
-impl<I: Idx> RangeAsUsizeRange for IndexRange<I> {
-    fn usize_range(&self) -> Range<usize> {
-        Range {
-            start: self.start.into_usize(),
-            end: self.end.into_usize(),
-        }
+impl<I> From<RangeTo<I>> for IndexRangeTo<I> {
+    fn from(r: RangeTo<I>) -> Self {
+        IndexRangeTo { end: r.end }
+    }
+}
+impl<I> From<IndexRangeTo<I>> for RangeTo<I> {
+    fn from(r: IndexRangeTo<I>) -> Self {
+        RangeTo { end: r.end }
     }
 }
 
-/// Convenience helper.
-///
-/// # Example
-/// ```
-/// use indexland::{index_range::RangeAsIndexRange, Idx};
-///
-/// #[derive(Idx)]
-/// struct FooId(u32);
-/// for id in (FooId(1)..FooId(10)).idx_range() {
-///     println!("id: {id}");
-/// }
-/// ```
-pub trait RangeAsIndexRange<I> {
-    fn idx_range(self) -> IndexRange<I>;
+impl<I> IndexRangeToInclusive<I> {
+    pub fn new(r: RangeTo<I>) -> Self {
+        Self { end: r.end }
+    }
 }
-impl<I: Idx> RangeAsIndexRange<I> for Range<I> {
-    fn idx_range(self) -> IndexRange<I> {
-        IndexRange::from(self)
+impl<I> From<RangeToInclusive<I>> for IndexRangeToInclusive<I> {
+    fn from(r: RangeToInclusive<I>) -> Self {
+        IndexRangeToInclusive { end: r.end }
+    }
+}
+impl<I> From<IndexRangeToInclusive<I>> for RangeToInclusive<I> {
+    fn from(r: IndexRangeToInclusive<I>) -> Self {
+        RangeToInclusive { end: r.end }
     }
 }
 
-/// Convenience helper.
-///
-/// # Example
-/// ```
-/// use indexland::{index_range::RangeInclusiveAsIndexRangeInclusive, Idx};
-///
-/// #[derive(Idx)]
-/// struct FooId(u32);
-/// for id in (FooId(1)..=FooId(10)).idx_range() {
-///     println!("id: {id}");
-/// }
-/// ```
-pub trait RangeInclusiveAsIndexRangeInclusive<I> {
-    fn idx_range(self) -> IndexRangeInclusive<I>;
+impl IndexRangeFull {
+    pub fn new() -> Self {
+        Self
+    }
 }
-impl<I: Idx> RangeInclusiveAsIndexRangeInclusive<I> for RangeInclusive<I> {
-    fn idx_range(self) -> IndexRangeInclusive<I> {
-        IndexRangeInclusive::from(self)
+impl From<RangeFull> for IndexRangeFull {
+    fn from(_r: RangeFull) -> Self {
+        Self
+    }
+}
+impl From<IndexRangeFull> for RangeFull {
+    fn from(_r: IndexRangeFull) -> Self {
+        RangeFull
     }
 }
 
-/// Convenience helper.
-///
-/// # Example
-/// ```
-/// use indexland::{index_range::{RangeFromAsIndexRangeFrom, RangeAsIndexRange}, Idx};
-///
-/// #[derive(Idx)]
-/// struct FooId(u32);
-/// for id in (FooId(1)..).idx_range().take(10) {
-///     println!("id: {id}");
-/// }
-/// ```
-pub trait RangeFromAsIndexRangeFrom<I> {
-    fn idx_range(self) -> IndexRangeFrom<I>;
-}
-impl<I: Idx> RangeFromAsIndexRangeFrom<I> for RangeFrom<I> {
-    fn idx_range(self) -> IndexRangeFrom<I> {
-        IndexRangeFrom::from(self)
-    }
-}
-
-/// Convenience helper.
-///
-/// # Example
-/// ```
-/// use indexland::{index_range::UsizeRangeIntoIndexRange, Idx};
-///
-/// #[derive(Idx)]
-/// struct FooId(u32);
-/// for id in (0..10).into_idx_range::<FooId>() {
-///     println!("id: {id}");
-/// }
-/// ```
-///
-pub trait UsizeRangeIntoIndexRange: Sized {
-    fn into_idx_range<I: Idx>(self) -> IndexRange<I>;
-}
-impl UsizeRangeIntoIndexRange for Range<usize> {
-    fn into_idx_range<I: Idx>(self) -> IndexRange<I> {
-        IndexRange::from(Range {
-            start: I::from_usize(self.start),
-            end: I::from_usize(self.start),
-        })
-    }
-}
-
-pub trait RangeBoundsAsRange<I> {
-    fn as_usize_range(&self, len: usize) -> Range<usize>;
-    fn as_range(&self, len: I) -> Range<I>;
-    fn as_idx_range(&self, len: I) -> IndexRange<I>;
-    fn as_idx_range_inclusive(&self, len: I) -> IndexRangeInclusive<I>;
-}
-
-impl<I: Idx, RB: RangeBounds<I>> RangeBoundsAsRange<I> for RB {
-    fn as_range(&self, len: I) -> Range<I> {
-        let start = match self.start_bound() {
-            Bound::Included(i) => *i,
-            Bound::Excluded(i) => *i + I::ONE,
-            Bound::Unbounded => I::ZERO,
-        };
-        let end = match self.end_bound() {
-            Bound::Included(i) => *i + I::ONE,
-            Bound::Excluded(i) => *i,
-            Bound::Unbounded => len,
-        };
-        start..end
-    }
-    fn as_idx_range(&self, len: I) -> IndexRange<I> {
-        IndexRange::from(self.as_range(len))
-    }
-    fn as_idx_range_inclusive(&self, last_idx: I) -> IndexRangeInclusive<I> {
-        let mut exclusive = false;
-        let start = match self.start_bound() {
-            Bound::Included(i) => *i,
-            // TODO: we should do some checked add stuff here instead
-            // this might overflow for enum indices
-            Bound::Excluded(i) => *i + I::ONE,
-            Bound::Unbounded => I::ZERO,
-        };
-        let end = match self.end_bound() {
-            Bound::Included(i) => *i,
-            Bound::Excluded(i) => {
-                exclusive = true;
-                *i
-            }
-            Bound::Unbounded => last_idx,
-        };
-        IndexRangeInclusive {
-            start,
-            end,
-            exclusive,
-        }
-    }
-    fn as_usize_range(&self, len: usize) -> Range<usize> {
-        let start = match self.start_bound() {
-            Bound::Included(i) => i.into_usize(),
-            Bound::Excluded(i) => i.into_usize() + 1,
-            Bound::Unbounded => 0,
-        };
-        let end = match self.end_bound() {
-            Bound::Included(i) => i.into_usize() + 1,
-            Bound::Excluded(i) => i.into_usize(),
-            Bound::Unbounded => len,
-        };
-        start..end
-    }
-}
-
-impl<I: Idx> RangeBounds<I> for IndexRange<I> {
+impl<I> RangeBounds<I> for IndexRange<I> {
     fn start_bound(&self) -> Bound<&I> {
         Bound::Included(&self.start)
     }
@@ -288,7 +193,28 @@ impl<I: Idx> RangeBounds<I> for IndexRange<I> {
         Bound::Excluded(&self.end)
     }
 }
-impl<I: Idx> RangeBounds<I> for IndexRangeInclusive<I> {
+impl<I: Idx> IndexRangeBounds<I> for IndexRange<I> {
+    type BaseRange = Range<I>;
+    type IndexRange = IndexRange<I>;
+    type UsizeRange = Range<usize>;
+    fn base_range(self) -> Self::BaseRange {
+        Range::from(self)
+    }
+    fn index_range(self) -> Self::IndexRange {
+        self
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        Range {
+            start: self.start.into_usize(),
+            end: self.end.into_usize(),
+        }
+    }
+    fn canonicalize(self, _len: usize) -> Range<usize> {
+        self.usize_range()
+    }
+}
+
+impl<I> RangeBounds<I> for IndexRangeInclusive<I> {
     fn start_bound(&self) -> Bound<&I> {
         Bound::Included(&self.start)
     }
@@ -296,12 +222,293 @@ impl<I: Idx> RangeBounds<I> for IndexRangeInclusive<I> {
         Bound::Included(&self.end)
     }
 }
-impl<I: Idx> RangeBounds<I> for IndexRangeFrom<I> {
+impl<I: Idx> IndexRangeBounds<I> for IndexRangeInclusive<I> {
+    type BaseRange = IndexRangeInclusive<I>;
+    type IndexRange = IndexRangeInclusive<I>;
+    type UsizeRange = IndexRangeInclusive<usize>;
+    /// !NOTE: this is a hack. Unfortunately, there's no way to construct an
+    /// exhaustive RangeInclusive for a T that isn't `Step`, which we can't
+    /// implement for `Idx` because it is unstable.
+    fn base_range(self) -> Self::BaseRange {
+        self
+    }
+    fn index_range(self) -> Self::IndexRange {
+        self
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        IndexRangeInclusive {
+            start: self.start.into_usize(),
+            end: self.end.into_usize(),
+            exclusive: self.exclusive,
+        }
+    }
+    fn canonicalize(self, _len: usize) -> Range<usize> {
+        Range {
+            start: self.start.into_usize(),
+            end: self.end.into_usize() + usize::from(self.exclusive),
+        }
+    }
+}
+
+impl<I> RangeBounds<I> for IndexRangeFrom<I> {
     fn start_bound(&self) -> Bound<&I> {
         Bound::Included(&self.start)
     }
     fn end_bound(&self) -> Bound<&I> {
         Bound::Unbounded
+    }
+}
+impl<I: Idx> IndexRangeBounds<I> for IndexRangeFrom<I> {
+    type BaseRange = RangeFrom<I>;
+    type IndexRange = IndexRangeFrom<I>;
+    type UsizeRange = RangeFrom<usize>;
+    fn base_range(self) -> Self::BaseRange {
+        RangeFrom::from(self)
+    }
+    fn index_range(self) -> Self::IndexRange {
+        self
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        RangeFrom {
+            start: self.start.into_usize(),
+        }
+    }
+    fn canonicalize(self, len: usize) -> Range<usize> {
+        Range {
+            start: self.start.into_usize(),
+            end: len,
+        }
+    }
+}
+
+impl<I> RangeBounds<I> for IndexRangeTo<I> {
+    fn start_bound(&self) -> Bound<&I> {
+        Bound::Unbounded
+    }
+    fn end_bound(&self) -> Bound<&I> {
+        Bound::Excluded(&self.end)
+    }
+}
+impl<I: Idx> IndexRangeBounds<I> for IndexRangeTo<I> {
+    type BaseRange = RangeTo<I>;
+    type IndexRange = IndexRangeTo<I>;
+    type UsizeRange = IndexRangeTo<usize>;
+    fn base_range(self) -> Self::BaseRange {
+        RangeTo::from(self)
+    }
+    fn index_range(self) -> Self::IndexRange {
+        self
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        IndexRangeTo {
+            end: self.end.into_usize(),
+        }
+    }
+    fn canonicalize(self, _len: usize) -> Range<usize> {
+        Range {
+            start: 0,
+            end: self.end.into_usize(),
+        }
+    }
+}
+
+impl<I> RangeBounds<I> for IndexRangeToInclusive<I> {
+    fn start_bound(&self) -> Bound<&I> {
+        Bound::Unbounded
+    }
+    fn end_bound(&self) -> Bound<&I> {
+        Bound::Included(&self.end)
+    }
+}
+impl<I: Idx> IndexRangeBounds<I> for IndexRangeToInclusive<I> {
+    type BaseRange = RangeToInclusive<I>;
+    type IndexRange = IndexRangeToInclusive<I>;
+    type UsizeRange = IndexRangeToInclusive<usize>;
+
+    fn base_range(self) -> Self::BaseRange {
+        RangeToInclusive::from(self)
+    }
+    fn index_range(self) -> Self::IndexRange {
+        self
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        IndexRangeToInclusive {
+            end: self.end.into_usize(),
+        }
+    }
+    fn canonicalize(self, _len: usize) -> Range<usize> {
+        Range {
+            start: 0,
+            end: self.end.into_usize() + 1,
+        }
+    }
+}
+
+impl<I> RangeBounds<I> for IndexRangeFull {
+    fn start_bound(&self) -> Bound<&I> {
+        Bound::Unbounded
+    }
+    fn end_bound(&self) -> Bound<&I> {
+        Bound::Unbounded
+    }
+}
+impl<I: Idx> IndexRangeBounds<I> for IndexRangeFull {
+    type BaseRange = RangeFull;
+    type IndexRange = IndexRangeFull;
+    type UsizeRange = IndexRangeFull;
+    fn base_range(self) -> Self::BaseRange {
+        RangeFull::from(self)
+    }
+    fn index_range(self) -> Self::IndexRange {
+        self
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        IndexRangeFull
+    }
+    fn canonicalize(self, len: usize) -> Range<usize> {
+        Range { start: 0, end: len }
+    }
+}
+
+impl<I: Idx> IndexRangeBounds<I> for Range<I> {
+    type BaseRange = Range<I>;
+    type IndexRange = IndexRange<I>;
+    type UsizeRange = Range<usize>;
+    fn base_range(self) -> Self::BaseRange {
+        self
+    }
+    fn index_range(self) -> Self::IndexRange {
+        IndexRange::from(self)
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        Range {
+            start: self.start.into_usize(),
+            end: self.end.into_usize(),
+        }
+    }
+    fn canonicalize(self, _len: usize) -> Range<usize> {
+        self.usize_range()
+    }
+}
+
+impl<I: Idx> IndexRangeBounds<I> for RangeInclusive<I> {
+    type BaseRange = RangeInclusive<I>;
+    type IndexRange = IndexRangeInclusive<I>;
+    type UsizeRange = RangeInclusive<usize>;
+    fn base_range(self) -> Self::BaseRange {
+        self
+    }
+    fn index_range(self) -> Self::IndexRange {
+        IndexRangeInclusive::from(self)
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        let mut range = RangeInclusive::new(
+            self.start().into_usize(),
+            self.end().into_usize(),
+        );
+        if matches!(self.end_bound(), Bound::Excluded(_)) {
+            if range.start() != range.end() {
+                return RangeInclusive::new(*range.start(), *range.end() - 1);
+            }
+            range.next();
+            return range;
+        }
+        range
+    }
+    fn canonicalize(self, _len: usize) -> Range<usize> {
+        Range {
+            start: self.start().into_usize(),
+            end: self.end().into_usize()
+                + usize::from(matches!(self.end_bound(), Bound::Included(_))),
+        }
+    }
+}
+
+impl<I: Idx> IndexRangeBounds<I> for RangeFrom<I> {
+    type BaseRange = RangeFrom<I>;
+    type IndexRange = IndexRangeFrom<I>;
+    type UsizeRange = RangeFrom<usize>;
+    fn base_range(self) -> Self::BaseRange {
+        self
+    }
+    fn index_range(self) -> Self::IndexRange {
+        IndexRangeFrom::from(self)
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        RangeFrom {
+            start: self.start.into_usize(),
+        }
+    }
+    fn canonicalize(self, len: usize) -> Range<usize> {
+        Range {
+            start: self.start.into_usize(),
+            end: len,
+        }
+    }
+}
+
+impl<I: Idx> IndexRangeBounds<I> for RangeTo<I> {
+    type BaseRange = RangeTo<I>;
+    type IndexRange = IndexRangeTo<I>;
+    type UsizeRange = RangeTo<usize>;
+    fn base_range(self) -> Self::BaseRange {
+        self
+    }
+    fn index_range(self) -> Self::IndexRange {
+        IndexRangeTo::from(self)
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        RangeTo {
+            end: self.end.into_usize(),
+        }
+    }
+    fn canonicalize(self, _len: usize) -> Range<usize> {
+        Range {
+            start: 0,
+            end: self.end.into_usize(),
+        }
+    }
+}
+
+impl<I: Idx> IndexRangeBounds<I> for RangeToInclusive<I> {
+    type BaseRange = RangeToInclusive<I>;
+    type IndexRange = IndexRangeToInclusive<I>;
+    type UsizeRange = RangeToInclusive<usize>;
+
+    fn base_range(self) -> Self::BaseRange {
+        self
+    }
+    fn index_range(self) -> Self::IndexRange {
+        IndexRangeToInclusive::from(self)
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        RangeToInclusive {
+            end: self.end.into_usize(),
+        }
+    }
+    fn canonicalize(self, _len: usize) -> Range<usize> {
+        Range {
+            start: 0,
+            end: self.end.into_usize() + 1,
+        }
+    }
+}
+
+impl<I: Idx> IndexRangeBounds<I> for RangeFull {
+    type BaseRange = RangeFull;
+    type IndexRange = IndexRangeFull;
+    type UsizeRange = RangeFull;
+    fn base_range(self) -> Self::BaseRange {
+        self
+    }
+    fn index_range(self) -> Self::IndexRange {
+        IndexRangeFull::from(self)
+    }
+    fn usize_range(self) -> Self::UsizeRange {
+        RangeFull
+    }
+    fn canonicalize(self, len: usize) -> Range<usize> {
+        Range { start: 0, end: len }
     }
 }
 
