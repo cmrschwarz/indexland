@@ -1,4 +1,4 @@
-use crate::{idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange};
+use crate::{index_enumerate::IndexEnumerate, index_range::RangeBoundsAsRange};
 use core::{
     fmt::Debug,
     marker::PhantomData,
@@ -10,7 +10,7 @@ use core::{
 
 use alloc::{boxed::Box, vec::Vec};
 
-use super::{idx::Idx, idx_range::IdxRange, index_slice::IndexSlice};
+use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 
 /// Create an [`IndexVec`] containing the arguments.
 ///
@@ -140,21 +140,21 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.data.push(v);
         id
     }
-    pub fn iter_enumerated(&self) -> IdxEnumerate<I, core::slice::Iter<T>> {
-        IdxEnumerate::new(I::ZERO, &self.data)
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>> {
+        IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IdxEnumerate<I, core::slice::IterMut<T>> {
-        IdxEnumerate::new(I::ZERO, &mut self.data)
+    ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
+        IndexEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IdxEnumerate<I, alloc::vec::IntoIter<T>> {
-        IdxEnumerate::new(I::ZERO, self.data)
+    ) -> IndexEnumerate<I, alloc::vec::IntoIter<T>> {
+        IndexEnumerate::new(I::ZERO, self.data)
     }
-    pub fn indices(&self) -> IdxRange<I> {
-        IdxRange::new(I::ZERO..self.len_idx())
+    pub fn indices(&self) -> IndexRange<I> {
+        IndexRange::new(I::ZERO..self.len_idx())
     }
     pub fn capacity(&self) -> usize {
         self.data.capacity()

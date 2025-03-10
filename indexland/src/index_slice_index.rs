@@ -1,8 +1,8 @@
 use core::ops::{Index, IndexMut, Range};
 
 use crate::{
-    idx_range::{RangeAsUsizeRange, RangeBoundsAsRange},
-    Idx, IdxRange, IdxRangeInclusive, IndexSlice,
+    index_range::{RangeAsUsizeRange, RangeBoundsAsRange},
+    Idx, IndexRange, IndexRangeInclusive, IndexSlice,
 };
 
 /// # Safety
@@ -198,10 +198,10 @@ index_slice_partial_range_impl![
     core::ops::RangeFrom<I>,
     core::ops::RangeTo<I>,
     core::ops::RangeToInclusive<I>,
-    IdxRangeInclusive<I>
+    IndexRangeInclusive<I>
 ];
 
-unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for IdxRange<I> {
+unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for IndexRange<I> {
     type Output = IndexSlice<I, T>;
     #[inline]
     fn get(self, slice: &IndexSlice<I, T>) -> Option<&IndexSlice<I, T>> {

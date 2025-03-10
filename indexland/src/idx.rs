@@ -5,7 +5,7 @@ use core::{
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
-use crate::{idx_range::IdxRangeInclusive, IdxRange};
+use crate::{index_range::IndexRangeInclusive, IndexRange};
 
 pub trait Idx:
     Default
@@ -48,11 +48,11 @@ pub trait Idx:
                 % Self::MAX.into_usize(),
         )
     }
-    fn range_to(&self, end: Self) -> IdxRange<Self> {
-        IdxRange::new(*self..end)
+    fn range_to(&self, end: Self) -> IndexRange<Self> {
+        IndexRange::new(*self..end)
     }
-    fn range_through(&self, end: Self) -> IdxRangeInclusive<Self> {
-        IdxRangeInclusive::new(*self..=end)
+    fn range_through(&self, end: Self) -> IndexRangeInclusive<Self> {
+        IndexRangeInclusive::new(*self..=end)
     }
 }
 

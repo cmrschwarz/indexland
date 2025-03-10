@@ -6,7 +6,7 @@ use core::{
 
 use arrayvec::{ArrayVec, CapacityError};
 
-use crate::{idx_enumerate::IdxEnumerate, IdxRange, IndexArray};
+use crate::{index_enumerate::IndexEnumerate, IndexArray, IndexRange};
 
 use super::{idx::Idx, index_slice::IndexSlice};
 
@@ -152,21 +152,21 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn truncate(&mut self, new_end_index: I) {
         self.data.truncate(new_end_index.into_usize());
     }
-    pub fn iter_enumerated(&self) -> IdxEnumerate<I, core::slice::Iter<T>> {
-        IdxEnumerate::new(I::ZERO, &self.data)
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>> {
+        IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IdxEnumerate<I, core::slice::IterMut<T>> {
-        IdxEnumerate::new(I::ZERO, &mut self.data)
+    ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
+        IndexEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IdxEnumerate<I, arrayvec::IntoIter<T, CAP>> {
-        IdxEnumerate::new(I::ZERO, self.data)
+    ) -> IndexEnumerate<I, arrayvec::IntoIter<T, CAP>> {
+        IndexEnumerate::new(I::ZERO, self.data)
     }
-    pub fn indices(&self) -> IdxRange<I> {
-        IdxRange::new(I::ZERO..self.len_idx())
+    pub fn indices(&self) -> IndexRange<I> {
+        IndexRange::new(I::ZERO..self.len_idx())
     }
     pub fn capacity(&self) -> usize {
         self.data.capacity()

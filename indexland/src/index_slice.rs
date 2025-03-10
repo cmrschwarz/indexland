@@ -1,5 +1,5 @@
 use super::Idx;
-use crate::{idx_enumerate::IdxEnumerate, index_slice_index::IndexSliceIndex};
+use crate::{index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex};
 
 use core::{
     fmt::Debug,
@@ -57,14 +57,14 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn iter_enumerated(
         &self,
         initial_offset: I,
-    ) -> IdxEnumerate<I, core::slice::Iter<T>> {
-        IdxEnumerate::new(initial_offset, &self.data)
+    ) -> IndexEnumerate<I, core::slice::Iter<T>> {
+        IndexEnumerate::new(initial_offset, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
         initial_offset: I,
-    ) -> IdxEnumerate<I, core::slice::IterMut<T>> {
-        IdxEnumerate::new(initial_offset, &mut self.data)
+    ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
+        IndexEnumerate::new(initial_offset, &mut self.data)
     }
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()

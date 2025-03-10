@@ -18,9 +18,9 @@ extern crate alloc;
 extern crate self as indexland;
 
 pub mod idx;
-pub mod idx_enumerate;
-pub mod idx_range;
 pub mod index_array;
+pub mod index_enumerate;
+pub mod index_range;
 
 pub mod index_slice;
 pub mod index_slice_index;
@@ -58,8 +58,8 @@ pub mod index_hash_set;
 #[doc(inline)]
 pub use crate::{
     idx::{Idx, IdxEnum, IdxNewtype},
-    idx_range::IdxRange,
-    idx_range::IdxRangeInclusive,
+    index_range::IndexRange,
+    index_range::IndexRangeInclusive,
 };
 
 #[doc(inline)]

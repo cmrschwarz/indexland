@@ -1,5 +1,7 @@
 use super::Idx;
-use crate::{idx_enumerate::IdxEnumerate, index_slice::IndexSlice, IdxEnum};
+use crate::{
+    index_enumerate::IndexEnumerate, index_slice::IndexSlice, IdxEnum,
+};
 
 use core::{
     fmt::Debug,
@@ -150,18 +152,18 @@ impl<I: Idx, T, const LEN: usize> IndexArray<I, T, LEN> {
     pub fn as_index_slice_mut(&mut self) -> &mut IndexSlice<I, T> {
         IndexSlice::from_slice_mut(&mut self.data)
     }
-    pub fn iter_enumerated(&self) -> IdxEnumerate<I, core::slice::Iter<T>> {
-        IdxEnumerate::new(I::ZERO, &self.data)
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>> {
+        IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IdxEnumerate<I, core::slice::IterMut<T>> {
-        IdxEnumerate::new(I::ZERO, &mut self.data)
+    ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
+        IndexEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IdxEnumerate<I, core::array::IntoIter<T, LEN>> {
-        IdxEnumerate::new(I::ZERO, self.data)
+    ) -> IndexEnumerate<I, core::array::IntoIter<T, LEN>> {
+        IndexEnumerate::new(I::ZERO, self.data)
     }
     pub fn into_array(self) -> [T; LEN] {
         self.data

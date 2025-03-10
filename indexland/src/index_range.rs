@@ -6,24 +6,24 @@
 //! Ideally these wouldn't have to exist but unfortunately
 //! [`core::iter::Step`] is unstable so we cannot implement it for [`Idx`].
 //! This means that you cannot iterate over a [`Range<Idx>`].
-//! [`IdxRange`] implements iteration for [`Idx`] implementors and adds
+//! [`IndexRange`] implements iteration for [`Idx`] implementors and adds
 //! conversions to and from [`Range`].
 //!
-//! `IdxRangeTo`, and `IdxRangeToInclusive`
+//! `IndexRangeTo`, and `IndexRangeToInclusive`
 //! would not be iterable anyways so there's no reason for them to exist.
 use crate::Idx;
 use core::ops::{Bound, Range, RangeBounds, RangeFrom, RangeInclusive};
 
 /// Mirror of [`core::ops::Range`].
 /// See this module's [documentation](self) for justification.
-pub struct IdxRange<I> {
+pub struct IndexRange<I> {
     pub start: I,
     pub end: I,
 }
 
 /// Mirror of [`core::ops::RangeInclusive`].
 /// See this module's [documentation](self) for justification.
-pub struct IdxRangeInclusive<I> {
+pub struct IndexRangeInclusive<I> {
     pub start: I,
     pub end: I,
     // when iterating this range, once the end element was reported this range
@@ -44,11 +44,11 @@ pub struct IdxRangeInclusive<I> {
 /// that overflow happens earlier than you might assume: the overflow happens
 /// in the call to `next` that yields the maximum value, as the range must be
 /// set to a state to yield the next value.
-pub struct IdxRangeFrom<I> {
+pub struct IndexRangeFrom<I> {
     pub start: I,
 }
 
-impl<I> IdxRange<I> {
+impl<I> IndexRange<I> {
     pub fn new(r: Range<I>) -> Self {
         Self {
             start: r.start,
@@ -56,16 +56,16 @@ impl<I> IdxRange<I> {
         }
     }
 }
-impl<I> From<Range<I>> for IdxRange<I> {
+impl<I> From<Range<I>> for IndexRange<I> {
     fn from(r: Range<I>) -> Self {
-        IdxRange {
+        IndexRange {
             start: r.start,
             end: r.end,
         }
     }
 }
-impl<I> From<IdxRange<I>> for Range<I> {
-    fn from(r: IdxRange<I>) -> Self {
+impl<I> From<IndexRange<I>> for Range<I> {
+    fn from(r: IndexRange<I>) -> Self {
         Range {
             start: r.start,
             end: r.end,
@@ -73,7 +73,7 @@ impl<I> From<IdxRange<I>> for Range<I> {
     }
 }
 
-impl<I: Copy> IdxRangeInclusive<I> {
+impl<I: Copy> IndexRangeInclusive<I> {
     pub fn new(r: RangeInclusive<I>) -> Self {
         Self {
             start: *r.start(),
@@ -83,32 +83,32 @@ impl<I: Copy> IdxRangeInclusive<I> {
     }
 }
 /// We unfortunately cannot implement the reverse:
-/// `impl<I: Idx> From<IdxRangeInclusive<I>> for RangeInclusive<I>`
+/// `impl<I: Idx> From<IndexRangeInclusive<I>> for RangeInclusive<I>`
 /// because there's no way to construct a [`RangeInclusive`] in it's exhausted
 /// state for non [`Step`](core::iter::Step) indices.
-impl<I: Idx> From<RangeInclusive<I>> for IdxRangeInclusive<I> {
+impl<I: Idx> From<RangeInclusive<I>> for IndexRangeInclusive<I> {
     fn from(r: RangeInclusive<I>) -> Self {
-        IdxRangeInclusive::new(r)
+        IndexRangeInclusive::new(r)
     }
 }
 
-impl<I> IdxRangeFrom<I> {
+impl<I> IndexRangeFrom<I> {
     pub fn new(r: Range<I>) -> Self {
         Self { start: r.start }
     }
 }
-impl<I> From<RangeFrom<I>> for IdxRangeFrom<I> {
+impl<I> From<RangeFrom<I>> for IndexRangeFrom<I> {
     fn from(r: RangeFrom<I>) -> Self {
-        IdxRangeFrom { start: r.start }
+        IndexRangeFrom { start: r.start }
     }
 }
-impl<I> From<IdxRangeFrom<I>> for RangeFrom<I> {
-    fn from(r: IdxRangeFrom<I>) -> Self {
+impl<I> From<IndexRangeFrom<I>> for RangeFrom<I> {
+    fn from(r: IndexRangeFrom<I>) -> Self {
         RangeFrom { start: r.start }
     }
 }
 
-// From<IdxRange<I>> for Range<usize> would be overlapping
+// From<IndexRange<I>> for Range<usize> would be overlapping
 pub trait RangeAsUsizeRange: Sized {
     fn usize_range(&self) -> Range<usize>;
 }
@@ -121,7 +121,7 @@ impl<I: Idx> RangeAsUsizeRange for Range<I> {
         }
     }
 }
-impl<I: Idx> RangeAsUsizeRange for IdxRange<I> {
+impl<I: Idx> RangeAsUsizeRange for IndexRange<I> {
     fn usize_range(&self) -> Range<usize> {
         Range {
             start: self.start.into_usize(),
@@ -134,7 +134,7 @@ impl<I: Idx> RangeAsUsizeRange for IdxRange<I> {
 ///
 /// # Example
 /// ```
-/// use indexland::{idx_range::RangeAsIdxRange, Idx};
+/// use indexland::{index_range::RangeAsIndexRange, Idx};
 ///
 /// #[derive(Idx)]
 /// struct FooId(u32);
@@ -142,12 +142,12 @@ impl<I: Idx> RangeAsUsizeRange for IdxRange<I> {
 ///     println!("id: {id}");
 /// }
 /// ```
-pub trait RangeAsIdxRange<I> {
-    fn idx_range(self) -> IdxRange<I>;
+pub trait RangeAsIndexRange<I> {
+    fn idx_range(self) -> IndexRange<I>;
 }
-impl<I: Idx> RangeAsIdxRange<I> for Range<I> {
-    fn idx_range(self) -> IdxRange<I> {
-        IdxRange::from(self)
+impl<I: Idx> RangeAsIndexRange<I> for Range<I> {
+    fn idx_range(self) -> IndexRange<I> {
+        IndexRange::from(self)
     }
 }
 
@@ -155,7 +155,7 @@ impl<I: Idx> RangeAsIdxRange<I> for Range<I> {
 ///
 /// # Example
 /// ```
-/// use indexland::{idx_range::RangeInclusiveAsIdxRangeInclusive, Idx};
+/// use indexland::{index_range::RangeInclusiveAsIndexRangeInclusive, Idx};
 ///
 /// #[derive(Idx)]
 /// struct FooId(u32);
@@ -163,12 +163,12 @@ impl<I: Idx> RangeAsIdxRange<I> for Range<I> {
 ///     println!("id: {id}");
 /// }
 /// ```
-pub trait RangeInclusiveAsIdxRangeInclusive<I> {
-    fn idx_range(self) -> IdxRangeInclusive<I>;
+pub trait RangeInclusiveAsIndexRangeInclusive<I> {
+    fn idx_range(self) -> IndexRangeInclusive<I>;
 }
-impl<I: Idx> RangeInclusiveAsIdxRangeInclusive<I> for RangeInclusive<I> {
-    fn idx_range(self) -> IdxRangeInclusive<I> {
-        IdxRangeInclusive::from(self)
+impl<I: Idx> RangeInclusiveAsIndexRangeInclusive<I> for RangeInclusive<I> {
+    fn idx_range(self) -> IndexRangeInclusive<I> {
+        IndexRangeInclusive::from(self)
     }
 }
 
@@ -176,7 +176,7 @@ impl<I: Idx> RangeInclusiveAsIdxRangeInclusive<I> for RangeInclusive<I> {
 ///
 /// # Example
 /// ```
-/// use indexland::{idx_range::RangeFromAsIdxRangeFrom, Idx};
+/// use indexland::{index_range::{RangeFromAsIndexRangeFrom, RangeAsIndexRange}, Idx};
 ///
 /// #[derive(Idx)]
 /// struct FooId(u32);
@@ -184,12 +184,12 @@ impl<I: Idx> RangeInclusiveAsIdxRangeInclusive<I> for RangeInclusive<I> {
 ///     println!("id: {id}");
 /// }
 /// ```
-pub trait RangeFromAsIdxRangeFrom<I> {
-    fn idx_range(self) -> IdxRangeFrom<I>;
+pub trait RangeFromAsIndexRangeFrom<I> {
+    fn idx_range(self) -> IndexRangeFrom<I>;
 }
-impl<I: Idx> RangeFromAsIdxRangeFrom<I> for RangeFrom<I> {
-    fn idx_range(self) -> IdxRangeFrom<I> {
-        IdxRangeFrom::from(self)
+impl<I: Idx> RangeFromAsIndexRangeFrom<I> for RangeFrom<I> {
+    fn idx_range(self) -> IndexRangeFrom<I> {
+        IndexRangeFrom::from(self)
     }
 }
 
@@ -197,7 +197,7 @@ impl<I: Idx> RangeFromAsIdxRangeFrom<I> for RangeFrom<I> {
 ///
 /// # Example
 /// ```
-/// use indexland::{idx_range::UsizeRangeIntoIdxRange, Idx};
+/// use indexland::{index_range::UsizeRangeIntoIndexRange, Idx};
 ///
 /// #[derive(Idx)]
 /// struct FooId(u32);
@@ -205,12 +205,13 @@ impl<I: Idx> RangeFromAsIdxRangeFrom<I> for RangeFrom<I> {
 ///     println!("id: {id}");
 /// }
 /// ```
-pub trait UsizeRangeIntoIdxRange: Sized {
-    fn into_idx_range<I: Idx>(self) -> IdxRange<I>;
+///
+pub trait UsizeRangeIntoIndexRange: Sized {
+    fn into_idx_range<I: Idx>(self) -> IndexRange<I>;
 }
-impl UsizeRangeIntoIdxRange for Range<usize> {
-    fn into_idx_range<I: Idx>(self) -> IdxRange<I> {
-        IdxRange::from(Range {
+impl UsizeRangeIntoIndexRange for Range<usize> {
+    fn into_idx_range<I: Idx>(self) -> IndexRange<I> {
+        IndexRange::from(Range {
             start: I::from_usize(self.start),
             end: I::from_usize(self.start),
         })
@@ -220,8 +221,8 @@ impl UsizeRangeIntoIdxRange for Range<usize> {
 pub trait RangeBoundsAsRange<I> {
     fn as_usize_range(&self, len: usize) -> Range<usize>;
     fn as_range(&self, len: I) -> Range<I>;
-    fn as_idx_range(&self, len: I) -> IdxRange<I>;
-    fn as_idx_range_inclusive(&self, len: I) -> IdxRangeInclusive<I>;
+    fn as_idx_range(&self, len: I) -> IndexRange<I>;
+    fn as_idx_range_inclusive(&self, len: I) -> IndexRangeInclusive<I>;
 }
 
 impl<I: Idx, RB: RangeBounds<I>> RangeBoundsAsRange<I> for RB {
@@ -238,10 +239,10 @@ impl<I: Idx, RB: RangeBounds<I>> RangeBoundsAsRange<I> for RB {
         };
         start..end
     }
-    fn as_idx_range(&self, len: I) -> IdxRange<I> {
-        IdxRange::from(self.as_range(len))
+    fn as_idx_range(&self, len: I) -> IndexRange<I> {
+        IndexRange::from(self.as_range(len))
     }
-    fn as_idx_range_inclusive(&self, last_idx: I) -> IdxRangeInclusive<I> {
+    fn as_idx_range_inclusive(&self, last_idx: I) -> IndexRangeInclusive<I> {
         let mut exclusive = false;
         let start = match self.start_bound() {
             Bound::Included(i) => *i,
@@ -258,7 +259,7 @@ impl<I: Idx, RB: RangeBounds<I>> RangeBoundsAsRange<I> for RB {
             }
             Bound::Unbounded => last_idx,
         };
-        IdxRangeInclusive {
+        IndexRangeInclusive {
             start,
             end,
             exclusive,
@@ -279,7 +280,7 @@ impl<I: Idx, RB: RangeBounds<I>> RangeBoundsAsRange<I> for RB {
     }
 }
 
-impl<I: Idx> RangeBounds<I> for IdxRange<I> {
+impl<I: Idx> RangeBounds<I> for IndexRange<I> {
     fn start_bound(&self) -> Bound<&I> {
         Bound::Included(&self.start)
     }
@@ -287,7 +288,7 @@ impl<I: Idx> RangeBounds<I> for IdxRange<I> {
         Bound::Excluded(&self.end)
     }
 }
-impl<I: Idx> RangeBounds<I> for IdxRangeInclusive<I> {
+impl<I: Idx> RangeBounds<I> for IndexRangeInclusive<I> {
     fn start_bound(&self) -> Bound<&I> {
         Bound::Included(&self.start)
     }
@@ -295,7 +296,7 @@ impl<I: Idx> RangeBounds<I> for IdxRangeInclusive<I> {
         Bound::Included(&self.end)
     }
 }
-impl<I: Idx> RangeBounds<I> for IdxRangeFrom<I> {
+impl<I: Idx> RangeBounds<I> for IndexRangeFrom<I> {
     fn start_bound(&self) -> Bound<&I> {
         Bound::Included(&self.start)
     }
@@ -304,7 +305,7 @@ impl<I: Idx> RangeBounds<I> for IdxRangeFrom<I> {
     }
 }
 
-impl<I: Idx> Iterator for IdxRange<I> {
+impl<I: Idx> Iterator for IndexRange<I> {
     type Item = I;
     fn next(&mut self) -> Option<I> {
         if self.start == self.end {
@@ -315,7 +316,7 @@ impl<I: Idx> Iterator for IdxRange<I> {
         Some(curr)
     }
 }
-impl<I: Idx> DoubleEndedIterator for IdxRange<I> {
+impl<I: Idx> DoubleEndedIterator for IndexRange<I> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.start == self.end {
             return None;
@@ -325,7 +326,7 @@ impl<I: Idx> DoubleEndedIterator for IdxRange<I> {
     }
 }
 
-impl<I: Idx> Iterator for IdxRangeInclusive<I> {
+impl<I: Idx> Iterator for IndexRangeInclusive<I> {
     type Item = I;
     fn next(&mut self) -> Option<I> {
         let curr = self.start;
@@ -340,7 +341,7 @@ impl<I: Idx> Iterator for IdxRangeInclusive<I> {
         Some(curr)
     }
 }
-impl<I: Idx> DoubleEndedIterator for IdxRangeInclusive<I> {
+impl<I: Idx> DoubleEndedIterator for IndexRangeInclusive<I> {
     fn next_back(&mut self) -> Option<Self::Item> {
         let curr = self.end;
         if self.start == curr {
@@ -355,7 +356,7 @@ impl<I: Idx> DoubleEndedIterator for IdxRangeInclusive<I> {
     }
 }
 
-impl<I: Idx> Iterator for IdxRangeFrom<I> {
+impl<I: Idx> Iterator for IndexRangeFrom<I> {
     type Item = I;
     fn next(&mut self) -> Option<I> {
         let curr = self.start;

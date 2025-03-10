@@ -1,4 +1,4 @@
-use crate::idx_enumerate::IdxEnumerate;
+use crate::index_enumerate::IndexEnumerate;
 use alloc::boxed::Box;
 use core::{
     fmt::Debug,
@@ -11,7 +11,7 @@ use indexmap::{map::Slice, Equivalent, IndexMap};
 
 use super::{
     idx::Idx,
-    idx_range::{IdxRange, RangeBoundsAsRange},
+    index_range::{IndexRange, RangeBoundsAsRange},
 };
 
 /// Create an [`IndexHashMap`] containing the arguments.
@@ -192,58 +192,58 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     }
     pub fn iter_enumerated(
         &self,
-    ) -> IdxEnumerate<I, indexmap::map::Iter<K, V>> {
-        IdxEnumerate::new(I::ZERO, &self.data)
+    ) -> IndexEnumerate<I, indexmap::map::Iter<K, V>> {
+        IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IdxEnumerate<I, indexmap::map::IterMut<K, V>> {
-        IdxEnumerate::new(I::ZERO, &mut self.data)
+    ) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>> {
+        IndexEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IdxEnumerate<I, indexmap::map::IntoIter<K, V>> {
-        IdxEnumerate::new(I::ZERO, self.data)
+    ) -> IndexEnumerate<I, indexmap::map::IntoIter<K, V>> {
+        IndexEnumerate::new(I::ZERO, self.data)
     }
     pub fn keys(&self) -> indexmap::map::Keys<K, V> {
         self.data.keys()
     }
     pub fn keys_enumerated(
         &self,
-    ) -> IdxEnumerate<I, indexmap::map::Keys<K, V>> {
-        IdxEnumerate::new(I::ZERO, self.data.keys())
+    ) -> IndexEnumerate<I, indexmap::map::Keys<K, V>> {
+        IndexEnumerate::new(I::ZERO, self.data.keys())
     }
     pub fn into_keys(self) -> indexmap::map::IntoKeys<K, V> {
         self.data.into_keys()
     }
     pub fn into_keys_enumerated(
         self,
-    ) -> IdxEnumerate<I, indexmap::map::IntoKeys<K, V>> {
-        IdxEnumerate::new(I::ZERO, self.data.into_keys())
+    ) -> IndexEnumerate<I, indexmap::map::IntoKeys<K, V>> {
+        IndexEnumerate::new(I::ZERO, self.data.into_keys())
     }
     pub fn values(&self) -> indexmap::map::Values<K, V> {
         self.data.values()
     }
     pub fn values_enumerated(
         &self,
-    ) -> IdxEnumerate<I, indexmap::map::Values<K, V>> {
-        IdxEnumerate::new(I::ZERO, self.data.values())
+    ) -> IndexEnumerate<I, indexmap::map::Values<K, V>> {
+        IndexEnumerate::new(I::ZERO, self.data.values())
     }
     pub fn values_mut(&mut self) -> indexmap::map::ValuesMut<K, V> {
         self.data.values_mut()
     }
     pub fn values_mut_enumerated(
         &mut self,
-    ) -> IdxEnumerate<I, indexmap::map::ValuesMut<K, V>> {
-        IdxEnumerate::new(I::ZERO, self.data.values_mut())
+    ) -> IndexEnumerate<I, indexmap::map::ValuesMut<K, V>> {
+        IndexEnumerate::new(I::ZERO, self.data.values_mut())
     }
     pub fn into_values(self) -> indexmap::map::IntoValues<K, V> {
         self.data.into_values()
     }
     pub fn into_values_emumerated(
         self,
-    ) -> IdxEnumerate<I, indexmap::map::IntoValues<K, V>> {
-        IdxEnumerate::new(I::ZERO, self.data.into_values())
+    ) -> IndexEnumerate<I, indexmap::map::IntoValues<K, V>> {
+        IndexEnumerate::new(I::ZERO, self.data.into_values())
     }
     pub fn clear(&mut self) {
         self.data.clear();
@@ -308,8 +308,8 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
         &mut self.data
     }
 
-    pub fn indices(&self) -> IdxRange<I> {
-        IdxRange::new(I::ZERO..self.len_idx())
+    pub fn indices(&self) -> IndexRange<I> {
+        IndexRange::new(I::ZERO..self.len_idx())
     }
 
     pub fn entry(&mut self, key: K) -> indexmap::map::Entry<'_, K, V>

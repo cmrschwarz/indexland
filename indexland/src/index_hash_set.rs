@@ -1,5 +1,5 @@
-use super::{idx::Idx, idx_range::IdxRange};
-use crate::idx_enumerate::IdxEnumerate;
+use super::{idx::Idx, index_range::IndexRange};
+use crate::index_enumerate::IndexEnumerate;
 use alloc::boxed::Box;
 use indexmap::{set::Slice, Equivalent, IndexSet};
 use std::{
@@ -190,16 +190,16 @@ impl<I: Idx, T: Hash + Eq, S: BuildHasher> IndexHashSet<I, T, S> {
     pub fn as_index_set_mut(&mut self) -> &mut IndexSet<T, S> {
         &mut self.data
     }
-    pub fn iter_enumerated(&self) -> IdxEnumerate<I, indexmap::set::Iter<T>> {
-        IdxEnumerate::new(I::ZERO, &self.data)
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, indexmap::set::Iter<T>> {
+        IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IdxEnumerate<I, indexmap::set::IntoIter<T>> {
-        IdxEnumerate::new(I::ZERO, self.data)
+    ) -> IndexEnumerate<I, indexmap::set::IntoIter<T>> {
+        IndexEnumerate::new(I::ZERO, self.data)
     }
-    pub fn indices(&self) -> IdxRange<I> {
-        IdxRange::new(I::ZERO..self.len_idx())
+    pub fn indices(&self) -> IndexRange<I> {
+        IndexRange::new(I::ZERO..self.len_idx())
     }
     pub fn capacity(&self) -> usize {
         self.data.capacity()

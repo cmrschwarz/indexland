@@ -5,7 +5,7 @@ use std::{
 };
 
 use super::{idx::Idx, index_slice::IndexSlice};
-use crate::{idx_enumerate::IdxEnumerate, IdxRange};
+use crate::{index_enumerate::IndexEnumerate, IndexRange};
 
 use smallvec::SmallVec;
 
@@ -145,21 +145,21 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
-    pub fn iter_enumerated(&self) -> IdxEnumerate<I, std::slice::Iter<T>> {
-        IdxEnumerate::new(I::ZERO, &self.data)
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, std::slice::Iter<T>> {
+        IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IdxEnumerate<I, std::slice::IterMut<T>> {
-        IdxEnumerate::new(I::ZERO, &mut self.data)
+    ) -> IndexEnumerate<I, std::slice::IterMut<T>> {
+        IndexEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IdxEnumerate<I, smallvec::IntoIter<[T; CAP]>> {
-        IdxEnumerate::new(I::ZERO, self.data)
+    ) -> IndexEnumerate<I, smallvec::IntoIter<[T; CAP]>> {
+        IndexEnumerate::new(I::ZERO, self.data)
     }
-    pub fn indices(&self) -> IdxRange<I> {
-        IdxRange::new(I::ZERO..self.len_idx())
+    pub fn indices(&self) -> IndexRange<I> {
+        IndexRange::new(I::ZERO..self.len_idx())
     }
     pub fn capacity(&self) -> usize {
         self.data.capacity()
