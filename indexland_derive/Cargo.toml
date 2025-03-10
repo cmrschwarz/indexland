@@ -27,8 +27,9 @@ trybuild = "1.0.104"
 
 
 [package.metadata.docs.rs]
-# link to stable instead of nightly
+
 rustdoc-args = [
+    # link to stable instead of nightly
     "--generate-link-to-definition",
     "--extern-html-root-url=core=https://doc.rust-lang.org",
     "--extern-html-root-url=alloc=https://doc.rust-lang.org",

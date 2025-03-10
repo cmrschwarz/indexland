@@ -71,8 +71,9 @@ serde = ["dep:serde", "arrayvec/serde", "smallvec/serde", "indexmap/serde"]
 
 [package.metadata.docs.rs]
 features = ["full"]
-# link to stable instead of nightly
 rustdoc-args = [
+    "--sort-modules-by-appearance",
+    # link to stable instead of nightly
     "--generate-link-to-definition",
     "--extern-html-root-url=core=https://doc.rust-lang.org",
     "--extern-html-root-url=alloc=https://doc.rust-lang.org",

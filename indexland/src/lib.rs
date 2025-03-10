@@ -18,12 +18,15 @@ extern crate alloc;
 extern crate self as indexland;
 
 pub mod idx;
-pub mod index_array;
-pub mod index_enumerate;
+
 pub mod index_range;
+
+pub mod index_enumerate;
 
 pub mod index_slice;
 pub mod index_slice_index;
+
+pub mod index_array;
 
 #[cfg(feature = "alloc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
@@ -32,10 +35,6 @@ pub mod index_vec;
 #[cfg(feature = "alloc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub mod index_vec_deque;
-
-#[cfg(feature = "nonmax")]
-#[cfg_attr(docsrs, doc(cfg(feature = "nonmax")))]
-pub mod nonmax;
 
 #[cfg(feature = "arrayvec")]
 #[cfg_attr(docsrs, doc(cfg(feature = "arrayvec")))]
@@ -53,20 +52,28 @@ pub mod index_hash_map;
 #[cfg_attr(docsrs, doc(cfg(feature = "indexmap")))]
 pub mod index_hash_set;
 
+#[cfg(feature = "nonmax")]
+#[cfg_attr(docsrs, doc(cfg(feature = "nonmax")))]
+pub mod nonmax;
+
 // convenience exports
 
+// traits
 #[doc(inline)]
 pub use crate::{
     idx::{Idx, IdxEnum, IdxNewtype},
-    index_range::IndexRange,
     index_range::IndexRangeBounds,
 };
 
+// structs
 #[doc(inline)]
-pub use index_array::{EnumIndexArray, IndexArray};
+pub use crate::index_range::IndexRange;
 
 #[doc(inline)]
 pub use index_slice::IndexSlice;
+
+#[doc(inline)]
+pub use index_array::IndexArray;
 
 #[cfg(feature = "alloc")]
 #[doc(inline)]
@@ -99,6 +106,10 @@ pub use index_small_vec::IndexSmallVec;
 #[cfg(feature = "indexmap")]
 #[doc(inline)]
 pub use {index_hash_map::IndexHashMap, index_hash_set::IndexHashSet};
+
+// type aliases
+#[doc(inline)]
+pub use index_array::EnumIndexArray;
 
 // re-export the utility crates that we bundle
 #[cfg(feature = "arrayvec")]
