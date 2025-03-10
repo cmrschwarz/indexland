@@ -130,7 +130,7 @@ This crate is an attempt to solve these.
 
 ### Is there a runtime cost to this?
 - There is very litle runtime overhead. The core index wrapper functions are marked `#[inline(always)]`,
-so the compiler can reliably eliminate them, even in debug mode.
+  so the compiler can reliably eliminate them, even in debug mode.
 
 - By default, index conversions that might overflow will be bounds checked.
   This only affects index types smaller than `usize`.

@@ -82,7 +82,7 @@ impl Idx for usize {
     const MAX: usize = usize::MAX;
     #[inline(always)]
     fn into_usize(self) -> usize {
-        self as usize
+        self
     }
     #[inline(always)]
     fn from_usize(v: usize) -> Self {

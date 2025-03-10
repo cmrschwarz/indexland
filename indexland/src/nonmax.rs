@@ -350,14 +350,20 @@ macro_rules! impl_nonmax_idx {
             }
             #[inline(always)]
             fn from_usize_unchecked(v: usize) -> Self {
-                //TODO: wrap instead
-                #![allow(clippy::cast_possible_truncation)]
-                NonMax::<$primitive>::new(v as $primitive).unwrap()
+                #![allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_possible_wrap,
+                    clippy::cast_sign_loss,
+                )]
+                NonMax::<$primitive>::new(v as $primitive).unwrap_or(NonMax::ZERO)
             }
             #[inline(always)]
             fn into_usize_unchecked(self) -> usize {
-                //TODO: wrap instead
-                #![allow(clippy::cast_possible_truncation)]
+                #![allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_possible_wrap,
+                    clippy::cast_sign_loss,
+                )]
                 self.get() as usize
             }
         }
@@ -376,29 +382,17 @@ macro_rules! impl_from_unchecked {
         impl From<$source> for NonMax<$target> {
             #[inline]
             fn from(src: $source) -> Self {
+                #[allow(clippy::cast_lossless)]
                 unsafe { Self::new_unchecked(src as $target) }
             }
         }
-        //impl TryFrom<$source> for NonMax<$target> {
-        //    type Error = NonMaxOutOfRangeError;
-        //    #[inline]
-        //    fn try_from(src: $source) -> Result<Self, Self::Error> {
-        //        unsafe { Self::new_unchecked(src.get() as $target) }
-        //    }
-        //}
         impl From<NonMax<$source>> for NonMax<$target> {
             #[inline]
             fn from(src: NonMax<$source>) -> Self {
+                #[allow(clippy::cast_lossless)]
                 unsafe { Self::new_unchecked(src.get() as $target) }
             }
         }
-        //impl TryFrom<NonMax<$source>> for NonMax<$target> {
-        //    type Error = NonMaxOutOfRangeError;
-        //    #[inline]
-        //    fn try_from(src: NonMax<$source>) -> Result<Self, Self::Error> {
-        //        unsafe { Self::new_unchecked(src.get() as $target) }
-        //    }
-        //}
     )*};
 }
 
@@ -428,6 +422,7 @@ macro_rules! impl_try_from_check_gte_0 {
             #[inline]
             fn try_from(src: $source) -> Result<Self, Self::Error> {
                 if src >= 0 {
+                    #[allow(clippy::cast_sign_loss)]
                     Ok(unsafe { Self::new_unchecked(src as $target) })
                 } else {
                     Err(NonMaxOutOfRangeError)
@@ -440,6 +435,7 @@ macro_rules! impl_try_from_check_gte_0 {
             fn try_from(src: NonMax<$source>) -> Result<Self, Self::Error> {
                 let src = src.get();
                 if src >= 0 {
+                    #[allow(clippy::cast_sign_loss)]
                     Ok(unsafe { Self::new_unchecked(src as $target) })
                 } else {
                     Err(NonMaxOutOfRangeError)
@@ -463,6 +459,12 @@ macro_rules! impl_try_from_check_lt_max {
             type Error = NonMaxOutOfRangeError;
             #[inline]
             fn try_from(src: $source) -> Result<Self, Self::Error> {
+                #![allow(
+                    clippy::cast_sign_loss,
+                    clippy::cast_possible_truncation,
+                    clippy::cast_possible_wrap,
+                    clippy::cast_lossless
+                )]
                 if src < <$target>::MAX as $source {
                     Ok(unsafe { Self::new_unchecked(src as $target) })
                 } else {
@@ -474,6 +476,12 @@ macro_rules! impl_try_from_check_lt_max {
             type Error = NonMaxOutOfRangeError;
             #[inline]
             fn try_from(src: NonMax<$source>) -> Result<Self, Self::Error> {
+                #![allow(
+                    clippy::cast_sign_loss,
+                    clippy::cast_possible_truncation,
+                    clippy::cast_possible_wrap,
+                    clippy::cast_lossless
+                )]
                 let src = src.get();
                 if src < <$target>::MAX as $source {
                     Ok(unsafe { Self::new_unchecked(src as $target) })
@@ -506,7 +514,13 @@ macro_rules! impl_try_from_check_gte_min_lt_max {
 
             #[inline]
             fn try_from(src: $source) -> Result<Self, Self::Error> {
-                if src >= (<$target>::MIN as $source) || src < (<$target>::MAX as $source) {
+                #![allow(
+                    clippy::cast_sign_loss,
+                    clippy::cast_possible_truncation,
+                    clippy::cast_lossless
+                )]
+                if src >= (<$target>::MIN as $source) && src < (<$target>::MAX as $source) {
+
                     Ok(unsafe { Self::new_unchecked(src as $target) })
                 } else {
                     Err(NonMaxOutOfRangeError)
@@ -518,8 +532,13 @@ macro_rules! impl_try_from_check_gte_min_lt_max {
 
             #[inline]
             fn try_from(src: NonMax<$source>) -> Result<Self, Self::Error> {
+                #![allow(
+                    clippy::cast_sign_loss,
+                    clippy::cast_possible_truncation,
+                    clippy::cast_lossless
+                )]
                 let src = src.get();
-                if src >= (<$target>::MIN as $source) || src < (<$target>::MAX as $source) {
+                if src >= (<$target>::MIN as $source) && src < (<$target>::MAX as $source) {
                     Ok(unsafe { Self::new_unchecked(src as $target) })
                 } else {
                     Err(NonMaxOutOfRangeError)
@@ -591,15 +610,16 @@ rev![impl_try_from_target_dependant, u32, u64, u128 => usize];
 rev![impl_try_from_target_dependant, i32, i64, i128 => usize];
 
 // isize => xx
-impl_try_from_check_gte_0!(isize => usize);
+impl_try_from_check_gte_min_lt_max![isize => i8];
+impl_try_from_check_gte_min_lt_max!(isize => u8);
 impl_try_from_target_dependant![isize => u16, u32, u64, u128];
 impl_try_from_target_dependant![isize => i16, i32, i64, i128];
+impl_try_from_check_gte_0!(isize => usize);
 
 // xx => isize
 rev![impl_from_unchecked, u8 => isize];
-rev![impl_try_from_check_lt_max, u16 => isize];
 rev![impl_from_unchecked, i8, i16 => isize];
-rev![impl_try_from_target_dependant, u32, u64, u128 => isize];
+rev![impl_try_from_target_dependant, u16, u32, u64, u128 => isize];
 rev![impl_try_from_target_dependant, i32, i64, i128 => isize];
 
 #[cfg(test)]
@@ -625,5 +645,65 @@ mod test {
     #[should_panic]
     fn nonmax_oob() {
         NonMax::<u8>::from_usize(255);
+    }
+
+    #[test]
+    fn all_conversions_possible() {
+        macro_rules! assert_conv_works {
+            ($($t: ty),*) => {
+                assert_conv_works!(@expand, ($($t),*), ($($t),*));
+            };
+            (@expand, ($($from: ty),*), $all: tt) => {
+                $(
+                    assert_conv_works!(@impl, $from, $all);
+                )*
+            };
+            (@impl, $from: ty, ($($to: ty),*)) => {
+                let from_s = stringify!($from);
+
+                #[allow(irrefutable_let_patterns)]
+                for v in [ 0, 1, -1i128 as $from, $(<$to>::MAX as $from),*, $((<$to>::MAX - 1) as $from),* ] {
+                    $(
+                        let to_s = stringify!($to);
+
+                        let from_primitive = <NonMax<$to>>::try_from(v).ok();
+
+                        let from_primitive_expected = if let Ok(v_cast) = <$to>::try_from(v) {
+                            if v_cast >= <$to>::MAX {
+                                None
+                            }
+                            else {
+                                Some(NonMax::<$to>::new(v_cast).unwrap())
+                            }
+                        } else {
+                            None
+                        };
+
+                        assert_eq!(
+                            from_primitive,
+                            from_primitive_expected,
+                            "NonMax<{to_s}>::try_from({v} as {from_s}) == {from_primitive_expected:?}",
+                        );
+
+                        let from_nonmax = NonMax::<$from>::new(v).and_then(|from| <NonMax<$to>>::try_from(from).ok());
+
+                        let from_nonmax_expected = if v == <$from>::MAX {
+                            None
+                        } else {
+                            from_primitive_expected
+                        };
+
+                        assert_eq!(
+                            from_nonmax,
+                            from_nonmax_expected,
+                            "NonMax<{from_s}>::new({v}).and_then(|from| NonMax<{to_s}>) == {from_nonmax_expected:?}",
+                        );
+                    )*
+                }
+            }
+        }
+        assert_conv_works![
+            u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+        ];
     }
 }

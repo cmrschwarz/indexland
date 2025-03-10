@@ -164,12 +164,11 @@ pub fn derive_idx_enum(
 /// #[derive(Idx)]
 /// #[indexland(crate = foobar)]
 /// #[indexland(extra(Display))]
-/// enum Bar{
+/// enum Bar {
 ///     A,
 ///     B,
-///     C
+///     C,
 /// };
-///
 ///
 /// println!("{}", Bar::A);
 /// ```
