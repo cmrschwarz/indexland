@@ -119,16 +119,16 @@ When using this pattern heavily in Rust today there are a few issues though.
 The common approach is to use `type NodeId = usize` to denote differen index
 types, but this leaves two big things to be desired:
 
-1. Type Safety: Type aliases are not unique types.
-    It's very easy to accidentally use the wrong index or the wrong
-    container. Indices are essentially relative pointers. Using the same type
-    for all of them is like writing a C program using exclusively `void*`.
-    It is antithetical to robustness and fearless refactoring capabilities
-    that are usually enabled by Rust's strong type system.
+  1. Type Safety: Type aliases are not unique types.
+     It's very easy to accidentally use the wrong index or the wrong
+     container. Indices are essentially relative pointers. Using the same type
+     for all of them is like writing a C program using exclusively `void*`.
+     It is antithetical to robustness and fearless refactoring capabilities
+     that are usually enabled by Rust's strong type system.
 
-2. Readability: Container type definitions don't tell us what index
-    should be used to access them. When structs contain multiple collections
-    this becomes hard to read quickly.
+  2. Readability: Container type definitions don't tell us what index
+     should be used to access them. When structs contain multiple collections
+     this becomes hard to read quickly.
 
 Using newtypes for the indices and adding them as generic parameters to
 the container types elegantly solves both of these issues.
