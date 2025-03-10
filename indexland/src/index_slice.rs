@@ -1,16 +1,10 @@
 use super::Idx;
-use crate::{
-    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange,
-    index_slice_index::IndexSliceIndex,
-};
+use crate::{idx_enumerate::IdxEnumerate, index_slice_index::IndexSliceIndex};
 
 use core::{
     fmt::Debug,
     marker::PhantomData,
-    ops::{
-        Index, IndexMut, Range, RangeFrom, RangeInclusive, RangeTo,
-        RangeToInclusive,
-    },
+    ops::{Index, IndexMut, Range, RangeInclusive},
 };
 
 #[cfg(feature = "alloc")]
@@ -225,18 +219,22 @@ impl<I: Idx, T: Debug> Debug for IndexSlice<I, T> {
     }
 }
 
-impl<I: Idx, T> Index<I> for IndexSlice<I, T> {
-    type Output = T;
+impl<I, T, Idx: IndexSliceIndex<IndexSlice<I, T>>> Index<Idx>
+    for IndexSlice<I, T>
+{
+    type Output = Idx::Output;
     #[inline]
-    fn index(&self, index: I) -> &Self::Output {
-        &self.data[index.into_usize()]
+    fn index(&self, index: Idx) -> &Self::Output {
+        index.index(self)
     }
 }
 
-impl<I: Idx, T> IndexMut<I> for IndexSlice<I, T> {
+impl<I, T, Idx: IndexSliceIndex<IndexSlice<I, T>>> IndexMut<Idx>
+    for IndexSlice<I, T>
+{
     #[inline]
-    fn index_mut(&mut self, index: I) -> &mut Self::Output {
-        &mut self.data[index.into_usize()]
+    fn index_mut(&mut self, index: Idx) -> &mut Self::Output {
+        index.index_mut(self)
     }
 }
 
@@ -257,24 +255,6 @@ impl<'a, I: Idx, T> IntoIterator for &'a mut IndexSlice<I, T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
-    }
-}
-
-impl<I: Idx, T> Index<Range<I>> for IndexSlice<I, T> {
-    type Output = IndexSlice<I, T>;
-
-    fn index(&self, index: Range<I>) -> &Self::Output {
-        IndexSlice::from_slice(
-            &self.data[index.start.into_usize()..index.end.into_usize()],
-        )
-    }
-}
-
-impl<I: Idx, T> IndexMut<Range<I>> for IndexSlice<I, T> {
-    fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
-        IndexSlice::from_slice_mut(
-            &mut self.data[index.start.into_usize()..index.end.into_usize()],
-        )
     }
 }
 
@@ -327,28 +307,6 @@ impl<'a, I: Idx, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
         IndexSlice::from_slice_mut(value)
     }
 }
-
-macro_rules! slice_index_impl {
-    ($($range_type: ident),*) => {$(
-        impl<I: Idx, T> Index<$range_type<I>> for IndexSlice<I, T> {
-            type Output = IndexSlice<I, T>;
-            #[inline]
-            fn index(&self, rb: $range_type<I>) -> &Self::Output {
-                IndexSlice::from_slice(&self.data[rb.as_usize_range(self.len())])
-            }
-        }
-
-        impl<I: Idx, T> IndexMut<$range_type<I>> for IndexSlice<I, T> {
-            #[inline]
-            fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
-                let range = rb.as_usize_range(self.len());
-                IndexSlice::from_slice_mut(&mut self.data[range])
-            }
-        }
-    )*};
-}
-
-slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
 
 #[cfg(test)]
 mod test {

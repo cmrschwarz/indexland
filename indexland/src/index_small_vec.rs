@@ -1,16 +1,11 @@
 use std::{
     fmt::Debug,
     marker::PhantomData,
-    ops::{
-        Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeInclusive,
-        RangeTo, RangeToInclusive,
-    },
+    ops::{Deref, DerefMut},
 };
 
 use super::{idx::Idx, index_slice::IndexSlice};
-use crate::{
-    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange, IdxRange,
-};
+use crate::{idx_enumerate::IdxEnumerate, IdxRange};
 
 use smallvec::SmallVec;
 
@@ -270,64 +265,6 @@ impl<I: Idx, T: PartialEq, const CAP: usize> PartialEq<[T]>
         self.as_slice() == other
     }
 }
-
-impl<I: Idx, T, const CAP: usize> Index<I> for IndexSmallVec<I, T, CAP> {
-    type Output = T;
-    #[inline]
-    fn index(&self, index: I) -> &Self::Output {
-        &self.data[index.into_usize()]
-    }
-}
-
-impl<I: Idx, T, const CAP: usize> IndexMut<I> for IndexSmallVec<I, T, CAP> {
-    #[inline]
-    fn index_mut(&mut self, index: I) -> &mut Self::Output {
-        &mut self.data[index.into_usize()]
-    }
-}
-
-impl<I: Idx, T, const CAP: usize> Index<Range<I>>
-    for IndexSmallVec<I, T, CAP>
-{
-    type Output = IndexSlice<I, T>;
-
-    fn index(&self, index: Range<I>) -> &Self::Output {
-        IndexSlice::from_slice(
-            &self.data[index.start.into_usize()..index.end.into_usize()],
-        )
-    }
-}
-
-impl<I: Idx, T, const CAP: usize> IndexMut<Range<I>>
-    for IndexSmallVec<I, T, CAP>
-{
-    fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
-        IndexSlice::from_slice_mut(
-            &mut self.data[index.start.into_usize()..index.end.into_usize()],
-        )
-    }
-}
-
-macro_rules! slice_index_impl {
-    ($($range_type: ident),+) => {$(
-        impl<I: Idx, T, const CAP: usize> Index<$range_type<I>> for IndexSmallVec<I, T, CAP> {
-            type Output = IndexSlice<I, T>;
-            #[inline]
-            fn index(&self, rb: $range_type<I>) -> &Self::Output {
-                IndexSlice::from_slice(&self.data[rb.as_usize_range(self.len())])
-            }
-        }
-
-        impl<I: Idx, T, const CAP: usize> IndexMut<$range_type<I>> for IndexSmallVec<I, T, CAP> {
-            #[inline]
-            fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
-                let range = rb.as_usize_range(self.len());
-                IndexSlice::from_slice_mut(&mut self.data[range])
-            }
-        }
-    )*};
-}
-slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

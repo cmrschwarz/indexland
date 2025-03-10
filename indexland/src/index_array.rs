@@ -1,16 +1,10 @@
 use super::Idx;
-use crate::{
-    idx_enumerate::IdxEnumerate, idx_range::RangeBoundsAsRange,
-    index_slice::IndexSlice, IdxEnum,
-};
+use crate::{idx_enumerate::IdxEnumerate, index_slice::IndexSlice, IdxEnum};
 
 use core::{
     fmt::Debug,
     marker::PhantomData,
-    ops::{
-        Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeInclusive,
-        RangeTo, RangeToInclusive,
-    },
+    ops::{Deref, DerefMut},
 };
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -205,21 +199,6 @@ impl<I: Idx, T: Debug, const LEN: usize> Debug for IndexArray<I, T, LEN> {
     }
 }
 
-impl<I: Idx, T, const LEN: usize> Index<I> for IndexArray<I, T, LEN> {
-    type Output = T;
-    #[inline]
-    fn index(&self, index: I) -> &Self::Output {
-        &self.data[index.into_usize()]
-    }
-}
-
-impl<I: Idx, T, const LEN: usize> IndexMut<I> for IndexArray<I, T, LEN> {
-    #[inline]
-    fn index_mut(&mut self, index: I) -> &mut Self::Output {
-        &mut self.data[index.into_usize()]
-    }
-}
-
 impl<I: Idx, T, const LEN: usize> IntoIterator for IndexArray<I, T, LEN> {
     type Item = T;
 
@@ -254,26 +233,6 @@ impl<'a, I: Idx, T, const LEN: usize> IntoIterator
     }
 }
 
-impl<I: Idx, T, const LEN: usize> Index<Range<I>> for IndexArray<I, T, LEN> {
-    type Output = IndexSlice<I, T>;
-
-    fn index(&self, index: Range<I>) -> &Self::Output {
-        IndexSlice::from_slice(
-            &self.data[index.start.into_usize()..index.end.into_usize()],
-        )
-    }
-}
-
-impl<I: Idx, T, const LEN: usize> IndexMut<Range<I>>
-    for IndexArray<I, T, LEN>
-{
-    fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
-        IndexSlice::from_slice_mut(
-            &mut self.data[index.start.into_usize()..index.end.into_usize()],
-        )
-    }
-}
-
 impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
     for [T; LEN]
 {
@@ -305,28 +264,6 @@ impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<[T]>
         self.data == other
     }
 }
-
-macro_rules! slice_index_impl {
-    ($($range_type: ident),+) => {$(
-        impl<I: Idx, T, const LEN: usize> Index<$range_type<I>> for IndexArray<I, T, LEN> {
-            type Output = IndexSlice<I, T>;
-            #[inline]
-            fn index(&self, rb: $range_type<I>) -> &Self::Output {
-                IndexSlice::from_slice(&self.data[rb.as_usize_range(self.len())])
-            }
-        }
-
-        impl<I: Idx, T, const LEN: usize> IndexMut<$range_type<I>> for IndexArray<I, T, LEN> {
-            #[inline]
-            fn index_mut(&mut self, rb: $range_type<I>) -> &mut Self::Output {
-                let range = rb.as_usize_range(self.len());
-                IndexSlice::from_slice_mut(&mut self.data[range])
-            }
-        }
-    )*};
-}
-
-slice_index_impl!(RangeInclusive, RangeFrom, RangeTo, RangeToInclusive);
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
