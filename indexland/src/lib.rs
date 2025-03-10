@@ -77,6 +77,9 @@ pub use index_vec::IndexVec;
 pub use index_vec_deque::IndexVecDeque;
 
 #[cfg(feature = "derive")]
+extern crate indexland_derive;
+
+#[cfg(feature = "derive")]
 #[cfg_attr(docsrs, doc(cfg(feature = "derive")))]
 #[doc(inline)]
 pub use indexland_derive::{Idx, IdxEnum, IdxNewtype};

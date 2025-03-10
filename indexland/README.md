@@ -23,7 +23,7 @@ Newtype Index Support for Rust Collection Types.
 
   No more ```// indexed by `NodeId` ``` comments.
 
-- Underlying APIs available and working with `Idx` Types.
+- Underlying APIs faithfully wrapped and adapted for `Idx` Types.
 
   No need to learn a new collections API.
 
@@ -103,40 +103,66 @@ let message = STATUS_MESSAGE[Status::Running];
 ## FAQ
 
 ### Why?
-Using indices instead of references or smart pointers like `Box` or `Rc`
-is an incredibly powerful idiom, especially in Rust.
-They avoid borrow checker issues around cycles and can even increase
-performance due to their smaller size, better locality and fewer allocations.
+Using indices into collections instead of references or
+smart pointers is an incredibly powerful idiom popularized by
+[Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design).
 
-Code that makes heavy use of this pattern can suffer in readability though,
-because instead of `&Node` the code now just reads `usize`. Using type aliases like
-`type NodeId = usize` solves half of this problem, but does not provide type
-safety, as `NodeId` is fundamentally still `usize`. This can lead do subtle
-bugs, especially for functions that take in multiple ids as parameters.
-Using newtypes solves these issues, but introduces ergonomic problems.
-This crate is an attempt to solve these.
+Many places make use this pattern, including
+[the Rust Compiler itself](https://github.com/rust-lang/rust/blob/2b285cd5f0877e30ad1d83e04f8cc46254e43391/compiler/rustc_index/src/vec.rs#L40).
 
+In Rust in particular, indices can be a fantastic way to avoid borrow
+checker issues while simultaneously *increasing* performance.
+They frequently reduce allocations, lower the memory usage and increase
+data locality.
+
+When using this pattern heavily in Rust today there are a few issues though.
+The common approach is to use `type NodeId = usize` to denote differen index
+types, but this leaves two big things to be desired:
+
+1. Type Safety: Type aliases are not unique types.
+    It's very easy to accidentally use the wrong index or the wrong
+    container. Indices are essentially relative pointers. Using the same type
+    for all of them is like writing a C program using exclusively `void*`.
+    It is antithetical to robustness and fearless refactoring capabilities
+    that are usually enabled by Rust's strong type system.
+
+2. Readability: Container type definitions don't tell us what index
+    should be used to access them. When structs contain multiple collections
+    this becomes hard to read quickly.
+
+Using newtypes for the indices and adding them as generic parameters to
+the container types elegantly solves both of these issues.
 
 ### Why not use [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
-- Ergonomic newtype indices require support for all standard collections in one place.
-  Sometimes an index is used for multiple datastructures.
-  Sometimes you want to switch from a `Vec` to a `VecDeque`.
+We believe that good support for newtype indices requires offering
+all the (array-based) collections in one place.
+Sometimes the same index type is
+used for multiple datastructures. Sometimes you want to switch from
+a `Vec` to a `VecDeque`.
 
-- Unlike `index_vec`, we don't implicitly implement `Add<usize> for Idx`,
-  which we believe breaks the type safety that's the whole point of this.
-  We support it as an opt-in configuration though.
+Unlike `index_vec`, we don't implicitly implement `Add<usize> for Idx`,
+which partly breaks the type safety that's the whole point of this.
+We support it as an opt-in configuration though.
 
-- Our `Idx` derivation syntax is significantly nicer.
+Our `Idx` derivation syntax
+is also much nicer to use than `index_vec`'s
+[`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
 
 ### Is there a runtime cost to this?
-- There is very litle runtime overhead. The core index wrapper functions are marked `#[inline(always)]`,
-  so the compiler can reliably eliminate them, even in debug mode.
+There is very litle runtime overhead compared to using the
+underlying containers directly.
+The core index wrapper functions are marked `#[inline(always)]`,
+so the compiler can reliably eliminate them, even in debug mode.
 
-- By default, index conversions that might overflow will be bounds checked.
-  This only affects index types smaller than `usize`.
-  It can also be fully disabled through `#[indexland(disable_bounds_checks)]`,
-  in which case the indices will silently wrap around, just like
-  `my_usize as u32` would.
+By default, index conversions that might overflow will be bounds checked.
+This only affects index types smaller than `usize`,
+and will be avoided internally wherever possible.
+If this is unacceptable for performance reasons,
+these checks can be disabled on a per type basis through
+[`#[indexland(disable_bounds_checks)]`](crate::indexland_derive::Idx),
+or in a single spot through [`into_usize_unchecked`](crate::idx::Idx::into_usize_unchecked).
+This causes the indices to will silently wrap around, just like
+`my_usize as u32` would.
 
 
 
