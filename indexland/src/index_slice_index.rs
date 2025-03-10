@@ -1,10 +1,7 @@
 use core::ops::{Index, IndexMut, Range};
 
 use crate::{
-    index_range::{
-        IndexRangeBounds, IndexRangeFrom, IndexRangeFull, IndexRangeInclusive,
-        IndexRangeTo, IndexRangeToInclusive,
-    },
+    index_range::{IndexRangeBounds, IndexRangeFrom, IndexRangeInclusive},
     Idx, IndexRange, IndexSlice,
 };
 
@@ -205,10 +202,7 @@ index_slice_partial_range_impl![
     core::ops::RangeToInclusive<I>,
     core::ops::RangeFull,
     IndexRangeInclusive<I>,
-    IndexRangeFrom<I>,
-    IndexRangeTo<I>,
-    IndexRangeToInclusive<I>,
-    IndexRangeFull
+    IndexRangeFrom<I>
 ];
 
 unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for IndexRange<I> {

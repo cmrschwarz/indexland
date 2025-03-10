@@ -190,7 +190,9 @@ impl<I: Idx, T: Hash + Eq, S: BuildHasher> IndexHashSet<I, T, S> {
     pub fn as_index_set_mut(&mut self) -> &mut IndexSet<T, S> {
         &mut self.data
     }
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, indexmap::set::Iter<T>> {
+    pub fn iter_enumerated(
+        &self,
+    ) -> IndexEnumerate<I, indexmap::set::Iter<T>> {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn into_iter_enumerated(
