@@ -260,7 +260,9 @@ macro_rules! impl_nonmax {
                     not(debug_assertions),
                     feature = "disable_debuggable_nonmax"
                 ))]
-                self.get()
+                {
+                    self.get() ^ <$primitive>::MAX
+                }
             }
             // we could implement these wrapping functions wihtout unsafe
             // but that would make them even more expensive in debug mode
@@ -668,7 +670,7 @@ mod test {
                     clippy::cast_lossless,
                     clippy::cast_possible_wrap
                 )]
-                for v in [ 0, 1, -1i128 as $from, $(<$to>::MAX as $from),*, $((<$to>::MAX - 1) as $from),* ] {
+                for v in [ 0, 1, 2, -1i128 as $from, $(<$to>::MAX as $from),*, $((<$to>::MAX - 1) as $from),* ] {
                     $(
                         let to_s = stringify!($to);
 
@@ -679,15 +681,21 @@ mod test {
                                 None
                             }
                             else {
-                                Some(NonMax::<$to>::new(v_cast).unwrap())
+                                Some(v_cast)
                             }
                         } else {
                             None
                         };
 
                         assert_eq!(
-                            from_primitive,
+                            from_primitive.map(|v| v.get()),
                             from_primitive_expected,
+                            "NonMax<{to_s}>::try_from({v} as {from_s}).map(|v|v.get())  == {from_primitive_expected:?}",
+                        );
+
+                        assert_eq!(
+                            from_primitive,
+                            from_primitive_expected.and_then(|v| NonMax::<$to>::new(v)),
                             "NonMax<{to_s}>::try_from({v} as {from_s}) == {from_primitive_expected:?}",
                         );
 
@@ -700,9 +708,15 @@ mod test {
                         };
 
                         assert_eq!(
-                            from_nonmax,
+                            from_nonmax.map(|v|v.get()),
                             from_nonmax_expected,
-                            "NonMax<{from_s}>::new({v}).and_then(|from| NonMax<{to_s}>) == {from_nonmax_expected:?}",
+                            "NonMax<{from_s}>::new({v}).and_then(|from| NonMax<{to_s}>).map(|v|v.get()) == {from_nonmax_expected:?}",
+                        );
+
+                        assert_eq!(
+                            from_nonmax,
+                            from_nonmax_expected.and_then(|v| NonMax::<$to>::new(v)),
+                            "NonMax<{to_s}>::try_from({v} as {from_s}) == {from_primitive_expected:?}",
                         );
                     )*
                 }
