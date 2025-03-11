@@ -1,8 +1,13 @@
-use indexland::{Idx, IndexSlice, IndexVec, NonMax};
+use indexland::{Idx, IndexSlice, IndexVec};
 
+#[cfg(not(feature = "nonmax"))]
+#[derive(Idx)]
+pub struct NodeId(u32);
+
+#[cfg(feature = "nonmax")]
 #[derive(Idx)]
 /// using [`NonMax<u32>`] keeps [Option<NodeId>] at 4 bytes
-pub struct NodeId(NonMax<u32>);
+pub struct NodeId(indexland::NonMax<u32>);
 
 #[derive(Default, Clone, Debug)]
 pub struct Node<T> {

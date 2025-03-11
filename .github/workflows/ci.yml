@@ -20,9 +20,9 @@ jobs:
         run: cargo check --features=full --workspace
       - name: cargo test
         run: cargo test --features=full --workspace
-      - name: cargo run examples
+      - name: run all indexland examples
         run: |
-          for example in indexland/examples/*; do
+          for example in examples/*; do
             cargo run --features=full --example $(basename $example .rs);
           done
 
