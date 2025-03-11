@@ -1,7 +1,9 @@
-use indexland::{Idx, IndexSlice, IndexVec};
+use indexland::{Idx, IndexSlice, IndexVec, NonMax};
 
+/// Using [`NonMax<u32>`] ensures that [`Option<NodeId>`] is 4 bytes instead of
+/// 8, which is a big perf improvement for this usecase.
 #[derive(Idx)]
-pub struct NodeId(indexland::NonMax<u32>);
+pub struct NodeId(NonMax<u32>);
 
 /// This is a very standard linked list implemenation using a growing
 /// array as the underlying data structure.

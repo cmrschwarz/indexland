@@ -62,7 +62,6 @@ impl<I: Idx, T> IndexSlice<I, T> {
 
     /// The slice version of `iter_enumerated` takes an `initial_offset`
     /// parameter to avoid the following common mistake:
-    ///
     /// ``` compile fail
     /// # use indexland::{index_vec, Idx};
     /// # #[derive(Idx)]
@@ -344,10 +343,11 @@ impl<'a, I: Idx, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
 
 #[cfg(test)]
 mod test {
-    use crate::{index_array, Idx, IndexArray};
-
+    #[cfg(feature = "derive")]
     #[test]
     fn get_disjoint_mut() {
+        use crate::{index_array, Idx, IndexArray};
+
         #[derive(Idx)]
         enum I {
             A,

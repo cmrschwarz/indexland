@@ -64,7 +64,6 @@ default-features = false
 [dev-dependencies]
 derive_more = { version = "2.0.1", features = ["full"] }
 
-
 [features]
 default = ["std", "derive", "arrayvec"]
 
@@ -98,12 +97,18 @@ alloc = []
 # `nonmax::NonMaxOutOfRangeError`. Enabled by default. Disable for #[no_std].
 std = ["alloc", "arrayvec/std", "indexmap/std"]
 
-smallvec = ["std", "dep:smallvec"] # smallvec v1 does not support no_std
+# A small size optimized vec implementation. An optimization for those that
+# need it, not enabled by default.
+# smallvec v1 unfortunately doesn't support `#[no_std]`, v2 isn't out yet.
+smallvec = ["std", "dep:smallvec"]
 
+# An array based vec implementation with no heap allocations.
 arrayvec = ["dep:arrayvec"]
 
+# An array based hashmap implementation that preserves insertion order.
 indexmap = ["alloc", "dep:indexmap"]
 
+# serde Serialize/Deserialize implementations for all containers.
 serde = ["dep:serde", "arrayvec/serde", "smallvec/serde", "indexmap/serde"]
 
 [package.metadata.docs.rs]
@@ -116,7 +121,6 @@ rustdoc-args = [
     "--extern-html-root-url=alloc=https://doc.rust-lang.org",
     "--extern-html-root-url=std=https://doc.rust-lang.org",
 ]
-
 
 [[example]]
 name = "linked_list"

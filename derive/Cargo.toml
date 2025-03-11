@@ -22,7 +22,7 @@ syn = { version = "2.0.100", features = ["parsing"] }
 quote = "1.0.39"
 
 [dev-dependencies]
-indexland = { workspace = true, features = ["derive"] }
+indexland = { workspace = true, features = ["derive", "arrayvec"] }
 trybuild = "1.0.104"
 
 

@@ -18,9 +18,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: cargo check
         run: cargo check --features=full --workspace
-      - name: cargo test nostd
-        run: cargo test --no-default-features --features=nonmax --workspace
-      - name: cargo test
+      - name: cargo test (nostd, no alloc)
+        run: |
+          cargo test  --no-default-features -p indexland --tests
+          cargo test  --no-default-features -p indexland_derive --tests
+      - name: cargo test (nostd, alloc)
+        run: |
+          cargo test --no-default-features --features=alloc -p indexland --tests
+          cargo test --no-default-features --features=indexland/alloc -p indexland_derive --tests
+      - name: cargo test (full + doctests)
         run: cargo test --features=full --workspace
       - name: run all indexland examples
         run: |
@@ -34,7 +40,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
-      - uses: dtolnay/install@cargo-docs-rs
+      - uses: cargo-bins/cargo-binstall@main
+      - run: cargo binstall cargo-docs-rs
       - run: cargo docs-rs -p indexland
       - run: cargo docs-rs -p indexland_derive
 

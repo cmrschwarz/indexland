@@ -12,7 +12,6 @@ fn derive_enum_idx() {
         A,
         B,
     }
-
     const FOO: EnumIndexArray<Foo, i32> = IndexArray::new([0, 1]);
 
     assert_eq!(FOO[Foo::B], 1);

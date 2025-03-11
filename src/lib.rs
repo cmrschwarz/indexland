@@ -1,4 +1,7 @@
-#![doc = include_str!("../README.md")]
+#![cfg_attr(
+    any(feature="derive", not(doctest)),
+    doc = include_str!("../README.md")
+)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]

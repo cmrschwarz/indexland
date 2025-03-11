@@ -39,7 +39,10 @@ use core::num::NonZero;
 
 use crate::Idx;
 
-/// Generic [`NonMax`]
+/// An Integer value that's dynamically guaranteed to never be MAX. This enables
+/// [Niche Layout Optimizations](https://doc.rust-lang.org/std/option/index.html#representation),
+/// meaning that e.g. [`Option<NonMax<u32>>`] takes up 4 bytes,
+/// whereas [`Option<u32>`] will ususally use 8.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NonMax<P: NonMaxPrimitive>(P::NonMaxInner);
 

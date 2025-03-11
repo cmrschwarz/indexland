@@ -44,6 +44,7 @@
 //!
 //! ## Idiomatic Alternative
 //! ```
+//! # #![cfg(feature="derive")]
 //! use indexland::{Idx, IndexVec};
 //!
 //! #[derive(Idx)]

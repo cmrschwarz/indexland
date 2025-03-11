@@ -23,6 +23,7 @@ pub struct IndexArray<I, T, const LEN: usize> {
 ///
 /// ### Example:
 /// ```
+/// # #![cfg(feature="derive")]
 /// # use indexland::{Idx, index_array::{IndexArray, EnumIndexArray}};
 /// #[derive(Idx)]
 /// enum Foo {
@@ -39,6 +40,7 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 /// If the inputs are constant this creates a compile time constant array.
 /// ### Examples:
 /// ```
+/// # #![cfg(feature="derive")]
 /// use indexland::{index_array, Idx, IdxEnum, IndexArray};
 ///
 /// const FOO: IndexArray<u8, i32, 3> = index_array![1, 2, 3];
