@@ -1,18 +1,5 @@
 use indexland::{Idx, IndexSlice, IndexVec};
 
-/// If the "nonmax" feature is enabled, you can also use [`indexland::NonMax<u32>`]
-/// as a drop in replacement for `u32` below to make `Option<NodeId>` only use 4 bytes
-/// instead of 8. A big improvement for this usecase!
-#[cfg(not(feature = "nonmax"))]
-#[derive(Idx)]
-pub struct NodeId(u32);
-
-/// This is the optimized version.
-/// This only matters if you make heavy use of [`Option`], like this example does.
-/// Just like the one above, this version uses 4 bytes for every `NodeId`.
-/// Because it has a [Niche](https://doc.rust-lang.org/std/option/index.html#representation),
-/// [`Option<NodeId>`] will use 4 bytes aswell!
-#[cfg(feature = "nonmax")]
 #[derive(Idx)]
 pub struct NodeId(indexland::NonMax<u32>);
 

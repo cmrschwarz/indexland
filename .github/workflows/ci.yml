@@ -18,6 +18,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: cargo check
         run: cargo check --features=full --workspace
+      - name: cargo test nostd
+        run: cargo test --no-default-features --features=nonmax --workspace
       - name: cargo test
         run: cargo test --features=full --workspace
       - name: run all indexland examples

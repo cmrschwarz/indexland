@@ -7,6 +7,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 // nostd
 #![no_std]
+
 #[cfg(feature = "std")]
 extern crate std;
 

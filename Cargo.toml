@@ -70,14 +70,32 @@ default = ["std", "derive", "arrayvec"]
 
 full = ["std", "derive", "nonmax", "arrayvec", "smallvec", "indexmap", "serde"]
 
+# Enables `#[derive(Idx)]`.
+# Unlike e.g. serde, this is by far the preferred way to use indexland,
+# so it is part of the default features. If you have to, you can disable this
+# and use the less customizable `idx_newtype!` or implement the
+# `Idx` trait manually.
 derive = ["dep:indexland_derive"]
 
+# Enables the builtin `NonMax` integer types. These bring in a fair bit of
+# code due to need to implement a lot of traits,
+# so this feature is not enabled by default.
 nonmax = []
 
+# By default, the `NonMax` Niche optimizations are disabled in debug mode,
+# because they prevent gdb / lldb from displaying index values correctly.
+# If your crate fundamentally relies on the niche optimiziation to
+# be present you can disable this behavior here. Be aware that this will
+# also affect all your downstream consumers, as feature flags are viral.
 disable_debuggable_nonmax = []
 
+# Allow indexland to use the alloc crate. Only meaningful in a #[no_std] context.
+# Without this flag, only the `IndexSlice`, `IndexArray`, and `IndexArrayVec`
+# containers will be available.
 alloc = []
 
+# Adds a few additional goodies like the `Error` implementation on
+# `nonmax::NonMaxOutOfRangeError`. Enabled by default. Disable for #[no_std].
 std = ["alloc", "arrayvec/std", "indexmap/std"]
 
 smallvec = ["std", "dep:smallvec"] # smallvec v1 does not support no_std
@@ -98,3 +116,8 @@ rustdoc-args = [
     "--extern-html-root-url=alloc=https://doc.rust-lang.org",
     "--extern-html-root-url=std=https://doc.rust-lang.org",
 ]
+
+
+[[example]]
+name = "linked_list"
+required-features = ["nonmax"]
