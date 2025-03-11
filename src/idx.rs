@@ -53,10 +53,11 @@ pub trait IdxEnum: Idx + 'static {
     const COUNT: usize;
     const VARIANTS: &'static [Self];
 
-    /// Helper type to construct `IndexArray<Self, T, Self::COUNT>`
+    /// Helper type to construct [`EnumIndexArray`](crate::index_array::EnumIndexArray)
     /// on stable Rust without const generics.
-    /// See [`EnumIndexArray`](crate::index_array::EnumIndexArray)
-    type EnumIndexArray<T>;
+    /// This should always be equivalent to `IndexArray<Self, T, { Self::COUNT }>`.
+    /// Please make sure to honor this when implementing this trait manually.
+    type EnumIndexArray<T>; // = `IndexArray<Self, T, { Self::COUNT }>`
 
     fn iter() -> core::iter::Copied<core::slice::Iter<'static, Self>> {
         Self::VARIANTS.iter().copied()

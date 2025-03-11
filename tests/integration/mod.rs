@@ -1,16 +1,17 @@
-#[cfg(all(feature = "std", feature = "derive"))]
-mod std_derive;
+pub mod idx_manual;
+
+pub mod index_array;
+
+mod declarative;
 
 #[cfg(feature = "derive")]
-mod derive_no_std;
-
-mod no_derive_no_std;
+mod derive;
 
 #[cfg(feature = "smallvec")]
-mod smallvec;
+mod index_small_vec;
 
-#[cfg(all(feature = "arrayvec", feature = "derive"))]
-mod arrayvec;
+#[cfg(feature = "arrayvec")]
+mod index_array_vec;
 
-#[cfg(all(feature = "indexmap", feature = "derive"))]
+#[cfg(feature = "indexmap")]
 mod index_hash_map;

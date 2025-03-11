@@ -30,7 +30,7 @@ use super::{idx::Idx, index_range::IndexRange};
 macro_rules! index_hash_map {
     ($($anything: tt)*) => {
         $crate::IndexHashMap::from($crate::indexmap::indexmap![$($anything)*])
-    };
+    }
 }
 
 #[cfg(feature = "std")]

@@ -1,4 +1,6 @@
-use indexland::{index_array_vec, Idx, IndexArrayVec};
+use indexland::{index_array_vec, IndexArrayVec};
+
+use crate::integration::idx_manual::IdxManual;
 
 #[test]
 fn macro_works() {
@@ -34,13 +36,10 @@ fn shorter_array_works() {
 
 #[test]
 fn indexing_works() {
-    #[derive(Idx)]
-    struct FooId(u32);
-
-    let av: IndexArrayVec<FooId, _, 5> =
+    let av: IndexArrayVec<IdxManual, _, 5> =
         indexland::index_array_vec![0, 1, 2, 3, 4];
 
-    assert_eq!(av[FooId(2)], 2);
+    assert_eq!(av[IdxManual(2)], 2);
 }
 
 // TODO: allow sizes other than the array cap, see #5
