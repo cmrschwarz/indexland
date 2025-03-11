@@ -1,0 +1,5 @@
+error: `From<whatever<{3>2}>` does not name a trait that can be derived
+ --> tests/ui/nonexistant_trait_newtype.rs:5:22
+  |
+5 |     #[indexland(omit(From<whatever<{3>2}>))]
+  |                      ^^^^^^^^^^^^^^^^^^^^
