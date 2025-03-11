@@ -1,13 +1,17 @@
 use super::{idx::Idx, index_range::IndexRange};
 use crate::{index_enumerate::IndexEnumerate, IndexRangeBounds};
 use alloc::boxed::Box;
-use indexmap::{set::Slice, Equivalent, IndexSet};
-use std::{
+use core::{
     fmt::Debug,
-    hash::{BuildHasher, Hash, RandomState},
+    hash::{BuildHasher, Hash},
     marker::PhantomData,
     ops::Index,
 };
+
+use indexmap::{set::Slice, Equivalent, IndexSet};
+
+#[cfg(feature = "std")]
+use std::hash::RandomState;
 
 /// Create an [`IndexHashSet`] containing the arguments.
 ///
@@ -31,8 +35,16 @@ macro_rules! index_hash_set {
     };
 }
 
+#[cfg(feature = "std")]
 #[derive(Clone)]
 pub struct IndexHashSet<I, T, S = RandomState> {
+    data: IndexSet<T, S>,
+    _phantom: PhantomData<fn(I) -> T>,
+}
+
+#[cfg(not(feature = "std"))]
+#[derive(Clone)]
+pub struct IndexHashSet<I, T, S> {
     data: IndexSet<T, S>,
     _phantom: PhantomData<fn(I) -> T>,
 }
@@ -46,19 +58,19 @@ pub struct IndexHashSetSlice<I, T> {
 impl<I, T> IndexHashSetSlice<I, T> {
     #[inline]
     pub fn from_index_map_slice(s: &Slice<T>) -> &Self {
-        unsafe { &*(std::ptr::from_ref(s) as *const Self) }
+        unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline]
     pub fn from_index_map_slice_mut(s: &mut Slice<T>) -> &mut Self {
-        unsafe { &mut *(std::ptr::from_mut(s) as *mut Self) }
+        unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[inline]
     pub fn into_index_map_slice(s: &Self) -> &Slice<T> {
-        unsafe { &*(std::ptr::from_ref(s) as *const Slice<T>) }
+        unsafe { &*(core::ptr::from_ref(s) as *const Slice<T>) }
     }
     #[inline]
     pub fn into_index_map_slice_mut(s: &mut Self) -> &mut Slice<T> {
-        unsafe { &mut *(std::ptr::from_mut(s) as *mut Slice<T>) }
+        unsafe { &mut *(core::ptr::from_mut(s) as *mut Slice<T>) }
     }
     pub fn from_boxed_slice(slice_box: Box<Slice<T>>) -> Box<Self> {
         unsafe { Box::from_raw(Box::into_raw(slice_box) as *mut Self) }
@@ -103,6 +115,8 @@ impl<I, T, S> From<IndexHashSet<I, T, S>> for IndexSet<T, S> {
     }
 }
 
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl<I, T: Hash + Eq, const N: usize> From<[T; N]>
     for IndexHashSet<I, T, RandomState>
 {
@@ -121,15 +135,20 @@ impl<I, T, S: Default> Default for IndexHashSet<I, T, S> {
 }
 
 impl<I: Idx, T: Debug, S> Debug for IndexHashSet<I, T, S> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
 
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl<I, T> IndexHashSet<I, T> {
+    /// This is not const because the default [`RandomState`] used for the hasher
+    /// might get random bits from the OS.
+    /// Look at [`IndexHashSet::with_hasher`] for a const constructor for this.
     pub fn new() -> Self {
         Self {
-            data: IndexSet::default(),
+            data: IndexSet::new(),
             _phantom: PhantomData,
         }
     }
@@ -142,6 +161,12 @@ impl<I, T> IndexHashSet<I, T> {
 }
 
 impl<I: Idx, T: Hash + Eq, S: BuildHasher> IndexHashSet<I, T, S> {
+    pub const fn with_hasher(hash_builder: S) -> Self {
+        Self {
+            data: IndexSet::with_hasher(hash_builder),
+            _phantom: PhantomData,
+        }
+    }
     pub fn with_capacity_and_hasher(cap: usize, hasher: S) -> Self {
         Self {
             data: IndexSet::with_capacity_and_hasher(cap, hasher),

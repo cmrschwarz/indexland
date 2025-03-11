@@ -36,8 +36,16 @@ macro_rules! index_hash_map {
 #[cfg(feature = "std")]
 use std::collections::hash_map::RandomState;
 
+#[cfg(feature = "std")]
 #[derive(Clone)]
 pub struct IndexHashMap<I, K, V, S = RandomState> {
+    data: IndexMap<K, V, S>,
+    _phantom: PhantomData<fn(I) -> (K, V)>,
+}
+
+#[cfg(not(feature = "std"))]
+#[derive(Clone)]
+pub struct IndexHashMap<I, K, V, S> {
     data: IndexMap<K, V, S>,
     _phantom: PhantomData<fn(I) -> (K, V)>,
 }
@@ -112,6 +120,8 @@ impl<I, K, V, S> From<IndexHashMap<I, K, V, S>> for IndexMap<K, V, S> {
     }
 }
 
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl<I, K: Hash + Eq, V, const N: usize> From<[(K, V); N]>
     for IndexHashMap<I, K, V, RandomState>
 {
@@ -135,6 +145,8 @@ impl<I: Idx, K: Debug, V: Debug, S> Debug for IndexHashMap<I, K, V, S> {
     }
 }
 
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl<I, K, V> IndexHashMap<I, K, V> {
     pub fn new() -> Self {
         Self {
