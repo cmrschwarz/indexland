@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{spanned::Spanned, Data, DeriveInput, Fields, Generics};
+use syn::{Data, DeriveInput, Fields, Generics};
 
 use crate::{
     context::{Attrs, Context, ErrorList},
@@ -398,13 +398,13 @@ fn derivation_list(ctx: &EnumCtx) -> Derivations<EnumTraitDerivation> {
 fn push_unknown_entry_error(ctx: &EnumCtx, entry: &TokenStream, descr: &str) {
     let from_enum = format!("From<{}", ctx.name);
     if descr.starts_with(&from_enum) {
-        ctx.error_list.error(
-            entry.span(),
+        ctx.error_list.error_spanned(
+            entry,
             format!("Use `From<Self>` instead of `From<{}>`", ctx.name),
         );
     } else {
-        ctx.error_list.error(
-            entry.span(),
+        ctx.error_list.error_spanned(
+            entry,
             format!("`{descr}` does not name a trait that can be derived"),
         );
     }

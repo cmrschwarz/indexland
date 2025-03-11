@@ -51,6 +51,10 @@ impl ErrorList {
     pub fn error(&self, span: Span, message: impl Display) {
         self.push(syn::Error::new(span, message));
     }
+
+    pub fn error_spanned(&self, tokens: impl ToTokens, message: impl Display) {
+        self.push(syn::Error::new_spanned(tokens, message));
+    }
     pub fn check(&self) -> syn::Result<()> {
         match self.errors.take() {
             Some(e) => Err(e),
