@@ -19,7 +19,13 @@ pub struct NodeId(indexland::NonMax<u32>);
 /// This is a very standard linked list implemenation using a growing
 /// array as the underlying data structure.
 /// Nothing special really, but it demonstrates the use of [`IndexVec`] and
-/// [`IndexSlice`]
+/// [`IndexSlice`].
+///
+/// The implementation details aren't inportant, I don't want to waste
+/// your time studying them.
+///
+/// This is just a random usecase example that's meant for you to see and
+/// enjoy some of the neat indexland helpers (highlighted by // NOTE)s.
 #[derive(Default, Clone, Debug)]
 pub struct LinkedList<T> {
     nodes: IndexVec<NodeId, Node<T>>,
@@ -35,8 +41,9 @@ pub struct Node<T> {
 }
 
 impl<T> LinkedList<T> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
+            // NOTE: all indexland containers have zero alloc const new!
             nodes: IndexVec::new(),
             head: None,
             tail: None,
@@ -49,6 +56,8 @@ impl<T> LinkedList<T> {
             prev: self.tail,
             next: None,
         };
+
+        // NOTE: `push_get_id` is a nice convenience helper
         let new_id = self.nodes.push_get_id(node);
 
         if let Some(tail) = self.tail {
@@ -56,29 +65,16 @@ impl<T> LinkedList<T> {
         } else {
             self.head = Some(new_id);
         }
+
         self.tail = Some(new_id);
 
         new_id
     }
 
-    pub fn pop_back(&mut self) -> Option<T> {
-        let tail_id = self.tail?;
-
-        let node = self.nodes.remove(tail_id);
-        self.tail = node.prev;
-
-        if let Some(new_tail) = self.tail {
-            self.nodes[new_tail].next = None;
-        } else {
-            self.head = None;
-        }
-
-        Some(node.data)
-    }
-
     /// O(1) remove, one of the few reasons anybody would ever want to use a
-    /// linked list in the first place as anything but an example.
+    /// linked list in the first place (as anything but an example).
     pub fn remove(&mut self, idx: NodeId) -> T {
+        // NOTE: index based swap remove, otherwise same api we all know and love.
         let node = self.nodes.swap_remove(idx);
 
         // Update adjacent nodes
@@ -94,6 +90,10 @@ impl<T> LinkedList<T> {
 
         // If the removed node wasn't the last one
         // update the moved node's adjacent nodes
+
+        // NOTE: `len_idx` is a nice convenience helper.
+        // It returns the index that a node after the last (index `len()`)
+        // would have.
         if idx < self.nodes.len_idx() {
             if let Some(prev) = self.nodes[idx].prev {
                 self.nodes[prev].next = Some(idx);
@@ -119,8 +119,12 @@ impl<T> LinkedList<T> {
         node.data
     }
 
-    pub fn iter(&self) -> Iter<'_, T> {
+    pub fn iter(&self) -> Iter<T> {
         Iter {
+            // NOTE: `as_index_slice` is identical to
+            // `&*self.nodes` (using IndexVec's Deref to IndexSlice),
+            // but a bit more clear. we offer `.as_slice()` aswell to get
+            // a non index aware slice. We don't judge :).
             nodes: self.nodes.as_index_slice(),
             current: self.head,
         }
@@ -143,6 +147,8 @@ impl<'a, T> Iterator for Iter<'a, T> {
         Some(&self.nodes[curr].data)
     }
 }
+
+// phew! below is a simple demo usage of our LinkedList:
 
 fn main() {
     let mut list = LinkedList::new();
