@@ -1,5 +1,5 @@
 // Helper command for testing indexland with different sets of feature
-// flags enabled. Running `cargo xtask` without any options
+// flags enabled. Running `cargo +nightly xtask` without any options
 // will run every test that's also runnning in ci.
 
 use std::{fmt::Write, process::Command};
