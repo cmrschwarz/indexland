@@ -44,10 +44,7 @@ impl<T> LinkedList<T> {
     }
 
     pub fn pop_back(&mut self) -> Option<T> {
-        let tail_id = match self.tail {
-            Some(id) => id,
-            None => return None,
-        };
+        let tail_id = self.tail?;
 
         let node = self.nodes.remove(tail_id);
         self.tail = node.prev;
