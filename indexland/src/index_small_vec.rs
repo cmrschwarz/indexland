@@ -5,7 +5,7 @@ use std::{
 };
 
 use super::{idx::Idx, index_slice::IndexSlice};
-use crate::{index_enumerate::IndexEnumerate, IndexRange};
+use crate::{index_enumerate::IndexEnumerate, IndexRange, IndexRangeBounds};
 
 use smallvec::SmallVec;
 
@@ -152,6 +152,22 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
         &mut self,
     ) -> IndexEnumerate<I, std::slice::IterMut<T>> {
         IndexEnumerate::new(I::ZERO, &mut self.data)
+    }
+    pub fn iter_enumerated_range(
+        &self,
+        range: impl IndexRangeBounds<I>,
+    ) -> IndexEnumerate<I, core::slice::Iter<T>> {
+        IndexEnumerate::new(
+            I::ZERO,
+            &self.data[range.canonicalize(self.len())],
+        )
+    }
+    pub fn iter_enumerated_range_mut(
+        &mut self,
+        range: impl IndexRangeBounds<I>,
+    ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
+        let range = range.canonicalize(self.len());
+        IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
     pub fn into_iter_enumerated(
         self,

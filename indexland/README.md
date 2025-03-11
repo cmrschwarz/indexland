@@ -84,17 +84,18 @@ let message = STATUS_MESSAGE[Status::Running];
 
 ## Additional Features
 
-- Cheaply convert to/from underlying collections when necessary.
-
+- Every wrapper has an escape hatch function to mutably access the underlying
+  collection, aswell as bidirectional [`From`](core::convert::From) implementations.
   Never feel boxed in by this dependency.
 
-- All basic integer types implement `Idx`.
+- All basic integer types implement [`Idx`](crate::Idx).
 
-  No complaints if your main usecase is `IndexVec<u32, T>`.
+  No complaints if your main usecase for this crate is `IndexVec<u32, T>`.
 
 - First class embedded support though `#[no_std]` and even optional `alloc`.
 
-- [`Idx`](crate::Idx) compatible [`NonMax<T>`](crate::nonmax) Integer Types for Niche Optimizations
+- [`Idx`](crate::Idx) compatible [`NonMax<T>`](crate::nonmax) Integer Types
+  for those sweet sweet [Niche Optimizations](https://doc.rust-lang.org/std/option/index.html#representation).
 
 - [`serde`](::serde) implementations for all Collections.
 
@@ -110,7 +111,7 @@ smart pointers is an incredibly powerful idiom popularized by
 Many places make use this pattern, including
 [the Rust Compiler itself](https://github.com/rust-lang/rust/blob/2b285cd5f0877e30ad1d83e04f8cc46254e43391/compiler/rustc_index/src/vec.rs#L40).
 
-In Rust in particular, indices can be a fantastic way to avoid borrow
+In Rust in particular, indices can be a fantastic way to avoid most borrow
 checker issues while simultaneously *increasing* performance.
 They frequently reduce allocations, lower the memory usage and increase
 data locality.
@@ -156,7 +157,7 @@ so the compiler can reliably eliminate them, even in debug mode.
 
 By default, index conversions that might overflow will be bounds checked.
 This only affects index types smaller than `usize`,
-and will be avoided internally wherever possible.
+and is avoided internally wherever possible.
 If this is unacceptable for performance reasons,
 these checks can be disabled on a per type basis through
 [`#[indexland(disable_bounds_checks)]`](crate::indexland_derive::Idx),

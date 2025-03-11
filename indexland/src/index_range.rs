@@ -1,13 +1,61 @@
 //! Wrappers around [`Range`](`core::ops::Range`),
 //! [`RangeInclusive`](`core::ops::RangeInclusive`),
 //! and [`RangeFrom`](`core::ops::RangeFrom`)
-//! that allow for [`Idx`] based iteration
+//! that allow for [`Idx`] based iteration.
 //!
 //! Ideally these wouldn't have to exist but unfortunately
 //! [`core::iter::Step`] is unstable so we cannot implement it for [`Idx`].
 //! This means that you cannot iterate over a [`Range<Idx>`].
-//! [`IndexRange`] implements iteration for [`Idx`] implementors and adds
+//! [`IndexRange`] implements iteration for [`Idx`] types and adds
 //! conversions to and from [`Range`].
+//!
+//! You normally don't need this but it's there for you if you do.
+//!
+//! ## Motivating Example
+//! ```compile_fail
+//! use indexland::{Idx, IndexVec};
+//!
+//! #[derive(Idx)]
+//! struct MyId(u32);
+//!
+//! let myvec: IndexVec<MyId, i32> = IndexVec::from_iter(0..10);
+//!
+//! // !! ranged iteration for custom types does compile in stable rust
+//! for i in MyId(1)..MyId(3) {
+//!     println!("myvec[{i}] = {}", myvec[i]);
+//! }
+//! ```
+//!
+//! ## Fix using [`IndexRangeBounds`]:
+//! ```
+//! // `.index_range()` is provided by `IndexRangeBounds`
+//! use indexland::{Idx, IndexVec, IndexRangeBounds};
+//!
+//! #[derive(Idx)]
+//! struct MyId(u32);
+//!
+//! let myvec: IndexVec<MyId, i32> = IndexVec::from_iter(0..10);
+//!
+//! // this works, and is available if you need it
+//! for i in (MyId(0)..MyId(3)).index_range() {
+//!     println!("myvec[{i}] = {}", myvec[i]);
+//! }
+//! ```
+//!
+//! ## Idiomatic Alternative
+//! ```
+//! use indexland::{Idx, IndexVec};
+//!
+//! #[derive(Idx)]
+//! struct MyId(u32);
+//!
+//! let myvec: IndexVec<MyId, i32> = IndexVec::from_iter(0..10);
+//!
+//! // where applicable, this is the recommended style
+//! for (i, &v) in myvec.iter_enumerated_range(MyId(1)..MyId(3)) {
+//!     println!("myvec[{i}] = {v}");
+//! }
+//! ```
 use crate::Idx;
 use core::ops::{
     Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo,

@@ -1,5 +1,5 @@
 use super::{idx::Idx, index_range::IndexRange};
-use crate::index_enumerate::IndexEnumerate;
+use crate::{index_enumerate::IndexEnumerate, IndexRangeBounds};
 use alloc::boxed::Box;
 use indexmap::{set::Slice, Equivalent, IndexSet};
 use std::{
@@ -194,6 +194,13 @@ impl<I: Idx, T: Hash + Eq, S: BuildHasher> IndexHashSet<I, T, S> {
         &self,
     ) -> IndexEnumerate<I, indexmap::set::Iter<T>> {
         IndexEnumerate::new(I::ZERO, &self.data)
+    }
+    pub fn iter_enumerated_range(
+        &self,
+        range: impl IndexRangeBounds<I>,
+    ) -> IndexEnumerate<I, indexmap::set::Iter<T>> {
+        let range = range.canonicalize(self.len());
+        IndexEnumerate::new(I::ZERO, &self.data[range])
     }
     pub fn into_iter_enumerated(
         self,

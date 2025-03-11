@@ -6,7 +6,7 @@ use core::{
 
 use alloc::{collections::VecDeque, vec::Vec};
 
-use crate::{index_enumerate::IndexEnumerate, IndexVec};
+use crate::{index_enumerate::IndexEnumerate, IndexRangeBounds, IndexVec};
 
 use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 
@@ -163,6 +163,22 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
         &mut self,
     ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<T>> {
         IndexEnumerate::new(I::ZERO, &mut self.data)
+    }
+    pub fn iter_enumerated_range(
+        &self,
+        range: impl IndexRangeBounds<I>,
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::Iter<T>> {
+        IndexEnumerate::new(
+            I::ZERO,
+            self.data.range(range.canonicalize(self.len())),
+        )
+    }
+    pub fn iter_enumerated_range_mut(
+        &mut self,
+        range: impl IndexRangeBounds<I>,
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<T>> {
+        let range = range.canonicalize(self.len());
+        IndexEnumerate::new(I::ZERO, self.data.range_mut(range))
     }
     pub fn into_iter_enumerated(
         self,

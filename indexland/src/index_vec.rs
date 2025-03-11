@@ -1,4 +1,4 @@
-use crate::index_enumerate::IndexEnumerate;
+use crate::{index_enumerate::IndexEnumerate, IndexRangeBounds};
 
 use core::{
     fmt::Debug,
@@ -138,13 +138,29 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.data.push(v);
         id
     }
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>> {
-        IndexEnumerate::new(I::ZERO, &self.data)
+    pub fn iter_enumerated_range(
+        &self,
+        range: impl IndexRangeBounds<I>,
+    ) -> IndexEnumerate<I, core::slice::Iter<T>> {
+        IndexEnumerate::new(
+            I::ZERO,
+            &self.data[range.canonicalize(self.len())],
+        )
+    }
+    pub fn iter_enumerated_range_mut(
+        &mut self,
+        range: impl IndexRangeBounds<I>,
+    ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
+        let range = range.canonicalize(self.len());
+        IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
     pub fn iter_enumerated_mut(
         &mut self,
     ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
         IndexEnumerate::new(I::ZERO, &mut self.data)
+    }
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>> {
+        IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn into_iter_enumerated(
         self,

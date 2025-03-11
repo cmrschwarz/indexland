@@ -56,6 +56,39 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn into_boxed_slice(self: Box<Self>) -> Box<[T]> {
         unsafe { Box::from_raw(Box::into_raw(self) as *mut [T]) }
     }
+
+    // TODO: while this is good advice, this usecase needs some more love,
+    // maybe we should `iter_enumerated_range` to the containers
+
+    /// The slice version of `iter_enumerated` takes an `initial_offset`
+    /// parameter to avoid the following common mistake:
+    ///
+    /// ``` compile fail
+    /// # use indexland::{index_vec, Idx};
+    /// # #[derive(Idx)]
+    /// # struct MyId(u32);
+    /// #
+    /// # let myvec = index_vec![0, 1, 2, 3, 4, 5];
+    ///
+    /// // !!! BUG: `i` would start at zero !!!
+    /// for (i, &v) in myvec[MyId(1)..MyId(3)].iter_enumerated() {
+    ///     println!("myvec[i] = {v}");
+    /// }
+    /// ```
+    /// ```
+    /// # use indexland::{index_vec, Idx};
+    /// # #[derive(Idx)]
+    /// # struct MyId(u32);
+    /// #
+    /// # let myvec = index_vec![0, 1, 2, 3, 4, 5];
+    /// // instead, use the following code:
+    /// for (i, &v) in myvec.iter_enumerated_range(MyId(1)..MyId(3)) {
+    ///     println!("myvec[i] = {v}");
+    /// }
+    ///
+    /// ```
+    /// If you actualy want to start at zero, simply pass [`Idx::ZERO`]
+    /// as the initial offset.
     pub fn iter_enumerated(
         &self,
         initial_offset: I,
