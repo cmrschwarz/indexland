@@ -11,6 +11,7 @@ package.edition = "2021"
 package.rust-version = "1.80"
 package.categories = ["data-structures", "memory-management", "rust-patterns"]
 package.keywords = ["index", "collection", "container", "vec", "slice"]
+members = ["xtask"]
 
 [workspace.dependencies]
 indexland = { version = "=0.2.1", path = ".", default-features = false }
@@ -125,3 +126,5 @@ rustdoc-args = [
 [[example]]
 name = "linked_list"
 required-features = ["nonmax"]
+
+[package.metadata.xtask]

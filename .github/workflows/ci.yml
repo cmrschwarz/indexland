@@ -16,37 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: cargo check
-        run: cargo check --features=full --workspace
-
-      - name: cargo test (nostd, no alloc)
-        run: |
-          cargo test --no-default-features -p indexland --tests
-          cargo test --no-default-features -p indexland_derive --tests
-
-      - name: cargo test (nostd, no alloc, arrayvec)
-        run: |
-          cargo test --no-default-features --feaures=arrayvec -p indexland --tests
-          cargo test --no-default-features --feaures=indexland/arrayvec -p indexland_derive --tests
-
-      - name: cargo test (nostd, alloc)
-        run: |
-          cargo test --no-default-features --features=alloc -p indexland --tests
-          cargo test --no-default-features --features=indexland/alloc -p indexland_derive --tests
-
-      - name: cargo test (nostd, alloc, indexmap, arrayvec) # smallve requires std for now
-        run: |
-            cargo test --no-default-features --features=alloc,arrayvec,indexmap -p indexland --tests
-            cargo test --no-default-features --features=indexland/alloc,indexland/indexmap,indexland/arrayvec -p indexland_derive --tests
-
-      - name: cargo test (full, doctests)
-        run: cargo test --features=full --workspace
-
-      - name: cargo test (examples)
-        run: |
-          for example in examples/*; do
-            cargo run --example $(basename $example .rs);
-          done
+      - name: test feature configurations
+        run: cargo xtask -t
 
   doc:
     name: Documentation
@@ -56,8 +27,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
       - uses: cargo-bins/cargo-binstall@main
       - run: cargo binstall -y cargo-docs-rs
-      - run: cargo docs-rs -p indexland
-      - run: cargo docs-rs -p indexland_derive
+      - run: cargo xtask -d
 
   clippy:
     name: Clippy
@@ -67,7 +37,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: clippy
-      - run: cargo +nightly clippy --features=full --workspace
+      - run: cargo xtask -c
 
   rustfmt:
     name: Rustfmt
@@ -78,4 +48,4 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt
-      - run: cargo fmt --check --all
+      - run: cargo xtask -f
