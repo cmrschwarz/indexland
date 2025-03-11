@@ -16,8 +16,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo check --features=full --workspace
-      - run: cargo test --features=full --workspace
+      - name: cargo check
+        run: cargo check --features=full --workspace
+      - name: cargo test
+        run: cargo test --features=full --workspace
+      - name: cargo run examples
+        run: |
+          for example in indexland/examples/*; do
+            cargo run --features=full --example $(basename $example .rs);
+          done
 
   doc:
     name: Documentation
