@@ -69,9 +69,18 @@ fn split_at_commas(tokens: TokenStream) -> Vec<TokenStream> {
     let mut groups = Vec::new();
     let mut current_group = TokenStream::new();
 
+    let mut angle_bracket_depth = 0usize;
+
     for token in tokens {
         if let TokenTree::Punct(punct) = &token {
-            if punct.as_char() == ',' {
+            let c = punct.as_char();
+            if c == '<' {
+                angle_bracket_depth += 1;
+            }
+            if c == '>' {
+                angle_bracket_depth = angle_bracket_depth.saturating_sub(1);
+            }
+            if c == ',' && angle_bracket_depth == 0 {
                 groups.push(current_group);
                 current_group = TokenStream::new();
                 continue;

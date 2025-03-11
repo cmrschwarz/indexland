@@ -1,11 +1,5 @@
-error: `From<Foo<qq` does not name a trait that can be derived
+error: `From<Foo<qq, bb>>` does not name a trait that can be derived
  --> tests/ui/nonexistant_trait.rs:5:22
   |
 5 |     #[indexland(omit(From<Foo<qq, bb>>))]
-  |                      ^^^^
-
-error: `bb>>` does not name a trait that can be derived
- --> tests/ui/nonexistant_trait.rs:5:35
-  |
-5 |     #[indexland(omit(From<Foo<qq, bb>>))]
-  |                                   ^^
+  |                      ^^^^^^^^^^^^^^^^^
