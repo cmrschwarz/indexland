@@ -117,7 +117,7 @@ They frequently reduce allocations, lower the memory usage and increase
 data locality.
 
 When using this pattern heavily in Rust today there are a few issues though.
-The common approach is to use `type NodeId = usize` to denote differen index
+The common approach is to use `type NodeId = usize` to denote different index
 types, but this leaves two big things to be desired:
 
   1. Type Safety: Type aliases are not unique types.
@@ -135,11 +135,10 @@ Using newtypes for the indices and adding them as generic parameters to
 the container types elegantly solves both of these issues.
 
 ### Why not use [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
-We believe that good support for newtype indices requires offering
-all the (array-based) collections in one place.
-Sometimes the same index type is
-used for multiple datastructures. Sometimes you want to switch from
-a `Vec` to a `VecDeque`.
+First class newtype index support requires offering all the array based
+collections in one place, using the same `Idx` trait.
+Sometimes the same index type is used for multiple data structures.
+Sometimes you want to switch from a `Vec` to a `VecDeque`.
 
 Unlike `index_vec`, we don't implicitly implement `Add<usize> for Idx`,
 which partly breaks the type safety that's the whole point of this.
@@ -150,7 +149,7 @@ is also much nicer to use than `index_vec`'s
 [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
 
 ### Is there a runtime cost to this?
-There is very litle runtime overhead compared to using the
+There is very little runtime overhead compared to using the
 underlying containers directly.
 The core index wrapper functions are marked `#[inline(always)]`,
 so the compiler can reliably eliminate them, even in debug mode.
