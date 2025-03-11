@@ -14,7 +14,7 @@ package.keywords = ["index", "collection", "container", "vec", "slice"]
 
 [workspace.dependencies]
 indexland = { version = "=0.2.1", path = ".", default-features = false }
-indexland_derive = { version = "=0.2.1", path = "indexland_derive", default-features = false }
+indexland_derive = { version = "=0.2.1", path = "./derive", default-features = false }
 
 
 [package]
