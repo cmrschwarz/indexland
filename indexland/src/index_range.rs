@@ -29,7 +29,7 @@
 //! ## Fix using [`IndexRangeBounds`]:
 //! ```
 //! // `.index_range()` is provided by `IndexRangeBounds`
-//! use indexland::{Idx, IndexVec, IndexRangeBounds};
+//! use indexland::{Idx, IndexRangeBounds, IndexVec};
 //!
 //! #[derive(Idx)]
 //! struct MyId(u32);

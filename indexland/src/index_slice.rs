@@ -85,7 +85,6 @@ impl<I: Idx, T> IndexSlice<I, T> {
     /// for (i, &v) in myvec.iter_enumerated_range(MyId(1)..MyId(3)) {
     ///     println!("myvec[i] = {v}");
     /// }
-    ///
     /// ```
     /// If you actualy want to start at zero, simply pass [`Idx::ZERO`]
     /// as the initial offset.

@@ -642,7 +642,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "NonMaxOutOfRangeError")]
     fn nonmax_oob() {
         NonMax::<u8>::from_usize(255);
     }
@@ -661,7 +661,13 @@ mod test {
             (@impl, $from: ty, ($($to: ty),*)) => {
                 let from_s = stringify!($from);
 
-                #[allow(irrefutable_let_patterns)]
+                #[allow(
+                    irrefutable_let_patterns,
+                    clippy::cast_possible_truncation,
+                    clippy::cast_sign_loss,
+                    clippy::cast_lossless,
+                    clippy::cast_possible_wrap
+                )]
                 for v in [ 0, 1, -1i128 as $from, $(<$to>::MAX as $from),*, $((<$to>::MAX - 1) as $from),* ] {
                     $(
                         let to_s = stringify!($to);
