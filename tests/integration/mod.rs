@@ -1,5 +1,5 @@
-#[cfg(feature = "std")]
-mod std;
+#[cfg(all(feature = "std", feature = "derive"))]
+mod std_derive;
 
 #[cfg(feature = "derive")]
 mod no_std;

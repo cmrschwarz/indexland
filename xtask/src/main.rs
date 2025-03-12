@@ -33,20 +33,37 @@ static FEATURE_SETS: &[FeatureSet] = &[
         features: &[],
     },
     FeatureSet {
-        name: "no std, no alloc, arrayvec",
-        features: &["arrayvec"],
+        name: "no std, no alloc, derive",
+        features: &["derive"],
     },
     FeatureSet {
-        name: "no std, alloc",
-        features: &["alloc"],
+        name: "no std, no alloc, nonmax, derive",
+        features: &["nonmax", "derive"],
     },
     FeatureSet {
-        name: "nostd, alloc, indexmap, arrayvec",
-        features: &["alloc", "indexmap", "arrayvec"],
+        name: "no std, no alloc, arrayvec, derive",
+        features: &["arrayvec", "derive"],
     },
     FeatureSet {
-        name: "full",
-        features: &["alloc", "indexmap", "arrayvec"],
+        name: "no std, alloc, derive",
+        features: &["alloc", "derive"],
+    },
+    // smallvec requires std so it's not in here
+    FeatureSet {
+        name: "no std, alloc, indexmap, arrayvec, derive",
+        features: &["alloc", "indexmap", "arrayvec", "derive"],
+    },
+    FeatureSet {
+        name: "std",
+        features: &["std"],
+    },
+    FeatureSet {
+        name: "std, nonmax, derive",
+        features: &["std", "nonmax", "derive"],
+    },
+    FeatureSet {
+        name: "std, indexmap, arrayvec, smallvec",
+        features: &["alloc", "indexmap", "arrayvec", "smallvec"],
     },
 ];
 
@@ -178,7 +195,7 @@ fn main() {
         run_cargo_nightly(["docs-rs", "-p=indexland"]);
 
         println!("\n📝 docs-rs for indexland 📝");
-        run_cargo_nightly(["docs-rs", "-p=indexland"]);
+        run_cargo_nightly(["docs-rs", "-p=indexland_derive"]);
     }
 
     if args.test {
