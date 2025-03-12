@@ -16,7 +16,7 @@ use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 /// The index type cannot be inferred from the macro so you
 /// might have to add type annotations.
 ///
-/// ## Example
+/// # Example
 /// ```
 /// use indexland::{index_vec, IndexVec};
 ///

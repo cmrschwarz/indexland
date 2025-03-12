@@ -21,7 +21,7 @@ pub struct IndexArray<I, T, const LEN: usize> {
 ///
 /// Use [`IndexArray`] instead for Arrays that don't have exactly `COUNT` elements.
 ///
-/// ### Example:
+/// # Example:
 /// ```
 /// # #![cfg(feature="derive")]
 /// # use indexland::{Idx, index_array::{IndexArray, EnumIndexArray}};
@@ -38,7 +38,7 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 /// Create a [`IndexArray`] containing the arguments.
 ///
 /// If the inputs are constant this creates a compile time constant array.
-/// ### Examples:
+/// # Examples:
 /// ```
 /// # #![cfg(feature="derive")]
 /// use indexland::{index_array, Idx, IdxEnum, IndexArray};
@@ -94,7 +94,7 @@ macro_rules! index_array {
 ///
 /// If the inputs are constant this creates a compile time constant array.
 /// This is an alias for [`index_array!`]
-/// ### Examples:
+/// # Examples:
 /// ```
 /// use indexland::{enum_index_array, EnumIndexArray, IdxEnum};
 ///

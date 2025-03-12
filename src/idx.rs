@@ -198,7 +198,7 @@ primitive_idx_implemenation_sized![isize, i8, i16, i32, i64];
 /// Allows generating multiple indices at once and does not require
 /// proc-macros.
 ///
-/// ### Example
+/// # Example
 /// ```rust
 /// # use indexland::idx_newtype;
 /// idx_newtype! {

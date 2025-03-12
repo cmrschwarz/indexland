@@ -118,7 +118,7 @@ fn usize_arith() {
 
     let mut idx = FooId(12);
 
-    idx += 1 as usize;
+    idx += 1usize;
 
     assert_eq!(idx.into_usize(), 13);
 }

@@ -16,7 +16,7 @@ use smallvec::SmallVec;
 /// The index type and capacity cannot be inferred from the macro so you
 /// might have to add type annotations.
 ///
-/// ## Example
+/// # Example
 /// ```
 /// use indexland::{index_small_vec, IndexSmallVec};
 ///

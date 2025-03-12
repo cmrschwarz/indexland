@@ -15,7 +15,7 @@ use syn::{Data, DeriveInput};
 /// Derives `IdxNewtype` and associated traits.
 /// See [`#[derive[Idx]]`](crate::Idx) the attributes explanation.
 ///
-/// ## Implemented Traits
+/// # Implemented Traits
 /// - [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
 /// - [`indexland::IdxNewtype`](https://docs.rs/indexland/latest/indexland/trait.IdxNewtype.html)
 /// - [`Default`](core::default::Default)
@@ -35,7 +35,14 @@ use syn::{Data, DeriveInput};
 /// - [`From<usize>`](core::convert::From) +
 ///   [`From<Self> for usize`](core::convert::From)
 ///
-/// ## Example
+/// # Opt-in Extra Traits ([`#[indexland(extra(..))]`](Idx#indexlandextra))
+/// - [`Add<usize>`](core::ops::Add),
+/// - [`Sub<usize>`](core::ops::Sub)
+/// - [`AddAssign<usize>`](core::ops::AddAssign)
+/// - [`SubAssign<usize>`](core::ops::SubAssign)
+/// - [`Display`](core::fmt::Display)
+///
+/// # Example
 /// ```
 /// use indexland::IdxNewtype;
 ///
@@ -70,7 +77,7 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 /// - [`indexland::IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html)
 /// - [`Default`](core::default::Default) (uses first variant)
 /// - [`Debug`](core::fmt::Debug)
-///   (enable [`Display`](core::fmt::Display) through `#[indexland(extra(Display))]`)
+///   (no [`Display`](core::fmt::Display) by default, enable through [`#[indexland(extra(Display))]`](Idx#indexlandextra))
 /// - [`Clone`](core::clone::Clone) +
 ///   [`Copy`](core::marker::Copy)
 /// - [`PartialOrd`](core::clone::Clone) +
@@ -86,7 +93,14 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 ///   [`From<Self> for usize`](core::convert::From)
 ///
 ///
-/// ## Example
+/// # Opt-in Extra Traits ([`#[indexland(extra(..))]`](Idx#indexlandextra))
+/// - [`Add<usize>`](core::ops::Add),
+/// - [`Sub<usize>`](core::ops::Sub)
+/// - [`AddAssign<usize>`](core::ops::AddAssign)
+/// - [`SubAssign<usize>`](core::ops::SubAssign)
+/// - [`Display`](core::fmt::Display)
+///
+/// # Example
 /// ```
 /// use indexland::IdxEnum;
 ///
@@ -109,7 +123,7 @@ pub fn derive_idx_enum(
 /// For structs this is equivalent to [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
 /// for enums to [`#[derive(IdxEnum)]`](crate::IdxEnum).
 ///
-/// ## Basic Usage
+/// # Basic Usage
 /// ```
 /// use indexland::Idx;
 ///
@@ -124,7 +138,7 @@ pub fn derive_idx_enum(
 /// };
 /// ```
 ///
-/// ## Attributes
+/// # Attributes
 ///
 /// #### `#[indexland(crate = ..)]`
 /// Change the crate name used within the derive macro. The default value is `::indexland`.
@@ -150,27 +164,34 @@ pub fn derive_idx_enum(
 /// #### `#[indexland(only(..))]`
 /// Suppress the derivation of all traits except the specified ones (whitelist).
 ///
-/// ## Attributes Example
+/// # Attributes Examples
+///
 /// ```
-/// use indexland as foobar;
+/// use indexland::Idx;
 ///
-/// use foobar::Idx;
-///
-/// #[derive(Idx, Debug)]
-/// #[indexland(crate = foobar, disable_bounds_checks)]
-/// #[indexland(omit(Debug, From<Self> for usize))]
-/// struct Foo(u32);
-///
-/// #[derive(Idx)]
-/// #[indexland(crate = foobar)]
-/// #[indexland(extra(Display))]
+/// #[derive(Idx, Default)]
+/// #[indexland(omit(Default, From<Self> for usize), extra(Display))]
 /// enum Bar {
 ///     A,
 ///     B,
+///     // using omit(Default) + derive(Default) allows us to change the default
+///     // to an element other than the first.
+///     #[default]
 ///     C,
 /// };
 ///
 /// println!("{}", Bar::A);
+/// ```
+///
+/// ```
+/// use indexland as foobar;
+/// # // prevent rustfmt from reordering these two lines ...
+/// use foobar::Idx;
+///
+/// #[derive(Idx)]
+/// #[indexland(crate = foobar)] // serde style crate renaming
+/// #[indexland(disable_bounds_checks)] // perf: make the `u32` implicitly wrap
+/// struct Foo(u32);
 /// ```
 #[proc_macro_derive(Idx, attributes(indexland))]
 pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

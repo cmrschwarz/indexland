@@ -20,7 +20,7 @@ use std::hash::RandomState;
 /// The index type cannot be inferred from the macro so you
 /// might have to add type annotations.
 ///
-/// ## Example
+/// # Example
 /// ```
 /// use indexland::{index_hash_set, IndexHashSet};
 /// let set: IndexHashSet<u32, _> = index_hash_set! {

@@ -18,7 +18,7 @@ use super::{idx::Idx, index_range::IndexRange};
 /// The index type cannot be inferred from the macro so you
 /// might have to add type annotations.
 ///
-/// ## Example
+/// # Example
 /// ```
 /// use indexland::{index_hash_map, IndexHashMap};
 /// let map: IndexHashMap<u32, _, _> = index_hash_map! {
