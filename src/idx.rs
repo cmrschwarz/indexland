@@ -50,6 +50,18 @@ pub trait Idx:
                 % Self::MAX.into_usize(),
         )
     }
+    fn saturating_add(self, other: Self) -> Self {
+        Self::from_usize(
+            self.into_usize()
+                .saturating_add(other.into_usize())
+                .min(Self::MAX.into_usize()),
+        )
+    }
+    fn saturating_sub(self, other: Self) -> Self {
+        Self::from_usize(
+            self.into_usize().saturating_add(other.into_usize()).max(0),
+        )
+    }
     fn range_to(&self, end: Self) -> IndexRange<Self> {
         IndexRange::new(*self..end)
     }

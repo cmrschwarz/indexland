@@ -209,16 +209,16 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     ) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>> {
         IndexEnumerate::new(I::ZERO, &mut self.data)
     }
-    pub fn iter_enumerated_range(
+    pub fn iter_enumerated_range<R: IndexRangeBounds<I>>(
         &self,
-        range: impl IndexRangeBounds<I>,
+        range: R,
     ) -> IndexEnumerate<I, indexmap::map::Iter<K, V>> {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &self.data[range])
     }
-    pub fn iter_enumerated_range_mut(
+    pub fn iter_enumerated_range_mut<R: IndexRangeBounds<I>>(
         &mut self,
-        range: impl IndexRangeBounds<I>,
+        range: R,
     ) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>> {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])

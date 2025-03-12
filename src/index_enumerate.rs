@@ -1,12 +1,15 @@
 use crate::Idx;
 
-pub struct IndexEnumerate<I, IT> {
+pub struct IndexEnumerate<I, BaseIter> {
     pos: I,
-    base_iter: IT,
+    base_iter: BaseIter,
 }
 
-impl<I: Idx, IT: Iterator> IndexEnumerate<I, IT> {
-    pub fn new(pos: I, base_iter: impl IntoIterator<IntoIter = IT>) -> Self {
+impl<I: Idx, BaseIter: Iterator> IndexEnumerate<I, BaseIter> {
+    pub fn new<IntoBaseIter: IntoIterator<IntoIter = BaseIter>>(
+        pos: I,
+        base_iter: IntoBaseIter,
+    ) -> Self {
         Self {
             pos,
             base_iter: base_iter.into_iter(),

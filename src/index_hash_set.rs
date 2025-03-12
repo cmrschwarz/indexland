@@ -2,13 +2,19 @@ use super::{idx::Idx, index_range::IndexRange};
 use crate::{index_enumerate::IndexEnumerate, IndexRangeBounds};
 use alloc::boxed::Box;
 use core::{
+    cmp::Ordering,
     fmt::Debug,
     hash::{BuildHasher, Hash},
     marker::PhantomData,
     ops::Index,
 };
 
-use indexmap::{set::Slice, Equivalent, IndexSet};
+use indexmap::{
+    set::{
+        Difference, Intersection, Slice, Splice, SymmetricDifference, Union,
+    },
+    Equivalent, IndexSet, TryReserveError,
+};
 
 #[cfg(feature = "std")]
 use std::hash::RandomState;
@@ -49,27 +55,27 @@ pub struct IndexHashSet<I, T, S> {
     _phantom: PhantomData<fn(I) -> T>,
 }
 
-pub struct IndexHashSetSlice<I, T> {
+pub struct IndexSlice<I, T> {
     _phantom: PhantomData<fn(I) -> T>,
     #[allow(unused)]
     data: Slice<T>,
 }
 
-impl<I, T> IndexHashSetSlice<I, T> {
+impl<I, T> IndexSlice<I, T> {
     #[inline]
-    pub fn from_index_map_slice(s: &Slice<T>) -> &Self {
+    pub fn from_slice(s: &Slice<T>) -> &Self {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline]
-    pub fn from_index_map_slice_mut(s: &mut Slice<T>) -> &mut Self {
+    pub fn from_slice_mut(s: &mut Slice<T>) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[inline]
-    pub fn into_index_map_slice(s: &Self) -> &Slice<T> {
+    pub fn into_slice(s: &Self) -> &Slice<T> {
         unsafe { &*(core::ptr::from_ref(s) as *const Slice<T>) }
     }
     #[inline]
-    pub fn into_index_map_slice_mut(s: &mut Self) -> &mut Slice<T> {
+    pub fn into_slice_mut(s: &mut Self) -> &mut Slice<T> {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Slice<T>) }
     }
     pub fn from_boxed_slice(slice_box: Box<Slice<T>>) -> Box<Self> {
@@ -80,24 +86,24 @@ impl<I, T> IndexHashSetSlice<I, T> {
     }
 }
 
-impl<'a, I, T> From<&'a Slice<T>> for &'a IndexHashSetSlice<I, T> {
+impl<'a, I, T> From<&'a Slice<T>> for &'a IndexSlice<I, T> {
     fn from(data: &'a Slice<T>) -> Self {
-        IndexHashSetSlice::from_index_map_slice(data)
+        IndexSlice::from_slice(data)
     }
 }
-impl<'a, I, T> From<&'a IndexHashSetSlice<I, T>> for &'a Slice<T> {
-    fn from(data: &'a IndexHashSetSlice<I, T>) -> Self {
-        IndexHashSetSlice::into_index_map_slice(data)
+impl<'a, I, T> From<&'a IndexSlice<I, T>> for &'a Slice<T> {
+    fn from(data: &'a IndexSlice<I, T>) -> Self {
+        IndexSlice::into_slice(data)
     }
 }
-impl<'a, I, T> From<&'a mut Slice<T>> for &'a mut IndexHashSetSlice<I, T> {
+impl<'a, I, T> From<&'a mut Slice<T>> for &'a mut IndexSlice<I, T> {
     fn from(data: &'a mut Slice<T>) -> Self {
-        IndexHashSetSlice::from_index_map_slice_mut(data)
+        IndexSlice::from_slice_mut(data)
     }
 }
-impl<'a, I, T> From<&'a mut IndexHashSetSlice<I, T>> for &'a mut Slice<T> {
-    fn from(data: &'a mut IndexHashSetSlice<I, T>) -> Self {
-        IndexHashSetSlice::into_index_map_slice_mut(data)
+impl<'a, I, T> From<&'a mut IndexSlice<I, T>> for &'a mut Slice<T> {
+    fn from(data: &'a mut IndexSlice<I, T>) -> Self {
+        IndexSlice::into_slice_mut(data)
     }
 }
 
@@ -143,9 +149,9 @@ impl<I: Idx, T: Debug, S> Debug for IndexHashSet<I, T, S> {
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl<I, T> IndexHashSet<I, T> {
-    /// This is not const because the default [`RandomState`] used for the hasher
-    /// might get random bits from the OS.
-    /// Look at [`IndexHashSet::with_hasher`] for a const constructor for this.
+    /// This is not `const` because the default [`RandomState`] used for the
+    /// hasher might need to get random bits from the OS.
+    /// You can use [`IndexHashSet::with_hasher`] as a const constructor.
     pub fn new() -> Self {
         Self {
             data: IndexSet::new(),
@@ -160,33 +166,27 @@ impl<I, T> IndexHashSet<I, T> {
     }
 }
 
-impl<I: Idx, T: Hash + Eq, S: BuildHasher> IndexHashSet<I, T, S> {
-    pub const fn with_hasher(hash_builder: S) -> Self {
-        Self {
-            data: IndexSet::with_hasher(hash_builder),
-            _phantom: PhantomData,
-        }
-    }
+impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     pub fn with_capacity_and_hasher(cap: usize, hasher: S) -> Self {
         Self {
             data: IndexSet::with_capacity_and_hasher(cap, hasher),
             _phantom: PhantomData,
         }
     }
-    pub fn reserve(&mut self, additional: I) {
-        self.data.reserve(additional.into_usize());
+    pub const fn with_hasher(hash_builder: S) -> Self {
+        Self {
+            data: IndexSet::with_hasher(hash_builder),
+            _phantom: PhantomData,
+        }
     }
-    pub fn reserve_len(&mut self, additional: usize) {
-        self.data.reserve(additional);
+    pub fn capacity(&mut self) -> usize {
+        self.data.capacity()
     }
-    pub fn insert(&mut self, value: T) -> bool {
-        self.data.insert(value)
+    pub fn capacity_idx(&mut self) -> I {
+        I::from_usize(self.data.capacity())
     }
-    pub fn clear(&mut self) {
-        self.data.clear();
-    }
-    pub fn is_empty(&self) -> bool {
-        self.data.is_empty()
+    pub fn hasher(&self) -> &S {
+        self.data.hasher()
     }
     pub fn len(&self) -> usize {
         self.data.len()
@@ -194,35 +194,23 @@ impl<I: Idx, T: Hash + Eq, S: BuildHasher> IndexHashSet<I, T, S> {
     pub fn len_idx(&self) -> I {
         I::from_usize(self.data.len())
     }
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
     pub fn last_idx(&self) -> Option<I> {
         self.len().checked_sub(1).map(I::from_usize)
     }
-    pub fn truncate(&mut self, end: I) {
-        self.data.truncate(end.into_usize());
-    }
-    pub fn truncate_len(&mut self, len: usize) {
-        self.data.truncate(len);
-    }
-    pub fn swap_remove<Q: ?Sized + Hash + Equivalent<T>>(
-        &mut self,
-        key: &T,
-    ) -> bool {
-        self.data.swap_remove(key)
-    }
-    pub fn as_index_set(&self) -> &IndexSet<T, S> {
-        &self.data
-    }
-    pub fn as_index_set_mut(&mut self) -> &mut IndexSet<T, S> {
-        &mut self.data
+    pub fn iter(&self) -> indexmap::set::Iter<T> {
+        self.data.iter()
     }
     pub fn iter_enumerated(
         &self,
     ) -> IndexEnumerate<I, indexmap::set::Iter<T>> {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
-    pub fn iter_enumerated_range(
+    pub fn iter_enumerated_range<R: IndexRangeBounds<I>>(
         &self,
-        range: impl IndexRangeBounds<I>,
+        range: R,
     ) -> IndexEnumerate<I, indexmap::set::Iter<T>> {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &self.data[range])
@@ -232,16 +220,506 @@ impl<I: Idx, T: Hash + Eq, S: BuildHasher> IndexHashSet<I, T, S> {
     ) -> IndexEnumerate<I, indexmap::set::IntoIter<T>> {
         IndexEnumerate::new(I::ZERO, self.data)
     }
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
+    pub fn truncate(&mut self, end: I) {
+        self.data.truncate(end.into_usize());
+    }
+    pub fn truncate_len(&mut self, len: usize) {
+        self.data.truncate(len);
+    }
+    pub fn drain<R: IndexRangeBounds<I>>(
+        &mut self,
+        range: R,
+    ) -> indexmap::set::Drain<T> {
+        self.data.drain(range.canonicalize(self.len()))
+    }
+    pub fn drain_enumerated<R: IndexRangeBounds<I>>(
+        &mut self,
+        range: R,
+    ) -> IndexEnumerate<I, indexmap::set::Drain<T>> {
+        let start = match range.start_bound() {
+            core::ops::Bound::Included(s) => *s,
+            core::ops::Bound::Excluded(e) => e.saturating_add(I::ONE),
+            core::ops::Bound::Unbounded => I::ZERO,
+        };
+        IndexEnumerate::new(start, self.drain(range))
+    }
+    pub fn split_off(&mut self, at: I) -> Self
+    where
+        S: Clone,
+    {
+        Self::from(self.data.split_off(at.into_usize()))
+    }
+    pub fn reserve(&mut self, additional: usize) {
+        self.data.reserve(additional);
+    }
+    pub fn reserve_total(&mut self, capacity_idx_min: I) {
+        self.data.reserve(capacity_idx_min.into_usize());
+    }
+    pub fn reserve_exact(&mut self, additional: usize) {
+        self.data.reserve_exact(additional.into_usize());
+    }
+    pub fn reserve_exact_total(&mut self, capacity_idx: I) {
+        self.data.reserve_exact(capacity_idx.into_usize());
+    }
+    pub fn try_reserve(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), TryReserveError> {
+        self.data.try_reserve(additional)
+    }
+    pub fn try_reserve_total(
+        &mut self,
+        capacity_idx_min: I,
+    ) -> Result<(), TryReserveError> {
+        self.data.try_reserve(capacity_idx_min.into_usize())
+    }
+    pub fn try_reserve_exact(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), TryReserveError> {
+        self.data.try_reserve_exact(additional)
+    }
+    pub fn try_reserve_exact_total(
+        &mut self,
+        capacity_idx: I,
+    ) -> Result<(), TryReserveError> {
+        self.data.try_reserve_exact(capacity_idx.into_usize())
+    }
+    pub fn shrink_to_fit(&mut self) {
+        self.data.shrink_to_fit();
+    }
+    pub fn shrink_to(&mut self, min_cap_idx: I) {
+        self.data.shrink_to(min_cap_idx.into_usize());
+    }
+    pub fn shrink_to_len(&mut self, min_cap: usize) {
+        self.data.shrink_to(min_cap);
+    }
+    pub fn insert(&mut self, value: T) -> bool
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+    {
+        self.data.insert(value)
+    }
+    pub fn insert_full(&mut self, value: T) -> (I, bool)
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+    {
+        let (idx, newly_inserted) = self.data.insert_full(value);
+        (I::from_usize(idx), newly_inserted)
+    }
+    pub fn insert_sorted(&mut self, value: T) -> (I, bool)
+    where
+        T: Ord + Hash,
+        S: BuildHasher,
+    {
+        let (idx, newly_inserted) = self.data.insert_sorted(value);
+        (I::from_usize(idx), newly_inserted)
+    }
+    pub fn insert_before(&mut self, idx: I, value: T) -> (I, bool)
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+    {
+        let (idx, newly_inserted) =
+            self.data.insert_before(idx.into_usize(), value);
+        (I::from_usize(idx), newly_inserted)
+    }
+    pub fn shift_insert(&mut self, idx: I, value: T) -> (I, bool)
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+    {
+        let (idx, newly_inserted) =
+            self.data.insert_before(idx.into_usize(), value);
+        (I::from_usize(idx), newly_inserted)
+    }
+    pub fn replace(&mut self, value: T) -> Option<T>
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+    {
+        self.data.replace(value)
+    }
+    pub fn replace_full(&mut self, value: T) -> (I, Option<T>)
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+    {
+        let (idx, prev) = self.data.replace_full(value);
+        (I::from_usize(idx), prev)
+    }
+
+    /// NOTE: in case you need the `difference` of an `IndexHashSet`
+    /// with an `IndexSet` you can use `index_hash_set.as_index_set_mut().difference(index_set)`
+    pub fn difference<'a, I2, S2>(
+        &'a self,
+        other: &'a IndexHashSet<I2, T, S2>,
+    ) -> Difference<'a, T, S2>
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+        S2: BuildHasher,
+    {
+        self.data.difference(&other.data)
+    }
+
+    /// NOTE: in case you need the `symmetric_difference` of an `IndexHashSet`
+    /// with an `IndexSet` you can use `index_hash_set.as_index_set_mut().symmetric_difference(index_set)`
+    pub fn symmetric_difference<'a, I2, S2>(
+        &'a self,
+        other: &'a IndexHashSet<I2, T, S2>,
+    ) -> SymmetricDifference<'a, T, S, S2>
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+        S2: BuildHasher,
+    {
+        self.data.symmetric_difference(&other.data)
+    }
+
+    /// NOTE: in case you need to intersect an `IndexHashSet` with an `IndexSet`
+    /// you can use `index_hash_set.as_index_set_mut().intersection(index_set)`
+    pub fn intersection<'a, I2, S2>(
+        &'a self,
+        other: &'a IndexHashSet<I2, T, S2>,
+    ) -> Intersection<'a, T, S2>
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+        S2: BuildHasher,
+    {
+        self.data.intersection(&other.data)
+    }
+
+    /// NOTE: in case you need to `union` an `IndexHashSet` with an `IndexSet`
+    /// you can use `index_hash_set.as_index_set_mut().union(index_set)`
+    pub fn union<'a, I2, S2>(
+        &'a self,
+        other: &'a IndexHashSet<I2, T, S2>,
+    ) -> Union<'a, T, S>
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+        S2: BuildHasher,
+    {
+        self.data.union(&other.data)
+    }
+
+    pub fn splice<R: IndexRangeBounds<I>, II, S2>(
+        &mut self,
+        range: R,
+        replace_with: II,
+    ) -> Splice<II::IntoIter, T, S>
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+        S2: BuildHasher,
+        II: IntoIterator<Item = T>,
+    {
+        self.data
+            .splice(range.canonicalize(self.len()), replace_with)
+    }
+
+    /// NOTE: to `append` to an `IndexHashSet` with an `IndexSet`
+    /// you can use `index_hash_set.as_index_set_mut().append(index_set)`
+    pub fn append<I2, S2>(&mut self, other: &mut IndexHashSet<I2, T, S2>)
+    where
+        T: Hash + Eq,
+        S: BuildHasher,
+    {
+        self.data.append(&mut other.data);
+    }
+
+    pub fn contains<Q>(&self, value: &Q) -> bool
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data.contains(value)
+    }
+
+    pub fn get<Q>(&self, value: &Q) -> Option<&T>
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data.get(value)
+    }
+
+    pub fn get_full<Q>(&self, value: &Q) -> Option<(I, &T)>
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data
+            .get_full(value)
+            .map(|(i, v)| (I::from_usize(i), v))
+    }
+
+    pub fn get_index_of<Q>(&self, value: &Q) -> Option<I>
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data.get_index_of(value).map(I::from_usize)
+    }
+
+    pub fn swap_remove<Q>(&mut self, key: &Q) -> bool
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data.swap_remove(key)
+    }
+
+    pub fn shift_remove<Q>(&mut self, key: &Q) -> bool
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data.shift_remove(key)
+    }
+
+    pub fn swap_take<Q>(&mut self, value: &Q) -> Option<T>
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data.swap_take(value)
+    }
+
+    pub fn shift_take<Q>(&mut self, value: &Q) -> Option<T>
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data.shift_take(value)
+    }
+
+    pub fn swap_remove_full<Q>(&mut self, value: &Q) -> Option<(I, T)>
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data
+            .swap_remove_full(value)
+            .map(|(i, v)| (I::from_usize(i), v))
+    }
+
+    pub fn shift_remove_full<Q>(&mut self, value: &Q) -> Option<(I, T)>
+    where
+        S: BuildHasher,
+        Q: ?Sized + Hash + Equivalent<T>,
+    {
+        self.data
+            .shift_remove_full(value)
+            .map(|(i, v)| (I::from_usize(i), v))
+    }
+
+    pub fn pop(&mut self) -> Option<T> {
+        self.data.pop()
+    }
+
+    pub fn retain<F>(&mut self, keep: F)
+    where
+        F: FnMut(&T) -> bool,
+    {
+        self.data.retain(keep);
+    }
+
+    pub fn sort(&mut self)
+    where
+        T: Ord,
+    {
+        self.data.sort();
+    }
+
+    pub fn sort_by<F>(&mut self, cmp: F)
+    where
+        F: FnMut(&T, &T) -> Ordering,
+    {
+        self.data.sort_by(cmp);
+    }
+
+    pub fn sorted_by<F>(self, cmp: F) -> indexmap::set::IntoIter<T>
+    where
+        F: FnMut(&T, &T) -> Ordering,
+    {
+        self.data.sorted_by(cmp)
+    }
+
+    pub fn sort_unstable(&mut self)
+    where
+        T: Ord,
+    {
+        self.data.sort_unstable();
+    }
+
+    pub fn sort_unstable_by<F>(&mut self, cmp: F)
+    where
+        F: FnMut(&T, &T) -> Ordering,
+    {
+        self.data.sort_unstable_by(cmp);
+    }
+
+    pub fn sorted_unstable_by<F>(self, cmp: F) -> indexmap::set::IntoIter<T>
+    where
+        F: FnMut(&T, &T) -> Ordering,
+    {
+        self.data.sorted_unstable_by(cmp)
+    }
+
+    pub fn sort_by_cached_key<K, F>(&mut self, sort_key: F)
+    where
+        K: Ord,
+        F: FnMut(&T) -> K,
+    {
+        self.data.sort_by_cached_key(sort_key);
+    }
+
+    pub fn binary_search(&self, x: &T) -> Result<I, I>
+    where
+        T: Ord,
+    {
+        self.data
+            .binary_search(x)
+            .map(I::from_usize)
+            .map_err(I::from_usize)
+    }
+
+    pub fn binary_search_by<'a, F>(&'a self, f: F) -> Result<I, I>
+    where
+        F: FnMut(&'a T) -> Ordering,
+    {
+        self.data
+            .binary_search_by(f)
+            .map(I::from_usize)
+            .map_err(I::from_usize)
+    }
+
+    pub fn binary_search_by_key<'a, B, F>(
+        &'a self,
+        b: &B,
+        f: F,
+    ) -> Result<I, I>
+    where
+        F: FnMut(&'a T) -> B,
+        B: Ord,
+    {
+        self.data
+            .binary_search_by_key(b, f)
+            .map(I::from_usize)
+            .map_err(I::from_usize)
+    }
+
+    pub fn partition_point<P>(&self, pred: P) -> I
+    where
+        P: FnMut(&T) -> bool,
+    {
+        I::from_usize(self.data.partition_point(pred))
+    }
+
+    pub fn reverse(&mut self) {
+        self.data.reverse();
+    }
+
+    pub fn as_slice(&self) -> &Slice<T> {
+        self.data.as_slice()
+    }
+
+    pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
+        IndexSlice::from_slice(self.data.as_slice())
+    }
+
+    pub fn into_boxed_slice(self) -> Box<Slice<T>> {
+        self.data.into_boxed_slice()
+    }
+    pub fn into_boxed_index_slice(self) -> Box<IndexSlice<I, T>> {
+        IndexSlice::from_boxed_slice(self.data.into_boxed_slice())
+    }
+
+    pub fn get_index(&self, index: I) -> Option<&T> {
+        self.data.get_index(index.into_usize())
+    }
+
+    pub fn get_range<R>(&self, range: R) -> Option<&Slice<T>>
+    where
+        R: IndexRangeBounds<I>,
+    {
+        self.data.get_range(range.canonicalize(self.len()))
+    }
+
+    pub fn first(&self) -> Option<&T> {
+        self.data.first()
+    }
+
+    pub fn last(&self) -> Option<&T> {
+        self.data.last()
+    }
+
+    pub fn swap_remove_index(&mut self, index: I) -> Option<T> {
+        self.data.swap_remove_index(index.into_usize())
+    }
+
+    pub fn shift_remove_index(&mut self, index: usize) -> Option<T> {
+        self.data.swap_remove_index(index.into_usize())
+    }
+
+    pub fn swap_indices(&mut self, from: I, to: I) {
+        self.data.swap_indices(from.into_usize(), to.into_usize());
+    }
+
+    /// NOTE: to call `is_disjoint` on an `IndexHashSet` with an `IndexSet`
+    /// you can use `index_hash_set.as_index_set_mut().is_disjoint(index_set)`
+    pub fn is_disjoint<I2, S2>(&self, other: &IndexHashSet<I2, T, S2>) -> bool
+    where
+        T: Eq + Hash,
+        I2: Idx,
+        S: BuildHasher,
+        S2: BuildHasher,
+    {
+        self.data.is_disjoint(&other.data)
+    }
+
+    /// NOTE: to call `is_subset` on an `IndexHashSet` with an `IndexSet`
+    /// you can use `index_hash_set.as_index_set_mut().is_subset(index_set)`
+    pub fn is_subset<I2, S2>(&self, other: &IndexHashSet<I2, T, S2>) -> bool
+    where
+        T: Eq + Hash,
+        I2: Idx,
+        S: BuildHasher,
+        S2: BuildHasher,
+    {
+        self.data.is_subset(&other.data)
+    }
+
+    /// NOTE: to `is_superset` to an `IndexHashSet` with an `IndexSet`
+    /// you can use `index_hash_set.as_index_set_mut().is_superset(index_set)`
+    pub fn is_superset<I2, S2>(&self, other: &IndexHashSet<I2, T, S2>) -> bool
+    where
+        T: Eq + Hash,
+        I2: Idx,
+        S: BuildHasher,
+        S2: BuildHasher,
+    {
+        self.data.is_superset(&other.data)
+    }
+
+    pub fn as_index_set(&self) -> &IndexSet<T, S> {
+        &self.data
+    }
+    pub fn as_index_set_mut(&mut self) -> &mut IndexSet<T, S> {
+        &mut self.data
+    }
+
     pub fn indices(&self) -> IndexRange<I> {
         IndexRange::new(I::ZERO..self.len_idx())
     }
-    pub fn capacity(&self) -> usize {
-        self.data.capacity()
-    }
-    pub fn iter(&self) -> indexmap::set::Iter<T> {
-        self.data.iter()
-    }
-    // TODO: wrap more IndexSet stuff
 }
 
 impl<'a, Idx, T, S> Extend<&'a T> for IndexHashSet<Idx, T, S>
@@ -287,8 +765,6 @@ impl<I: Idx, T, S: BuildHasher> Index<I> for IndexHashSet<I, T, S> {
         self.data.index(idx.into_usize())
     }
 }
-
-// TODO: implement slicing shenanegans
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

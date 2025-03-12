@@ -163,18 +163,18 @@ impl<I: Idx, T, const LEN: usize> IndexArray<I, T, LEN> {
     ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
         IndexEnumerate::new(I::ZERO, &mut self.data)
     }
-    pub fn iter_enumerated_range(
+    pub fn iter_enumerated_range<R: IndexRangeBounds<I>>(
         &self,
-        range: impl IndexRangeBounds<I>,
+        range: R,
     ) -> IndexEnumerate<I, core::slice::Iter<T>> {
         IndexEnumerate::new(
             I::ZERO,
             &self.data[range.canonicalize(self.len())],
         )
     }
-    pub fn iter_enumerated_range_mut(
+    pub fn iter_enumerated_range_mut<R: IndexRangeBounds<I>>(
         &mut self,
-        range: impl IndexRangeBounds<I>,
+        range: R,
     ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
