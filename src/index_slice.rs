@@ -57,17 +57,14 @@ impl<I: Idx, T> IndexSlice<I, T> {
         unsafe { Box::from_raw(Box::into_raw(self) as *mut [T]) }
     }
 
-    // TODO: while this is good advice, this usecase needs some more love,
-    // maybe we should `iter_enumerated_range` to the containers
-
     /// The slice version of `iter_enumerated` takes an `initial_offset`
     /// parameter to avoid the following common mistake:
     /// ``` compile fail
-    /// # use indexland::{index_vec, Idx};
+    /// # use indexland::{index_vec, Idx, IndexVec};
     /// # #[derive(Idx)]
     /// # struct MyId(u32);
     /// #
-    /// # let myvec = index_vec![0, 1, 2, 3, 4, 5];
+    /// # let myvec = IndexVec::from_iter(0..10);
     ///
     /// // !!! BUG: `i` would start at zero !!!
     /// for (i, &v) in myvec[MyId(1)..MyId(3)].iter_enumerated() {
@@ -75,11 +72,11 @@ impl<I: Idx, T> IndexSlice<I, T> {
     /// }
     /// ```
     /// ```
-    /// # use indexland::{index_vec, Idx};
+    /// # use indexland::{index_vec, Idx, IndexVec};
     /// # #[derive(Idx)]
     /// # struct MyId(u32);
     /// #
-    /// # let myvec = index_vec![0, 1, 2, 3, 4, 5];
+    /// # let myvec = IndexVec::from_iter(0..10);
     /// // instead, use the following code:
     /// for (i, &v) in myvec.iter_enumerated_range(MyId(1)..MyId(3)) {
     ///     println!("myvec[i] = {v}");
@@ -93,6 +90,9 @@ impl<I: Idx, T> IndexSlice<I, T> {
     ) -> IndexEnumerate<I, core::slice::Iter<T>> {
         IndexEnumerate::new(initial_offset, &self.data)
     }
+
+    /// See [`iter_enumerated`](IndexSlice::iter_enumerated) for why this api
+    /// deviates by having an `initial_offset`.
     pub fn iter_enumerated_mut(
         &mut self,
         initial_offset: I,

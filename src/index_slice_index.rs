@@ -127,12 +127,13 @@ unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>>
     }
 }
 
+// NOTE: We could theoretically return a &[T] here instead for cases where
+// the offset does not start from zero to prevent the user from accidentally
+// messing up their index space. This is probably more confusing and
+// inconsistent than useful though. Probably.
 macro_rules! index_slice_partial_range_impl {
-    ($($range: path),*) => {
-        $(
-            unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>>
-            for $range
-        {
+    ($($range: path),*) => {$(
+        unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for $range {
             type Output = IndexSlice<I, T>;
             #[inline]
             fn get(self, slice: &IndexSlice<I, T>) -> Option<&IndexSlice<I, T>> {
@@ -190,9 +191,7 @@ macro_rules! index_slice_partial_range_impl {
                 IndexSlice::from_slice_mut(&mut slice.as_slice_mut()[range])
             }
         }
-
-        )*
-    };
+    )*};
 }
 
 index_slice_partial_range_impl![
