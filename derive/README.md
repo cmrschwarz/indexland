@@ -20,4 +20,4 @@ enum PrimaryColor {
 ```
 
 ## License
-[MIT](../../LICENSE)
+Licensed under the terms of either the [Apache License Version 2.0](../LICENSE-APACHE), or the [MIT License](../LICENSE-MIT) at your option.

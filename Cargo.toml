@@ -4,7 +4,7 @@ resolver = "2"
 # remember to update dependency version on indexland_derive below aswell
 package.version = "0.2.1"
 
-package.license = "MIT"
+package.license = "MIT OR Apache-2.0"
 package.authors = ["Christian Schwarz <cmrs@cmrs.io>"]
 package.repository = "https://github.com/cmrschwarz/indexland"
 package.edition = "2021"
