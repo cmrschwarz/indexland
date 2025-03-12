@@ -107,7 +107,6 @@ let message = STATUS_MESSAGE[Status::Running];
 Using indices into collections instead of references or
 smart pointers is an incredibly powerful idiom popularized by
 [Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design).
-
 Many places make use this pattern, including
 [the Rust Compiler itself](https://github.com/rust-lang/rust/blob/2b285cd5f0877e30ad1d83e04f8cc46254e43391/compiler/rustc_index/src/vec.rs#L40).
 

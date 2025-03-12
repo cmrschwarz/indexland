@@ -1,22 +1,25 @@
 use indexland::{Idx, IndexSlice, IndexVec, NonMax};
 
-/// Using [`NonMax<u32>`] ensures that [`Option<NodeId>`] is 4 bytes instead of
+/// NOTE: Using [`NonMax<u32>`] ensures that [`Option<NodeId>`] is 4 bytes instead of
 /// 8, which is a big perf improvement for this usecase.
 #[derive(Idx)]
 pub struct NodeId(NonMax<u32>);
 
-/// This is a very standard linked list implemenation using a growing
+/// This is a very standard doubly linked list implemenation using a growing
 /// array as the underlying data structure.
+///
 /// Nothing special really, but it demonstrates the use of [`IndexVec`] and
-/// [`IndexSlice`].
+/// [`IndexSlice`] to easily achieve a pattern that's typically considered
+/// challenging to do in stable rust due to the borrow checker.
 ///
-/// The implementation details aren't inportant, I don't want to waste
-/// your time studying them.
-///
-/// This is just a random usecase example that's meant for you to see and
-/// enjoy some of the neat indexland helpers (highlighted by // NOTE)s.
+/// Please don't spend your time looking at the implementation details
+/// here, and instead focus on the indexland goodies annotated with `// NOTE` s.
 #[derive(Default, Clone, Debug)]
 pub struct LinkedList<T> {
+    // NOTE: immediately tells the reader much more than just `Vec<Node<T>>`.
+    // While it may have been pretty obvious what the intention was
+    // in this simple case, the explicit NodeId
+    // eliminates any doubt and lets the reader move on confidently.
     nodes: IndexVec<NodeId, Node<T>>,
     head: Option<NodeId>,
     tail: Option<NodeId>,
@@ -33,6 +36,7 @@ impl<T> LinkedList<T> {
     pub const fn new() -> Self {
         Self {
             // NOTE: all indexland containers have zero alloc const new!
+            // (caveat on HashMap explained in the doc.)
             nodes: IndexVec::new(),
             head: None,
             tail: None,
@@ -61,7 +65,7 @@ impl<T> LinkedList<T> {
     }
 
     /// O(1) remove, one of the few reasons anybody would ever want to use a
-    /// linked list in the first place (as anything but an example).
+    /// linked list in the first place.
     pub fn remove(&mut self, idx: NodeId) -> T {
         // NOTE: index based swap remove, otherwise same api we all know and love.
         let node = self.nodes.swap_remove(idx);
@@ -80,7 +84,7 @@ impl<T> LinkedList<T> {
         // If the removed node wasn't the last one
         // update the moved node's adjacent nodes
 
-        // NOTE: `len_idx` is a nice convenience helper.
+        // NOTE: `len_idx` is a very common and useful convenience helper.
         // It returns the index that a node after the last (index `len()`)
         // would have.
         if idx < self.nodes.len_idx() {
@@ -142,9 +146,9 @@ impl<'a, T> Iterator for Iter<'a, T> {
 fn main() {
     let mut list = LinkedList::new();
     list.push_back(1);
-    let second_id = list.push_back(2);
+    let second_id = list.push_back(42);
+    list.push_back(2);
     list.push_back(3);
-    list.push_back(4);
 
     list.remove(second_id);
 
