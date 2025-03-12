@@ -113,8 +113,8 @@ macro_rules! index_array {
 /// ```
 #[macro_export]
 macro_rules! enum_index_array {
-    ($($anything: tt)+) => {
-        $crate::index_array![$($anything)+]
+    ($($anything: tt)*) => {
+        $crate::index_array![$($anything)*]
     };
 }
 

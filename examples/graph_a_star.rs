@@ -1,11 +1,13 @@
-use indexland::{Idx, IndexSlice, IndexVec};
+use indexland::{index_vec, Idx, IndexSlice, IndexVec, NonMax};
 use std::{cmp::Ordering, collections::BinaryHeap};
 
 #[derive(Idx)]
 pub struct NodeId(u32);
 
+/// NOTE: Using [`NonMax<u32>`] ensures that [`Option<EdgeId>`] is
+/// 4 bytes instead of 8, which saves some space in the A* `came_from` table.
 #[derive(Idx)]
-pub struct EdgeId(u32);
+pub struct EdgeId(NonMax<u32>);
 
 /// A very basic A* graph example.
 /// If you think that this looks mostly like it would
@@ -50,16 +52,16 @@ pub struct Edge {
     cost: i32,
 }
 
-// A* specific structures
+// A* Node metadata
 #[derive(PartialEq, Eq)]
-struct State {
+struct NodeInfo {
     node: NodeId,
     cost: i32,
     distance_to_goal_estimate: i32,
 }
 
 // Custom ordering for our priority queue
-impl Ord for State {
+impl Ord for NodeInfo {
     fn cmp(&self, other: &Self) -> Ordering {
         (other.cost + other.distance_to_goal_estimate)
             .cmp(&(self.cost + self.distance_to_goal_estimate))
@@ -71,7 +73,7 @@ impl Ord for State {
     }
 }
 
-impl PartialOrd for State {
+impl PartialOrd for NodeInfo {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -105,6 +107,9 @@ impl Graph {
 
     // This is based on a directed graph, but for simplicity of the
     // example we just add all edges both ways
+    // NOTE: newtype indices make sure we can never accidentally pass
+    // other types like and `EdgeId` here and can often lead to other helful
+    // errors e.g. when when refactoring parameter order.
     pub fn add_bidi_edge(&mut self, from: NodeId, to: NodeId, cost: i32) {
         let edge_id_fwd = self.edges.push_get_id(Edge { from, to, cost });
         self.nodes[from].edges.push(edge_id_fwd);
@@ -131,12 +136,14 @@ impl Graph {
         goal: NodeId,
     ) -> Option<Vec<(NodeId, EdgeId)>> {
         let mut open_set = BinaryHeap::new();
-        let mut came_from = IndexVec::<NodeId, Option<EdgeId>>::new();
-        let mut g_score = IndexVec::<NodeId, i32>::new();
+        // NOTE: again, `IndexVec`s make this code much more self explanatory
+        let mut came_from: IndexVec<NodeId, Option<EdgeId>> = index_vec![];
+        let mut g_score: IndexVec<NodeId, i32> = index_vec![];
 
         // NOTE: `indices` is another convenience helper that iterates over the
         // typed indices of a container.
-        // (Though in this case we could have just used 0..nodes.len() instead).
+        // (Usage here is a bit contrived,
+        // we could have also used `0..self.nodes.len()` or even `&self.nodes`).
         for _ in self.nodes.indices() {
             came_from.push(None);
             // Initialize best found route score with "infinity"
@@ -144,7 +151,7 @@ impl Graph {
         }
 
         g_score[start] = 0;
-        open_set.push(State {
+        open_set.push(NodeInfo {
             node: start,
             cost: 0,
             distance_to_goal_estimate: self.heuristic(start, goal),
@@ -163,7 +170,7 @@ impl Graph {
                 if tentative_g_score < g_score[neighbor] {
                     came_from[neighbor] = Some(edge_id);
                     g_score[neighbor] = tentative_g_score;
-                    open_set.push(State {
+                    open_set.push(NodeInfo {
                         node: neighbor,
                         cost: tentative_g_score,
                         distance_to_goal_estimate: self

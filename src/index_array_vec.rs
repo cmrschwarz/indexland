@@ -17,8 +17,8 @@ use super::{idx::Idx, index_slice::IndexSlice};
 /// The syntax is identical to [`index_array!`](crate::index_array!).
 #[macro_export]
 macro_rules! index_array_vec {
-    ($($anything: tt)+) => {
-        $crate::IndexArrayVec::from(index_array![$($anything)+])
+    ($($anything: tt)*) => {
+        $crate::IndexArrayVec::from(index_array![$($anything)*])
     };
 }
 

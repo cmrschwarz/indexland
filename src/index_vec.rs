@@ -24,8 +24,8 @@ use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 /// ```
 #[macro_export]
 macro_rules! index_vec {
-    ($($anything: tt)+) => {
-        $crate::IndexVec::from($crate::__private::alloc::vec![$($anything)+])
+    ($($anything: tt)*) => {
+        $crate::IndexVec::from($crate::__private::alloc::vec![$($anything)*])
     };
 }
 

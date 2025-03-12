@@ -30,8 +30,8 @@ use std::hash::RandomState;
 /// ```
 #[macro_export]
 macro_rules! index_hash_set {
-    ($($anything: tt)+) => {
-        $crate::IndexHashSet::from(::indexmap::indexset![$($anything)+])
+    ($($anything: tt)*) => {
+        $crate::IndexHashSet::from(::indexmap::indexset![$($anything)*])
     };
 }
 
