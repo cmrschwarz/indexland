@@ -6,7 +6,7 @@ use core::{
     fmt::Debug,
     hash::{BuildHasher, Hash},
     marker::PhantomData,
-    ops::Index,
+    ops::{BitAnd, BitOr, BitXor, Deref, Index},
 };
 
 use indexmap::{
@@ -42,14 +42,12 @@ macro_rules! index_hash_set {
 }
 
 #[cfg(feature = "std")]
-#[derive(Clone)]
 pub struct IndexHashSet<I, T, S = RandomState> {
     data: IndexSet<T, S>,
     _phantom: PhantomData<fn(I) -> T>,
 }
 
 #[cfg(not(feature = "std"))]
-#[derive(Clone)]
 pub struct IndexHashSet<I, T, S> {
     data: IndexSet<T, S>,
     _phantom: PhantomData<fn(I) -> T>,
@@ -84,6 +82,18 @@ impl<I, T> IndexSlice<I, T> {
     pub fn into_boxed_slice(self: Box<Self>) -> Box<Slice<T>> {
         unsafe { Box::from_raw(Box::into_raw(self) as *mut Slice<T>) }
     }
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+    pub fn len_idx(&self) -> I
+    where
+        I: Idx,
+    {
+        I::from_usize(self.data.len())
+    }
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
 }
 
 impl<'a, I, T> From<&'a Slice<T>> for &'a IndexSlice<I, T> {
@@ -104,45 +114,6 @@ impl<'a, I, T> From<&'a mut Slice<T>> for &'a mut IndexSlice<I, T> {
 impl<'a, I, T> From<&'a mut IndexSlice<I, T>> for &'a mut Slice<T> {
     fn from(data: &'a mut IndexSlice<I, T>) -> Self {
         IndexSlice::into_slice_mut(data)
-    }
-}
-
-impl<I, T, S> From<IndexSet<T, S>> for IndexHashSet<I, T, S> {
-    fn from(v: IndexSet<T, S>) -> Self {
-        Self {
-            data: v,
-            _phantom: PhantomData,
-        }
-    }
-}
-impl<I, T, S> From<IndexHashSet<I, T, S>> for IndexSet<T, S> {
-    fn from(v: IndexHashSet<I, T, S>) -> Self {
-        v.data
-    }
-}
-
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl<I, T: Hash + Eq, const N: usize> From<[T; N]>
-    for IndexHashSet<I, T, RandomState>
-{
-    fn from(arr: [T; N]) -> IndexHashSet<I, T, RandomState> {
-        IndexHashSet::from(IndexSet::from(arr))
-    }
-}
-
-impl<I, T, S: Default> Default for IndexHashSet<I, T, S> {
-    fn default() -> Self {
-        Self {
-            data: IndexSet::default(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<I: Idx, T: Debug, S> Debug for IndexHashSet<I, T, S> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        Debug::fmt(&self.data, f)
     }
 }
 
@@ -722,13 +693,135 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
 }
 
-impl<'a, Idx, T, S> Extend<&'a T> for IndexHashSet<Idx, T, S>
+impl<I, T, S> Deref for IndexHashSet<I, T, S> {
+    type Target = IndexSlice<I, T>;
+
+    fn deref(&self) -> &Self::Target {
+        IndexSlice::from_slice(self.data.as_slice())
+    }
+}
+
+impl<T, I1, I2, S1, S2> BitAnd<&IndexHashSet<I2, T, S2>>
+    for &IndexHashSet<I1, T, S1>
+where
+    T: Eq + Hash + Clone,
+    S1: BuildHasher + Default,
+    S2: BuildHasher,
+{
+    type Output = IndexHashSet<I1, T, S1>;
+
+    fn bitand(self, rhs: &IndexHashSet<I2, T, S2>) -> Self::Output {
+        IndexHashSet::from(self.data.bitand(&rhs.data))
+    }
+}
+
+impl<T, I1, I2, S1, S2> BitOr<&IndexHashSet<I2, T, S2>>
+    for &IndexHashSet<I1, T, S1>
+where
+    T: Eq + Hash + Clone,
+    S1: BuildHasher + Default,
+    S2: BuildHasher,
+{
+    type Output = IndexHashSet<I1, T, S1>;
+
+    fn bitor(self, rhs: &IndexHashSet<I2, T, S2>) -> Self::Output {
+        IndexHashSet::from(self.data.bitor(&rhs.data))
+    }
+}
+
+impl<T, I1, I2, S1, S2> BitXor<&IndexHashSet<I2, T, S2>>
+    for &IndexHashSet<I1, T, S1>
+where
+    T: Eq + Hash + Clone,
+    S1: BuildHasher + Default,
+    S2: BuildHasher,
+{
+    type Output = IndexHashSet<I1, T, S1>;
+
+    fn bitxor(self, rhs: &IndexHashSet<I2, T, S2>) -> Self::Output {
+        IndexHashSet::from(self.data.bitxor(&rhs.data))
+    }
+}
+
+impl<I, T, S> Clone for IndexHashSet<I, T, S>
+where
+    T: Clone,
+    S: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<I: Idx, T: Debug, S> Debug for IndexHashSet<I, T, S> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(&self.data, f)
+    }
+}
+
+impl<I, T, S> Default for IndexHashSet<I, T, S>
+where
+    S: Default,
+{
+    fn default() -> Self {
+        Self::from(IndexSet::default())
+    }
+}
+
+impl<'a, I, T, S> Extend<&'a T> for IndexHashSet<I, T, S>
 where
     T: Hash + Eq + Copy,
     S: BuildHasher,
 {
-    fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
+    fn extend<II: IntoIterator<Item = &'a T>>(&mut self, iter: II) {
         self.data.extend(iter);
+    }
+}
+
+impl<I, T, S> Extend<T> for IndexHashSet<I, T, S>
+where
+    T: Hash + Eq + Copy,
+    S: BuildHasher,
+{
+    fn extend<II: IntoIterator<Item = T>>(&mut self, iter: II) {
+        self.data.extend(iter);
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl<I, T: Hash + Eq, const N: usize> From<[T; N]>
+    for IndexHashSet<I, T, RandomState>
+{
+    fn from(arr: [T; N]) -> IndexHashSet<I, T, RandomState> {
+        IndexHashSet::from(IndexSet::from(arr))
+    }
+}
+
+impl<I, T, S> From<IndexSet<T, S>> for IndexHashSet<I, T, S> {
+    fn from(v: IndexSet<T, S>) -> Self {
+        Self {
+            data: v,
+            _phantom: PhantomData,
+        }
+    }
+}
+impl<I, T, S> From<IndexHashSet<I, T, S>> for IndexSet<T, S> {
+    fn from(v: IndexHashSet<I, T, S>) -> Self {
+        v.data
+    }
+}
+
+impl<I, T, S> FromIterator<T> for IndexHashSet<I, T, S>
+where
+    T: Hash + Eq,
+    S: BuildHasher + Default,
+{
+    fn from_iter<II: IntoIterator<Item = T>>(iter: II) -> Self {
+        IndexHashSet::from(IndexSet::from_iter(iter))
     }
 }
 
@@ -751,18 +844,18 @@ impl<'a, I, T, S> IntoIterator for &'a IndexHashSet<I, T, S> {
     }
 }
 
-impl<I, T: Hash + Eq, S: BuildHasher + Default> FromIterator<T>
-    for IndexHashSet<I, T, S>
-{
-    fn from_iter<IT: IntoIterator<Item = T>>(iter: IT) -> Self {
-        Self::from(IndexSet::from_iter(iter))
-    }
-}
-
 impl<I: Idx, T, S: BuildHasher> Index<I> for IndexHashSet<I, T, S> {
     type Output = T;
     fn index(&self, idx: I) -> &T {
         self.data.index(idx.into_usize())
+    }
+}
+
+impl<I, T, R: IndexRangeBounds<I>> Index<R> for IndexSlice<I, T> {
+    type Output = IndexSlice<I, T>;
+    fn index(&self, index: R) -> &Self::Output {
+        let range = index.canonicalize(self.len());
+        IndexSlice::from_slice(&self.data[range])
     }
 }
 
