@@ -71,6 +71,9 @@ impl<I: Idx, T> IndexSlice<I, T> {
     ///     println!("myvec[i] = {v}");
     /// }
     /// ```
+    ///
+    /// Instead, using [`iter_enumerated_range`](crate::IndexVec::iter_enumerated_range)
+    /// on the container itself is preferred:
     /// ```
     /// # use indexland::{index_vec, Idx, IndexVec};
     /// # #[derive(Idx)]
@@ -82,8 +85,9 @@ impl<I: Idx, T> IndexSlice<I, T> {
     ///     println!("myvec[i] = {v}");
     /// }
     /// ```
-    /// If you actualy want to start at zero, simply pass [`Idx::ZERO`]
-    /// as the initial offset.
+    ///
+    /// If you actualy wanted to enumerate a slice starting from zero,
+    /// simply pass [`Idx::ZERO`] as the initial offset.
     pub fn iter_enumerated(
         &self,
         initial_offset: I,
