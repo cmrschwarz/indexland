@@ -114,9 +114,6 @@ fn run_cargo_with_features<'a>(
 }
 
 fn run_tests() {
-    println!("\n⚡ Testing with full features ⚡");
-    run_cargo_with_features(["test", "--workspace"], "full");
-
     for feature_set in FEATURE_SETS {
         println!(
             "\n⚡ Testing indexland feature set: {} ⚡",
@@ -147,6 +144,12 @@ fn run_tests() {
 
     println!("\n⚡ Testing doc-tests ⚡");
     run_cargo_with_features(["test", "--doc", "--workspace"], "full");
+
+    println!("\n⚡ Testing with full features ⚡");
+    run_cargo_with_features(["test", "--workspace"], "full");
+
+    println!("\n⚡ Testing with full features and --release ⚡");
+    run_cargo_with_features(["test", "--workspace", "--release"], "full");
 
     let examples = std::fs::read_dir("./examples")
         .expect("Failed to read examples directory")
