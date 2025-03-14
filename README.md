@@ -15,18 +15,11 @@
 Newtype Index Support for Rust Collection Types.
 
 ## Features
-- Strongly typed indices prevent accidental mix-ups at compile time.
+- Strongly typed collection indices for better type safety and readability.
 
-  Let's not make `usize` be the new `void*` !
+- All array based std::collections in one place through a single `Idx` trait.
 
-- Readable, self-documenting code through explicit indexing semantics.
-
-  No more ```// indexed by `NodeId` ``` comments.
-
-- Underlying APIs faithfully wrapped and adapted for `Idx` Types.
-
-  No need to learn a new collections API.
-
+- All underlying APIs faithfully adapted for `Idx` types.
 
 ## Examples
 ### Newtype Indices
@@ -84,18 +77,13 @@ let message = STATUS_MESSAGE[Status::Running];
 
 ## Additional Features
 
-- Every wrapper has an escape hatch function to mutably access the underlying
-  collection, aswell as bidirectional [`From`](core::convert::From) implementations.
-  Never feel boxed in by this dependency.
-
-- All basic integer types implement [`Idx`](crate::Idx).
-
-  No complaints if your main usecase for this crate is `IndexVec<u32, T>`.
+- Every wrapper has an escape hatch
+  to the underlying collection, aswell as bidirectional [`From`](core::convert::From)
+  implementations.
 
 - First class embedded support though `#[no_std]` and even optional `alloc`.
 
-- [`Idx`](crate::Idx) compatible [`NonMax<T>`](crate::nonmax) Integer Types
-  for those sweet sweet [Niche Optimizations](https://doc.rust-lang.org/std/option/index.html#representation).
+- [`Idx`](crate::Idx) compatible [`NonMax<T>`](crate::nonmax) for [Niche Optimizations](https://doc.rust-lang.org/std/option/index.html#representation).
 
 - [`serde`](::serde) implementations for all Collections.
 
@@ -105,13 +93,13 @@ let message = STATUS_MESSAGE[Status::Running];
 
 ### Why?
 Using indices into collections instead of references or
-smart pointers is an incredibly powerful idiom popularized by
+smart pointers is a powerful idiom popularized by
 [Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design).
 Many places make use this pattern, including
 [the Rust Compiler itself](https://github.com/rust-lang/rust/blob/2b285cd5f0877e30ad1d83e04f8cc46254e43391/compiler/rustc_index/src/vec.rs#L40).
 
-In Rust in particular, indices can be a fantastic way to avoid most borrow
-checker issues while simultaneously *increasing* performance.
+The pattern can solve many borrow checker issues
+while simultaneously *increasing* performance.
 They frequently reduce allocations, lower the memory usage and increase
 data locality.
 
@@ -130,48 +118,31 @@ types, but this leaves two big things to be desired:
      should be used to access them. When structs contain multiple collections
      this becomes hard to read quickly.
 
-Using newtypes for the indices and adding them as generic parameters to
-the container types elegantly solves both of these issues.
+Newtypes indices elegantly solve both of these issues.
 
 ### Why not use [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
-1.  The goal of `indexland` is to offer all the most common array based collections
-    in a single place, **using the same `Idx` trait**.
-    Sometimes the same index type is used for multiple data structures.
-    Sometimes you want to switch from a `Vec` to a `VecDeque`.
-    Doing so is not possible with single container wrappers like `index_vec`.
+1.  Indexland offers all common collections in one place,
+    **using the same `Idx` trait**. Sometimes the same index type is used
+    for multiple data structures. Sometimes you want to switch from a `Vec`
+    to a `VecDeque`.
 
-2.  Unlike `index_vec`, we explicitly **don't** implement
-    `Index<usize> for IndexSlice` (and therefore `IndexVec` through `Deref`),
-    aswell as `Add<usize> for Idx`, which breaks a big part of the type safety that's the
-    whole point of this. We do offer opt-in support for `Add<usize>` through
-    [`#[indexland(usize_arith)]`](indexland_derive::Idx#attributes) for those that want it,
-    and if you have an operation that requires lots of accesses through `usize` you
-    can always cast an `IndexSlice` into a `[T]` explicitly.
+2.  We deliberately **don't** implement
+    `Index<usize> for IndexSlice` and `Add<usize> for Idx`,
+    as they compromizes type safety. Opt-in support is availabe
+    via [`#[indexland(usize_arith)]`](indexland_derive::Idx#attributes).
 
-
-3.  Our `Idx` derivation syntax
-    is also much nicer to use than `index_vec`'s
+3.  Our `Idx` derivation syntax is much cleaner than `index_vec`'s
     [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
 
 ### Is there a runtime cost to this?
-There is very little runtime overhead compared to using the
-underlying containers directly.
-The core index wrapper functions are marked `#[inline(always)]`,
-so the compiler can reliably eliminate them, even in debug mode.
+There's minimal overhead. The core wrapper functions are
+marked `#[inline(always)]` to reliably eliminate them, even in debug mode.
 
-By default, Index type conversions follow the same rules that Rust
-uses for Integer overflow. This means that in debug mode,
-overflowing conversions will panic, whereas in release mode they will
-use two's complement wrap around. This avoids any overhead in release mode.
-This behavior can be customized on a per type basis using the
-[`#[indexland(bounds_checks = "..")]`](crate::indexland_derive::Idx) attribute,
-or bypassed in a single spot using in a single spot e.g. through
-[`into_usize_unchecked`](crate::idx::Idx::into_usize_unchecked).
-
-These bounds checks improve Debug mode safety for smaller index types like `u32`
-over the classic `type FooId = u32;`.
-Using `my_usize as FooId` would *always* wrap around silently, *even in Debug mode*.
-
+Type conversions follow the same rules as Rust integer overflow.
+Overflows will panic in debug mode and wrap in release.
+Newtypes can customize this via
+[`#[indexland(bounds_checks = "..")]`](crate::indexland_derive::Idx#indexlandbounds_checks--),
+or bypass it through [`into_usize_unchecked`](crate::idx::Idx::into_usize_unchecked).
 
 
 ## License
