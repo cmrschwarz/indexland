@@ -190,7 +190,7 @@ pub fn derive_idx_enum(
 ///
 /// #[derive(Idx)]
 /// #[indexland(crate = foobar)] // serde style crate renaming
-/// #[indexland(disable_bounds_checks)] // perf: make the `u32` implicitly wrap
+/// #[indexland(bounds_checks = "off")] // perf: make the `u32` implicitly wrap
 /// struct Foo(u32);
 /// ```
 #[proc_macro_derive(Idx, attributes(indexland))]

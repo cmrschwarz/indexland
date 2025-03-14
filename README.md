@@ -134,21 +134,24 @@ Using newtypes for the indices and adding them as generic parameters to
 the container types elegantly solves both of these issues.
 
 ### Why not use [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
-The goal of `indexland` is to offer all the most common array based collections
-in a single place, **using the same `Idx` trait**.
-Sometimes the same index type is used for multiple data structures.
-Sometimes you want to switch from a `Vec` to a `VecDeque`.
-Doing so is not possible with single container wrappers like `index_vec`.
+1.  The goal of `indexland` is to offer all the most common array based collections
+    in a single place, **using the same `Idx` trait**.
+    Sometimes the same index type is used for multiple data structures.
+    Sometimes you want to switch from a `Vec` to a `VecDeque`.
+    Doing so is not possible with single container wrappers like `index_vec`.
 
-Unlike `index_vec`, we don't implicitly implement `Add<usize> for Idx`,
-which partly breaks the type safety that's the whole point of this.
-We do offer opt-in support for it ([`#[indexland(usize_arith)]`](indexland_derive::Idx#attributes))
-in case it makes sense for your usecase.
+2.  Unlike `index_vec`, we explicitly **don't** implement
+    `Index<usize> for IndexSlice` (and therefore `IndexVec` through `Deref`),
+    aswell as `Add<usize> for Idx`, which breaks a big part of the type safety that's the
+    whole point of this. We do offer opt-in support for `Add<usize>` through
+    [`#[indexland(usize_arith)]`](indexland_derive::Idx#attributes) for those that want it,
+    and if you have an operation that requires lots of accesses through `usize` you
+    can always cast an `IndexSlice` into a `[T]` explicitly.
 
 
-Our `Idx` derivation syntax
-is also much nicer to use than `index_vec`'s
-[`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
+3.  Our `Idx` derivation syntax
+    is also much nicer to use than `index_vec`'s
+    [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
 
 ### Is there a runtime cost to this?
 There is very little runtime overhead compared to using the
@@ -156,15 +159,18 @@ underlying containers directly.
 The core index wrapper functions are marked `#[inline(always)]`,
 so the compiler can reliably eliminate them, even in debug mode.
 
-By default, index conversions that might overflow will be bounds checked.
-This only affects index types smaller than `usize`,
-and is avoided internally wherever possible.
-If this is unacceptable for performance reasons,
-these checks can be disabled on a per type basis through
-[`#[indexland(disable_bounds_checks)]`](crate::indexland_derive::Idx),
-or in a single spot through [`into_usize_unchecked`](crate::idx::Idx::into_usize_unchecked).
-This causes the indices to silently wrap around, just like
-`my_usize as u32` would.
+By default, Index type conversions follow the same rules that Rust
+uses for Integer overflow. This means that in debug mode,
+overflowing conversions will panic, whereas in release mode they will
+use two's complement wrap around. This avoids any overhead in release mode.
+This behavior can be customized on a per type basis using the
+[`#[indexland(bounds_checks = "..")]`](crate::indexland_derive::Idx) attribute,
+or bypassed in a single spot using in a single spot e.g. through
+[`into_usize_unchecked`](crate::idx::Idx::into_usize_unchecked).
+
+These bounds checks improve Debug mode safety for smaller index types like `u32`
+over the classic `type FooId = u32;`.
+Using `my_usize as FooId` would *always* wrap around silently, *even in Debug mode*.
 
 
 
