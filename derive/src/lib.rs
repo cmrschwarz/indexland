@@ -141,12 +141,15 @@ pub fn derive_idx_enum(
 /// # Attributes
 ///
 /// #### `#[indexland(crate = ..)]`
-/// Change the crate name used within the derive macro. The default value is `::indexland`.
+/// Change the crate name used within the derive macro.
+/// The default value is `::indexland`.
 ///
-/// #### `#[indexland(disable_bounds_checks)]`
-/// Disable bounds checking on conversion from your `Idx` to and from `usize`
-/// for increased performance. The index will wrap around instead.
-/// This is meaningless for indices that wrap usize in the first place.
+/// #### `#[indexland(bounds_checks = "..")]`
+/// Modify the default bounds checking behavior. There's currently three modes:
+/// - "debug_only": The default. Enable bounds checks in debug mode, but not in
+///   release builds.
+/// - "always": Enable bounds checks regardless of build type.
+/// - "never": Disable all bounds checks. Always silently wrap around.
 ///
 /// #### `#[indexland(usize_arith)]`
 /// Implement [`Add<usize>`](core::ops::Add),
@@ -190,7 +193,7 @@ pub fn derive_idx_enum(
 ///
 /// #[derive(Idx)]
 /// #[indexland(crate = foobar)] // serde style crate renaming
-/// #[indexland(bounds_checks = "off")] // perf: make the `u32` implicitly wrap
+/// #[indexland(bounds_checks = "never")] // perf: make the `u32` implicitly wrap
 /// struct Foo(u32);
 /// ```
 #[proc_macro_derive(Idx, attributes(indexland))]

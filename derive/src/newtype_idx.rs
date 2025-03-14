@@ -3,7 +3,7 @@ use quote::quote;
 use syn::{Data, DeriveInput, Fields, Generics, Ident, Type};
 
 use crate::{
-    context::{Attrs, Context, ErrorList},
+    context::{Attrs, BoundsChecksMode, Context, ErrorList},
     utils::{token_stream_to_compact_string, Derivations},
 };
 
@@ -26,26 +26,49 @@ fn derive_idx(ctx: &NewtypeCtx) -> TokenStream {
 
     let base_type = &ctx.base_type;
 
-    let checked_conversions = if ctx.attrs.disable_checks {
-        quote! {
-            #[inline(always)]
-            fn from_usize(v: usize) -> Self {
-                #name(<#base_type as #indexland::Idx>::from_usize_unchecked(v))
-            }
-            #[inline(always)]
-            fn into_usize(self) -> usize {
-                <#base_type as #indexland::Idx>::into_usize_unchecked(self.0)
+    let checked_conversions = match ctx.attrs.bounds_checks_mode {
+        BoundsChecksMode::Never => {
+            quote! {
+                #[inline(always)]
+                fn from_usize(v: usize) -> Self {
+                    #name(<#base_type as #indexland::Idx>::from_usize_unchecked(v))
+                }
+                #[inline(always)]
+                fn into_usize(self) -> usize {
+                    <#base_type as #indexland::Idx>::into_usize_unchecked(self.0)
+                }
             }
         }
-    } else {
-        quote! {
-            #[inline(always)]
-            fn from_usize(v: usize) -> Self {
-                #name(<#base_type as #indexland::Idx>::from_usize(v))
+        BoundsChecksMode::DebugOnly => {
+            quote! {
+                #[inline(always)]
+                fn from_usize(v: usize) -> Self {
+                    #[cfg(debug_assertions)]
+                    return #name(<#base_type as #indexland::Idx>::from_usize(v));
+
+                    #[cfg(not(debug_assertions))]
+                    #name(<#base_type as #indexland::Idx>::from_usize_unchecked(v))
+                }
+                #[inline(always)]
+                fn into_usize(self) -> usize {
+                    #[cfg(debug_assertions)]
+                    return <#base_type as #indexland::Idx>::into_usize(self.0);
+
+                    #[cfg(not(debug_assertions))]
+                    <#base_type as #indexland::Idx>::into_usize_unchecked(self.0)
+                }
             }
-            #[inline(always)]
-            fn into_usize(self) -> usize {
-                <#base_type as #indexland::Idx>::into_usize(self.0)
+        }
+        BoundsChecksMode::Always => {
+            quote! {
+                #[inline(always)]
+                fn from_usize(v: usize) -> Self {
+                    #name(<#base_type as #indexland::Idx>::from_usize(v))
+                }
+                #[inline(always)]
+                fn into_usize(self) -> usize {
+                    <#base_type as #indexland::Idx>::into_usize(self.0)
+                }
             }
         }
     };

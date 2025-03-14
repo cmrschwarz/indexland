@@ -4,7 +4,7 @@ use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::ToTokens;
 use syn::{
     parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput,
-    Ident, PathSegment,
+    Ident, LitStr, PathSegment,
 };
 
 const INDEXLAND: &str = "indexland";
@@ -12,9 +12,17 @@ const CRATE: &str = "crate";
 const ONLY: &str = "only";
 const OMIT: &str = "omit";
 const EXTRA: &str = "extra";
-const DISABLE_BOUNDS_CHECKS: &str = "disable_bounds_checks";
+const BOUNDS_CHECKS: &str = "bounds_checks";
 
 const USIZE_ARITH: &str = "usize_arith";
+
+#[derive(Default)]
+pub enum BoundsChecksMode {
+    #[default]
+    DebugOnly,
+    Always,
+    Never,
+}
 
 #[derive(Default)]
 pub struct ErrorList {
@@ -27,7 +35,7 @@ pub struct Attrs {
     pub extra_list: Vec<TokenStream>,
     // could be active despite being empty
     pub whitelist_active: bool,
-    pub disable_checks: bool,
+    pub bounds_checks_mode: BoundsChecksMode,
     pub enable_usize_arith: bool,
 }
 
@@ -110,7 +118,7 @@ impl Context {
         let mut first_whitelist = None;
         let mut extra_list = Vec::new();
         let mut first_extra_list = None;
-        let mut disable_checks = false;
+        let mut bounds_checks_mode = BoundsChecksMode::default();
         let mut enable_usize_arith = false;
         for attr in &ast.attrs {
             if !attr.path().is_ident(INDEXLAND) {
@@ -123,9 +131,25 @@ impl Context {
                     let v = meta.value()?;
                     let path = v.parse()?;
                     indexland_path = Some(path);
-                } else if meta.path.is_ident(DISABLE_BOUNDS_CHECKS) {
-                    // #[indexland(disable_bounds_checks)]
-                    disable_checks = true;
+                } else if meta.path.is_ident(BOUNDS_CHECKS) {
+                    // e.g. #[indexland(bounds_checks = "always")]
+                    let literal: LitStr = meta.value()?.parse()?;
+                    let value = literal.value();
+                    match &*value {
+                        "debug_only" => {
+                            bounds_checks_mode = BoundsChecksMode::DebugOnly
+                        }
+                        "always" => {
+                            bounds_checks_mode = BoundsChecksMode::Always
+                        }
+                        "never" => {
+                            bounds_checks_mode = BoundsChecksMode::Never
+                        }
+                        _ => errs.push(meta.error(format!(
+                            r#"unknown bounds checks mode "{value}", expected {}"#,
+                            r#""debug_only", "always", or "never""#
+                        ))),
+                    }
                 } else if meta.path.is_ident(USIZE_ARITH) {
                     // #[indexland(usize_arith)]
                     enable_usize_arith = true;
@@ -205,9 +229,9 @@ impl Context {
                 indexland_path,
                 whitelist,
                 blacklist,
-                whitelist_active: first_whitelist.is_some(),
                 extra_list,
-                disable_checks,
+                whitelist_active: first_whitelist.is_some(),
+                bounds_checks_mode,
                 enable_usize_arith,
             },
         }

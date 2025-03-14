@@ -3,7 +3,7 @@ use quote::quote;
 use syn::{Data, DeriveInput, Fields, Generics};
 
 use crate::{
-    context::{Attrs, Context, ErrorList},
+    context::{Attrs, BoundsChecksMode, Context, ErrorList},
     utils::{token_stream_to_compact_string, Derivations},
 };
 
@@ -33,26 +33,40 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
 
     let indices_1 = 0..count;
     let indices_2 = 0..count;
-    let indices_3 = 0..count;
 
-    let from_usize = if ctx.attrs.disable_checks {
-        quote! {
+    let panic_str = format!("index {{}} is out of bounds for {name}");
+    let from_usize = match ctx.attrs.bounds_checks_mode {
+        BoundsChecksMode::Never => quote! {
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
                 Self::from_usize_unchecked(v)
             }
-        }
-    } else {
-        let panic_str = format!("index {{}} is out of bounds for {name}");
-        quote! {
-            #[inline(always)]
+        },
+        BoundsChecksMode::DebugOnly => quote! {
+            #[cfg(debug_assertions)]
+            #[inline]
             fn from_usize(v: usize) -> Self {
                 match v {
                     #(#indices_1 => #name::#idents,)*
                     _ => panic!(#panic_str , v)
                 }
             }
-        }
+
+            #[cfg(not(debug_assertions))]
+            #[inline(always)]
+            fn from_usize(v: usize) -> Self {
+                Self::from_usize_unchecked(v)
+            }
+        },
+        BoundsChecksMode::Always => quote! {
+            #[inline]
+            fn from_usize(v: usize) -> Self {
+                match v {
+                    #(#indices_1 => #name::#idents,)*
+                    _ => panic!(#panic_str , v)
+                }
+            }
+        },
     };
 
     quote! {
@@ -71,9 +85,7 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
             #from_usize
             #[inline(always)]
             fn into_usize_unchecked(self) -> usize  {
-                match self {
-                    #(#name::#idents => #indices_3),*
-                }
+                self as usize
             }
             #[inline(always)]
             fn into_usize(self) -> usize  {
