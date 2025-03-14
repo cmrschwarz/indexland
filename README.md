@@ -17,7 +17,7 @@ Newtype Index Support for Rust Collection Types.
 ## Features
 - Strongly typed collection indices for better type safety and readability.
 
-- All array based std::collections in one place through a single `Idx` trait.
+- All array based `std::collections` wrapped in one place through a single `Idx` trait.
 
 - All underlying APIs faithfully adapted for `Idx` types.
 
@@ -92,33 +92,30 @@ let message = STATUS_MESSAGE[Status::Running];
 ## FAQ
 
 ### Why?
-Using indices into collections instead of references or
+Using indexed collections instead of references or
 smart pointers is a powerful idiom popularized by
-[Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design).
-Many places make use this pattern, including
+[Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design),
+and even used by
 [the Rust Compiler itself](https://github.com/rust-lang/rust/blob/2b285cd5f0877e30ad1d83e04f8cc46254e43391/compiler/rustc_index/src/vec.rs#L40).
-
-The pattern can solve many borrow checker issues
-while simultaneously *increasing* performance.
-They frequently reduce allocations, lower the memory usage and increase
+The pattern solves many borrow checker issues and often increases performance.
+Indexed collections can reduce allocations and memory usage while increasing
 data locality.
 
-When using this pattern heavily in Rust today there are a few issues though.
-The common approach is to use `type NodeId = usize` to denote different index
-types, but this leaves two big things to be desired:
+Heavy use of this pattern can cause issues though. The standard approach is to
+use `type NodeId = usize`, but this negatively affects
 
-  1. Type Safety: Type aliases are not unique types.
-     It's very easy to accidentally use the wrong index or the wrong
-     container. Indices are essentially relative pointers. Using the same type
-     for all of them is like writing a C program using exclusively `void*`.
-     It is antithetical to robustness and fearless refactoring capabilities
-     that are usually enabled by Rust's strong type system.
+  1. Type Safety: Type aliases are not unique types. The're all the same to the compiler, making it easy to accidentally use the wrong index or container
+     in an [SOA](https://en.wikipedia.org/wiki/AoS_and_SoA) heavy codebase.
+     Using `usize` everywhere can become similar to `void*` in C or
+     `any` in Typescript. One of Rust's main strenghts is to enable fearless
+     refactoring because the compiler will guide you through it. Non-newtype
+     type aliases make that a lot harder.
 
   2. Readability: Container type definitions don't tell us what index
      should be used to access them. When structs contain multiple collections
      this becomes hard to read quickly.
 
-Newtypes indices elegantly solve both of these issues.
+Newtypes elegantly solve both of these issues.
 
 ### Why not use [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
 1.  Indexland offers all common collections in one place,
@@ -128,8 +125,8 @@ Newtypes indices elegantly solve both of these issues.
 
 2.  We deliberately **don't** implement
     `Index<usize> for IndexSlice` and `Add<usize> for Idx`,
-    as they compromizes type safety. Opt-in support is availabe
-    via [`#[indexland(usize_arith)]`](indexland_derive::Idx#attributes).
+    as they compromize type safety. Opt-in support is availabe
+    via [`#[indexland(usize_arith)]`](indexland_derive::Idx#indexlandusize_arith).
 
 3.  Our `Idx` derivation syntax is much cleaner than `index_vec`'s
     [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
