@@ -1,0 +1,5 @@
+error: unknown bounds checks mode "off", expected "debug_only", "always", or "never"
+ --> tests/ui/bounds_checks_mode.rs:5:17
+  |
+5 |     #[indexland(bounds_checks = "off")]
+  |                 ^^^^^^^^^^^^^^^^^^^^^

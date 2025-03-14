@@ -93,8 +93,8 @@ fn derive_newtype_omit() {
 }
 
 #[test]
-#[should_panic]
-fn bounds_checks() {
+#[cfg_attr(debug_assertions, should_panic)]
+fn bounds_checks_debug_only() {
     #[derive(Idx)]
     struct FooId(u32);
 
@@ -102,9 +102,19 @@ fn bounds_checks() {
 }
 
 #[test]
-fn disable_bounds_checks() {
+#[should_panic]
+fn bounds_checks_always() {
     #[derive(Idx)]
-    #[indexland(disable_bounds_checks)]
+    #[indexland(bounds_checks = "always")]
+    struct FooId(u32);
+
+    FooId::from_usize(usize::MAX);
+}
+
+#[test]
+fn bounds_checks_never() {
+    #[derive(Idx)]
+    #[indexland(bounds_checks = "never")]
     struct FooId(u32);
 
     assert_eq!(FooId::from_usize(u32::MAX as usize + 2).into_usize(), 1);

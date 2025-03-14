@@ -1,5 +1,5 @@
-error: expected `,`
- --> tests/ui/arg_to_disable_bounds_checks.rs:5:39
+error: expected string literal
+ --> tests/ui/arg_to_disable_bounds_checks.rs:5:33
   |
-5 |     #[indexland(disable_bounds_checks = true)]
-  |                                       ^
+5 |     #[indexland(bounds_checks = true)]
+  |                                 ^^^^
