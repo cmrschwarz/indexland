@@ -142,7 +142,7 @@ impl<I, K, V, S: Default> Default for IndexHashMap<I, K, V, S> {
     }
 }
 
-impl<I: Idx, K: Debug, V: Debug, S> Debug for IndexHashMap<I, K, V, S> {
+impl<I, K: Debug, V: Debug, S> Debug for IndexHashMap<I, K, V, S> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
@@ -165,7 +165,7 @@ impl<I, K, V> IndexHashMap<I, K, V> {
     }
 }
 
-impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
+impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn with_capacity_and_hasher(cap: usize, hasher: S) -> Self {
         Self {
             data: IndexMap::with_capacity_and_hasher(cap, hasher),
@@ -187,10 +187,16 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn len(&self) -> usize {
         self.data.len()
     }
-    pub fn len_idx(&self) -> I {
+    pub fn len_idx(&self) -> I
+    where
+        I: Idx,
+    {
         I::from_usize(self.data.len())
     }
-    pub fn last_idx(&self) -> Option<I> {
+    pub fn last_idx(&self) -> Option<I>
+    where
+        I: Idx,
+    {
         self.len().checked_sub(1).map(I::from_usize)
     }
     pub fn is_empty(&self) -> bool {
@@ -204,31 +210,48 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     }
     pub fn iter_enumerated(
         &self,
-    ) -> IndexEnumerate<I, indexmap::map::Iter<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::Iter<K, V>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, &mut self.data)
     }
-    pub fn iter_enumerated_range<R: IndexRangeBounds<I>>(
+    pub fn iter_enumerated_range<R>(
         &self,
         range: R,
-    ) -> IndexEnumerate<I, indexmap::map::Iter<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::Iter<K, V>>
+    where
+        I: Idx,
+        R: IndexRangeBounds<I>,
+    {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &self.data[range])
     }
-    pub fn iter_enumerated_range_mut<R: IndexRangeBounds<I>>(
+    pub fn iter_enumerated_range_mut<R>(
         &mut self,
         range: R,
-    ) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>>
+    where
+        I: Idx,
+        R: IndexRangeBounds<I>,
+    {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IndexEnumerate<I, indexmap::map::IntoIter<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::IntoIter<K, V>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data)
     }
     pub fn keys(&self) -> indexmap::map::Keys<K, V> {
@@ -236,7 +259,10 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     }
     pub fn keys_enumerated(
         &self,
-    ) -> IndexEnumerate<I, indexmap::map::Keys<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::Keys<K, V>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data.keys())
     }
     pub fn into_keys(self) -> indexmap::map::IntoKeys<K, V> {
@@ -244,7 +270,10 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     }
     pub fn into_keys_enumerated(
         self,
-    ) -> IndexEnumerate<I, indexmap::map::IntoKeys<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::IntoKeys<K, V>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data.into_keys())
     }
     pub fn values(&self) -> indexmap::map::Values<K, V> {
@@ -252,7 +281,10 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     }
     pub fn values_enumerated(
         &self,
-    ) -> IndexEnumerate<I, indexmap::map::Values<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::Values<K, V>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data.values())
     }
     pub fn values_mut(&mut self) -> indexmap::map::ValuesMut<K, V> {
@@ -260,7 +292,10 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     }
     pub fn values_mut_enumerated(
         &mut self,
-    ) -> IndexEnumerate<I, indexmap::map::ValuesMut<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::ValuesMut<K, V>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data.values_mut())
     }
     pub fn into_values(self) -> indexmap::map::IntoValues<K, V> {
@@ -268,13 +303,19 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     }
     pub fn into_values_emumerated(
         self,
-    ) -> IndexEnumerate<I, indexmap::map::IntoValues<K, V>> {
+    ) -> IndexEnumerate<I, indexmap::map::IntoValues<K, V>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data.into_values())
     }
     pub fn clear(&mut self) {
         self.data.clear();
     }
-    pub fn truncate(&mut self, end: I) {
+    pub fn truncate(&mut self, end: I)
+    where
+        I: Idx,
+    {
         self.data.truncate(end.into_usize());
     }
     pub fn truncate_len(&mut self, len: usize) {
@@ -296,6 +337,7 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn split_off(&mut self, at: I) -> Self
     where
         S: Clone,
+        I: Idx,
     {
         Self::from(self.data.split_off(at.into_usize()))
     }
@@ -305,7 +347,10 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     {
         Self::from(self.data.split_off(at))
     }
-    pub fn reserve(&mut self, additional: I) {
+    pub fn reserve(&mut self, additional: I)
+    where
+        I: Idx,
+    {
         self.data.reserve(additional.into_usize());
     }
     pub fn reserve_len(&mut self, additional: usize) {
@@ -335,7 +380,10 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
         &mut self.data
     }
 
-    pub fn indices(&self) -> IndexRange<I> {
+    pub fn indices(&self) -> IndexRange<I>
+    where
+        I: Idx,
+    {
         IndexRange::new(I::ZERO..self.len_idx())
     }
 

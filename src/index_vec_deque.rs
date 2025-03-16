@@ -76,13 +76,13 @@ impl<I, T> Default for IndexVecDeque<I, T> {
     }
 }
 
-impl<I: Idx, T: Debug> Debug for IndexVecDeque<I, T> {
+impl<I, T: Debug> Debug for IndexVecDeque<I, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
 
-impl<I: Idx, T> IndexVecDeque<I, T> {
+impl<I, T> IndexVecDeque<I, T> {
     pub const fn new() -> Self {
         Self {
             data: VecDeque::new(),
@@ -101,13 +101,22 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn len(&self) -> usize {
         self.data.len()
     }
-    pub fn len_idx(&self) -> I {
+    pub fn len_idx(&self) -> I
+    where
+        I: Idx,
+    {
         I::from_usize(self.data.len())
     }
-    pub fn last_idx(&self) -> Option<I> {
+    pub fn last_idx(&self) -> Option<I>
+    where
+        I: Idx,
+    {
         self.len().checked_sub(1).map(I::from_usize)
     }
-    pub fn reserve(&mut self, additional: I) {
+    pub fn reserve(&mut self, additional: I)
+    where
+        I: Idx,
+    {
         self.data.reserve(additional.into_usize());
     }
     pub fn reserve_len(&mut self, additional: usize) {
@@ -131,16 +140,25 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn resize_with(&mut self, new_len: usize, f: impl FnMut() -> T) {
         self.data.resize_with(new_len, f);
     }
-    pub fn truncate(&mut self, end: I) {
+    pub fn truncate(&mut self, end: I)
+    where
+        I: Idx,
+    {
         self.data.truncate(end.into_usize());
     }
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
-    pub fn swap_remove_front(&mut self, idx: I) -> Option<T> {
+    pub fn swap_remove_front(&mut self, idx: I) -> Option<T>
+    where
+        I: Idx,
+    {
         self.data.swap_remove_front(idx.into_usize())
     }
-    pub fn swap_remove_back(&mut self, idx: I) -> Option<T> {
+    pub fn swap_remove_back(&mut self, idx: I) -> Option<T>
+    where
+        I: Idx,
+    {
         self.data.swap_remove_back(idx.into_usize())
     }
     pub fn as_vec_deque(&self) -> &VecDeque<T> {
@@ -149,25 +167,37 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn as_mut_vec_deque(&mut self) -> &mut VecDeque<T> {
         &mut self.data
     }
-    pub fn push_back_get_id(&mut self, v: T) -> I {
+    pub fn push_back_get_id(&mut self, v: T) -> I
+    where
+        I: Idx,
+    {
         let id = self.len_idx();
         self.data.push_back(v);
         id
     }
     pub fn iter_enumerated(
         &self,
-    ) -> IndexEnumerate<I, alloc::collections::vec_deque::Iter<T>> {
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::Iter<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<T>> {
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn iter_enumerated_range(
         &self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, alloc::collections::vec_deque::Iter<T>> {
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::Iter<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(
             I::ZERO,
             self.data.range(range.canonicalize(self.len())),
@@ -176,16 +206,25 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn iter_enumerated_range_mut(
         &mut self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<T>> {
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<T>>
+    where
+        I: Idx,
+    {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, self.data.range_mut(range))
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IntoIter<T>> {
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IntoIter<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data)
     }
-    pub fn indices(&self) -> IndexRange<I> {
+    pub fn indices(&self) -> IndexRange<I>
+    where
+        I: Idx,
+    {
         IndexRange::new(I::ZERO..self.len_idx())
     }
     pub fn capacity(&self) -> usize {
@@ -221,7 +260,7 @@ impl<I, T> Extend<T> for IndexVecDeque<I, T> {
     }
 }
 
-impl<I: Idx, T> IntoIterator for IndexVecDeque<I, T> {
+impl<I, T> IntoIterator for IndexVecDeque<I, T> {
     type Item = T;
 
     type IntoIter = alloc::collections::vec_deque::IntoIter<T>;
@@ -231,7 +270,7 @@ impl<I: Idx, T> IntoIterator for IndexVecDeque<I, T> {
     }
 }
 
-impl<'a, I: Idx, T> IntoIterator for &'a IndexVecDeque<I, T> {
+impl<'a, I, T> IntoIterator for &'a IndexVecDeque<I, T> {
     type Item = &'a T;
 
     type IntoIter = alloc::collections::vec_deque::Iter<'a, T>;
@@ -241,7 +280,7 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexVecDeque<I, T> {
     }
 }
 
-impl<'a, I: Idx, T> IntoIterator for &'a mut IndexVecDeque<I, T> {
+impl<'a, I, T> IntoIterator for &'a mut IndexVecDeque<I, T> {
     type Item = &'a mut T;
 
     type IntoIter = alloc::collections::vec_deque::IterMut<'a, T>;
@@ -276,7 +315,7 @@ impl<I: Idx, T> IndexMut<I> for IndexVecDeque<I, T> {
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(feature = "serde")]
-impl<I: Idx, T> Serialize for IndexVecDeque<I, T>
+impl<I, T> Serialize for IndexVecDeque<I, T>
 where
     VecDeque<T>: Serialize,
 {
@@ -289,7 +328,7 @@ where
 }
 
 #[cfg(feature = "serde")]
-impl<'de, I: Idx, T> Deserialize<'de> for IndexVecDeque<I, T>
+impl<'de, I, T> Deserialize<'de> for IndexVecDeque<I, T>
 where
     VecDeque<T>: Deserialize<'de>,
 {

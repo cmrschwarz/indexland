@@ -207,7 +207,10 @@ impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
     }
 }
 
-impl<I: Idx, T> Index<I> for IndexSlice<I, T> {
+impl<I, T> Index<I> for IndexSlice<I, T>
+where
+    I: Idx,
+{
     type Output = T;
     fn index(&self, index: I) -> &Self::Output {
         &self.data[index.into_usize()]
@@ -216,7 +219,9 @@ impl<I: Idx, T> Index<I> for IndexSlice<I, T> {
 
 macro_rules! range_impls {
     ($($range: path),* $(,)?) => {$(
-        impl<I: Idx, T> Index<$range> for IndexSlice<I, T> {
+        impl<I, T> Index<$range> for IndexSlice<I, T>
+            where I: Idx
+        {
             type Output = IndexSlice<I, T>;
             fn index(&self, index: $range) -> &Self::Output {
                 let range = IndexRangeBounds::<I>::canonicalize(index, self.len());
@@ -257,7 +262,7 @@ impl<I, T> IndexHashSet<I, T> {
     }
 }
 
-impl<I: Idx, T, S> IndexHashSet<I, T, S> {
+impl<I, T, S> IndexHashSet<I, T, S> {
     pub fn with_capacity_and_hasher(cap: usize, hasher: S) -> Self {
         Self {
             data: IndexSet::with_capacity_and_hasher(cap, hasher),
@@ -273,7 +278,10 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     pub fn capacity(&mut self) -> usize {
         self.data.capacity()
     }
-    pub fn capacity_idx(&mut self) -> I {
+    pub fn capacity_idx(&mut self) -> I
+    where
+        I: Idx,
+    {
         I::from_usize(self.data.capacity())
     }
     pub fn hasher(&self) -> &S {
@@ -282,39 +290,55 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     pub fn len(&self) -> usize {
         self.data.len()
     }
-    pub fn len_idx(&self) -> I {
+    pub fn len_idx(&self) -> I
+    where
+        I: Idx,
+    {
         I::from_usize(self.data.len())
     }
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
-    pub fn last_idx(&self) -> Option<I> {
+    pub fn last_idx(&self) -> Option<I>
+    where
+        I: Idx,
+    {
         self.len().checked_sub(1).map(I::from_usize)
     }
     pub fn iter(&self) -> indexmap::set::Iter<T> {
         self.data.iter()
     }
-    pub fn iter_enumerated(
-        &self,
-    ) -> IndexEnumerate<I, indexmap::set::Iter<T>> {
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, indexmap::set::Iter<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_range<R: IndexRangeBounds<I>>(
         &self,
         range: R,
-    ) -> IndexEnumerate<I, indexmap::set::Iter<T>> {
+    ) -> IndexEnumerate<I, indexmap::set::Iter<T>>
+    where
+        I: Idx,
+    {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &self.data[range])
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IndexEnumerate<I, indexmap::set::IntoIter<T>> {
+    ) -> IndexEnumerate<I, indexmap::set::IntoIter<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data)
     }
     pub fn clear(&mut self) {
         self.data.clear();
     }
-    pub fn truncate(&mut self, end: I) {
+    pub fn truncate(&mut self, end: I)
+    where
+        I: Idx,
+    {
         self.data.truncate(end.into_usize());
     }
     pub fn truncate_len(&mut self, len: usize) {
@@ -329,7 +353,10 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     pub fn drain_enumerated<R: IndexRangeBounds<I>>(
         &mut self,
         range: R,
-    ) -> IndexEnumerate<I, indexmap::set::Drain<T>> {
+    ) -> IndexEnumerate<I, indexmap::set::Drain<T>>
+    where
+        I: Idx,
+    {
         let start = match range.start_bound() {
             core::ops::Bound::Included(s) => *s,
             core::ops::Bound::Excluded(e) => e.saturating_add(I::ONE),
@@ -339,6 +366,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
     pub fn split_off(&mut self, at: I) -> Self
     where
+        I: Idx,
         S: Clone,
     {
         Self::from(self.data.split_off(at.into_usize()))
@@ -346,13 +374,19 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     pub fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
-    pub fn reserve_total(&mut self, capacity_idx_min: I) {
+    pub fn reserve_total(&mut self, capacity_idx_min: I)
+    where
+        I: Idx,
+    {
         self.data.reserve(capacity_idx_min.into_usize());
     }
     pub fn reserve_exact(&mut self, additional: usize) {
         self.data.reserve_exact(additional.into_usize());
     }
-    pub fn reserve_exact_total(&mut self, capacity_idx: I) {
+    pub fn reserve_exact_total(&mut self, capacity_idx: I)
+    where
+        I: Idx,
+    {
         self.data.reserve_exact(capacity_idx.into_usize());
     }
     pub fn try_reserve(
@@ -364,7 +398,10 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     pub fn try_reserve_total(
         &mut self,
         capacity_idx_min: I,
-    ) -> Result<(), TryReserveError> {
+    ) -> Result<(), TryReserveError>
+    where
+        I: Idx,
+    {
         self.data.try_reserve(capacity_idx_min.into_usize())
     }
     pub fn try_reserve_exact(
@@ -376,13 +413,19 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     pub fn try_reserve_exact_total(
         &mut self,
         capacity_idx: I,
-    ) -> Result<(), TryReserveError> {
+    ) -> Result<(), TryReserveError>
+    where
+        I: Idx,
+    {
         self.data.try_reserve_exact(capacity_idx.into_usize())
     }
     pub fn shrink_to_fit(&mut self) {
         self.data.shrink_to_fit();
     }
-    pub fn shrink_to(&mut self, min_cap_idx: I) {
+    pub fn shrink_to(&mut self, min_cap_idx: I)
+    where
+        I: Idx,
+    {
         self.data.shrink_to(min_cap_idx.into_usize());
     }
     pub fn shrink_to_len(&mut self, min_cap: usize) {
@@ -397,6 +440,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
     pub fn insert_full(&mut self, value: T) -> (I, bool)
     where
+        I: Idx,
         T: Hash + Eq,
         S: BuildHasher,
     {
@@ -405,6 +449,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
     pub fn insert_sorted(&mut self, value: T) -> (I, bool)
     where
+        I: Idx,
         T: Ord + Hash,
         S: BuildHasher,
     {
@@ -413,6 +458,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
     pub fn insert_before(&mut self, idx: I, value: T) -> (I, bool)
     where
+        I: Idx,
         T: Hash + Eq,
         S: BuildHasher,
     {
@@ -422,6 +468,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
     pub fn shift_insert(&mut self, idx: I, value: T) -> (I, bool)
     where
+        I: Idx,
         T: Hash + Eq,
         S: BuildHasher,
     {
@@ -438,6 +485,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
     pub fn replace_full(&mut self, value: T) -> (I, Option<T>)
     where
+        I: Idx,
         T: Hash + Eq,
         S: BuildHasher,
     {
@@ -544,6 +592,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
 
     pub fn get_full<Q>(&self, value: &Q) -> Option<(I, &T)>
     where
+        I: Idx,
         S: BuildHasher,
         Q: ?Sized + Hash + Equivalent<T>,
     {
@@ -554,6 +603,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
 
     pub fn get_index_of<Q>(&self, value: &Q) -> Option<I>
     where
+        I: Idx,
         S: BuildHasher,
         Q: ?Sized + Hash + Equivalent<T>,
     {
@@ -594,6 +644,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
 
     pub fn swap_remove_full<Q>(&mut self, value: &Q) -> Option<(I, T)>
     where
+        I: Idx,
         S: BuildHasher,
         Q: ?Sized + Hash + Equivalent<T>,
     {
@@ -604,6 +655,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
 
     pub fn shift_remove_full<Q>(&mut self, value: &Q) -> Option<(I, T)>
     where
+        I: Idx,
         S: BuildHasher,
         Q: ?Sized + Hash + Equivalent<T>,
     {
@@ -675,6 +727,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
 
     pub fn binary_search(&self, x: &T) -> Result<I, I>
     where
+        I: Idx,
         T: Ord,
     {
         self.data
@@ -685,6 +738,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
 
     pub fn binary_search_by<'a, F>(&'a self, f: F) -> Result<I, I>
     where
+        I: Idx,
         F: FnMut(&'a T) -> Ordering,
     {
         self.data
@@ -699,6 +753,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
         f: F,
     ) -> Result<I, I>
     where
+        I: Idx,
         F: FnMut(&'a T) -> B,
         B: Ord,
     {
@@ -710,6 +765,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
 
     pub fn partition_point<P>(&self, pred: P) -> I
     where
+        I: Idx,
         P: FnMut(&T) -> bool,
     {
         I::from_usize(self.data.partition_point(pred))
@@ -734,7 +790,10 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
         IndexSlice::from_boxed_slice(self.data.into_boxed_slice())
     }
 
-    pub fn get_index(&self, index: I) -> Option<&T> {
+    pub fn get_index(&self, index: I) -> Option<&T>
+    where
+        I: Idx,
+    {
         self.data.get_index(index.into_usize())
     }
 
@@ -753,7 +812,10 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
         self.data.last()
     }
 
-    pub fn swap_remove_index(&mut self, index: I) -> Option<T> {
+    pub fn swap_remove_index(&mut self, index: I) -> Option<T>
+    where
+        I: Idx,
+    {
         self.data.swap_remove_index(index.into_usize())
     }
 
@@ -761,7 +823,10 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
         self.data.swap_remove_index(index.into_usize())
     }
 
-    pub fn swap_indices(&mut self, from: I, to: I) {
+    pub fn swap_indices(&mut self, from: I, to: I)
+    where
+        I: Idx,
+    {
         self.data.swap_indices(from.into_usize(), to.into_usize());
     }
 
@@ -808,7 +873,10 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
         &mut self.data
     }
 
-    pub fn indices(&self) -> IndexRange<I> {
+    pub fn indices(&self) -> IndexRange<I>
+    where
+        I: Idx,
+    {
         IndexRange::new(I::ZERO..self.len_idx())
     }
 }
@@ -876,7 +944,7 @@ where
     }
 }
 
-impl<I: Idx, T: Debug, S> Debug for IndexHashSet<I, T, S> {
+impl<I, T: Debug, S> Debug for IndexHashSet<I, T, S> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
@@ -964,7 +1032,11 @@ impl<'a, I, T, S> IntoIterator for &'a IndexHashSet<I, T, S> {
     }
 }
 
-impl<I: Idx, T, S: BuildHasher> Index<I> for IndexHashSet<I, T, S> {
+impl<I, T, S> Index<I> for IndexHashSet<I, T, S>
+where
+    I: Idx,
+    S: BuildHasher,
+{
     type Output = T;
     fn index(&self, idx: I) -> &T {
         self.data.index(idx.into_usize())

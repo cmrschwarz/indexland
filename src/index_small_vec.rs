@@ -35,14 +35,14 @@ pub struct IndexSmallVec<I, T, const CAP: usize> {
     _phantom: PhantomData<fn(I) -> T>,
 }
 
-impl<I: Idx, T, const CAP: usize> Deref for IndexSmallVec<I, T, CAP> {
+impl<I, T, const CAP: usize> Deref for IndexSmallVec<I, T, CAP> {
     type Target = IndexSlice<I, T>;
 
     fn deref(&self) -> &Self::Target {
         IndexSlice::from_slice(&self.data)
     }
 }
-impl<I: Idx, T, const CAP: usize> DerefMut for IndexSmallVec<I, T, CAP> {
+impl<I, T, const CAP: usize> DerefMut for IndexSmallVec<I, T, CAP> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         IndexSlice::from_mut_slice(&mut self.data)
     }
@@ -76,23 +76,29 @@ impl<I, T, const CAP: usize> Default for IndexSmallVec<I, T, CAP> {
     }
 }
 
-impl<I: Idx, T: Debug, const CAP: usize> Debug for IndexSmallVec<I, T, CAP> {
+impl<I, T: Debug, const CAP: usize> Debug for IndexSmallVec<I, T, CAP> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
 
-impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
+impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub const fn new() -> Self {
         Self {
             data: SmallVec::new_const(),
             _phantom: PhantomData,
         }
     }
-    pub fn swap_remove(&mut self, idx: I) -> T {
+    pub fn swap_remove(&mut self, idx: I) -> T
+    where
+        I: Idx,
+    {
         self.data.swap_remove(idx.into_usize())
     }
-    pub fn reserve(&mut self, additional: I) {
+    pub fn reserve(&mut self, additional: I)
+    where
+        I: Idx,
+    {
         self.data.reserve(additional.into_usize());
     }
     pub fn reserve_len(&mut self, additional: usize) {
@@ -134,29 +140,44 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn into_array_vec(self) -> SmallVec<[T; CAP]> {
         self.data
     }
-    pub fn push_get_id(&mut self, v: T) -> I {
+    pub fn push_get_id(&mut self, v: T) -> I
+    where
+        I: Idx,
+    {
         let id = self.len_idx();
         self.data.push(v);
         id
     }
-    pub fn truncate(&mut self, end: I) {
+    pub fn truncate(&mut self, end: I)
+    where
+        I: Idx,
+    {
         self.data.truncate(end.into_usize());
     }
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, std::slice::Iter<T>> {
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, std::slice::Iter<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IndexEnumerate<I, std::slice::IterMut<T>> {
+    ) -> IndexEnumerate<I, std::slice::IterMut<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn iter_enumerated_range(
         &self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, core::slice::Iter<T>> {
+    ) -> IndexEnumerate<I, core::slice::Iter<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(
             I::ZERO,
             &self.data[range.canonicalize(self.len())],
@@ -165,16 +186,25 @@ impl<I: Idx, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn iter_enumerated_range_mut(
         &mut self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
+    ) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    where
+        I: Idx,
+    {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IndexEnumerate<I, smallvec::IntoIter<[T; CAP]>> {
+    ) -> IndexEnumerate<I, smallvec::IntoIter<[T; CAP]>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data)
     }
-    pub fn indices(&self) -> IndexRange<I> {
+    pub fn indices(&self) -> IndexRange<I>
+    where
+        I: Idx,
+    {
         IndexRange::new(I::ZERO..self.len_idx())
     }
     pub fn capacity(&self) -> usize {
@@ -194,7 +224,7 @@ impl<I, T, const CAP: usize> Extend<T> for IndexSmallVec<I, T, CAP> {
     }
 }
 
-impl<I: Idx, T, const CAP: usize> IntoIterator for IndexSmallVec<I, T, CAP> {
+impl<I, T, const CAP: usize> IntoIterator for IndexSmallVec<I, T, CAP> {
     type Item = T;
 
     type IntoIter = smallvec::IntoIter<[T; CAP]>;
@@ -204,7 +234,7 @@ impl<I: Idx, T, const CAP: usize> IntoIterator for IndexSmallVec<I, T, CAP> {
     }
 }
 
-impl<'a, I: Idx, T, const CAP: usize> IntoIterator
+impl<'a, I, T, const CAP: usize> IntoIterator
     for &'a IndexSmallVec<I, T, CAP>
 {
     type Item = &'a T;
@@ -216,7 +246,7 @@ impl<'a, I: Idx, T, const CAP: usize> IntoIterator
     }
 }
 
-impl<'a, I: Idx, T, const CAP: usize> IntoIterator
+impl<'a, I, T, const CAP: usize> IntoIterator
     for &'a mut IndexSmallVec<I, T, CAP>
 {
     type Item = &'a mut T;
@@ -234,7 +264,7 @@ impl<I, T, const CAP: usize> FromIterator<T> for IndexSmallVec<I, T, CAP> {
     }
 }
 
-impl<I: Idx, T: PartialEq, const CAP: usize, const N: usize>
+impl<I, T: PartialEq, const CAP: usize, const N: usize>
     PartialEq<IndexSmallVec<I, T, CAP>> for [T; N]
 {
     fn eq(&self, other: &IndexSmallVec<I, T, CAP>) -> bool {
@@ -242,7 +272,7 @@ impl<I: Idx, T: PartialEq, const CAP: usize, const N: usize>
     }
 }
 
-impl<I: Idx, T: PartialEq, const CAP: usize, const N: usize> PartialEq<[T; N]>
+impl<I, T: PartialEq, const CAP: usize, const N: usize> PartialEq<[T; N]>
     for IndexSmallVec<I, T, CAP>
 {
     fn eq(&self, other: &[T; N]) -> bool {
@@ -250,7 +280,7 @@ impl<I: Idx, T: PartialEq, const CAP: usize, const N: usize> PartialEq<[T; N]>
     }
 }
 
-impl<I: Idx, T: PartialEq, const CAP: usize> PartialEq<IndexSlice<I, T>>
+impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSlice<I, T>>
     for IndexSmallVec<I, T, CAP>
 {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
@@ -258,23 +288,23 @@ impl<I: Idx, T: PartialEq, const CAP: usize> PartialEq<IndexSlice<I, T>>
     }
 }
 
-impl<I: Idx, T: PartialEq, const CAP: usize>
-    PartialEq<IndexSmallVec<I, T, CAP>> for IndexSlice<I, T>
+impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSmallVec<I, T, CAP>>
+    for IndexSlice<I, T>
 {
     fn eq(&self, other: &IndexSmallVec<I, T, CAP>) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<I: Idx, T: PartialEq, const CAP: usize>
-    PartialEq<IndexSmallVec<I, T, CAP>> for [T]
+impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSmallVec<I, T, CAP>>
+    for [T]
 {
     fn eq(&self, other: &IndexSmallVec<I, T, CAP>) -> bool {
         self == other.as_slice()
     }
 }
 
-impl<I: Idx, T: PartialEq, const CAP: usize> PartialEq<[T]>
+impl<I, T: PartialEq, const CAP: usize> PartialEq<[T]>
     for IndexSmallVec<I, T, CAP>
 {
     fn eq(&self, other: &[T]) -> bool {
@@ -286,7 +316,7 @@ impl<I: Idx, T: PartialEq, const CAP: usize> PartialEq<[T]>
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(feature = "serde")]
-impl<I: Idx, T, const CAP: usize> Serialize for IndexSmallVec<I, T, CAP>
+impl<I, T, const CAP: usize> Serialize for IndexSmallVec<I, T, CAP>
 where
     SmallVec<[T; CAP]>: Serialize,
 {
@@ -299,8 +329,7 @@ where
 }
 
 #[cfg(feature = "serde")]
-impl<'de, I: Idx, T, const CAP: usize> Deserialize<'de>
-    for IndexSmallVec<I, T, CAP>
+impl<'de, I, T, const CAP: usize> Deserialize<'de> for IndexSmallVec<I, T, CAP>
 where
     SmallVec<[T; CAP]>: Deserialize<'de>,
 {

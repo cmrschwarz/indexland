@@ -17,7 +17,10 @@ impl<I, BaseIter: Iterator> IndexEnumerate<I, BaseIter> {
     }
 }
 
-impl<I: Idx, IT: Iterator> Iterator for IndexEnumerate<I, IT> {
+impl<I, IT: Iterator> Iterator for IndexEnumerate<I, IT>
+where
+    I: Idx,
+{
     type Item = (I, IT::Item);
 
     fn next(&mut self) -> Option<Self::Item> {

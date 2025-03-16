@@ -148,10 +148,13 @@ impl<I> IndexRangeInclusive<I> {
     }
 }
 /// We unfortunately cannot implement the reverse:
-/// `impl<I: Idx> From<IndexRangeInclusive<I>> for RangeInclusive<I>`
+/// `impl<I> From<IndexRangeInclusive<I>> for RangeInclusive<I>`
 /// because there's no way to construct a [`RangeInclusive`] in it's exhausted
 /// state for non [`Step`](core::iter::Step) indices.
-impl<I: Idx> From<RangeInclusive<I>> for IndexRangeInclusive<I> {
+impl<I> From<RangeInclusive<I>> for IndexRangeInclusive<I>
+where
+    I: Copy,
+{
     fn from(r: RangeInclusive<I>) -> Self {
         IndexRangeInclusive::new(r)
     }

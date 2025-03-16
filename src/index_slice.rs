@@ -208,18 +208,19 @@ unsafe impl<I: Idx> GetDisjointMutIndex<I> for RangeInclusive<I> {
     }
 }
 
-impl<I: Idx, T> IndexSlice<I, T> {
+impl<I, T> IndexSlice<I, T> {
     /// # Safety
     /// Calling this method with overlapping keys is undefined behavior
     /// even if the resulting references are not used.
     #[allow(clippy::needless_pass_by_value)]
-    pub unsafe fn get_disjoint_unchecked_mut<
-        ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
-        const N: usize,
-    >(
+    pub unsafe fn get_disjoint_unchecked_mut<ISI, const N: usize>(
         &mut self,
         indices: [ISI; N],
-    ) -> [&mut ISI::Output; N] {
+    ) -> [&mut ISI::Output; N]
+    where
+        I: Idx,
+        ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
+    {
         let slice = self as *mut IndexSlice<I, T>;
         let mut arr: core::mem::MaybeUninit<[&mut ISI::Output; N]> =
             core::mem::MaybeUninit::uninit();
@@ -239,13 +240,14 @@ impl<I: Idx, T> IndexSlice<I, T> {
     }
 
     #[allow(clippy::needless_pass_by_value)]
-    pub fn get_disjoint_mut<
-        ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
-        const N: usize,
-    >(
+    pub fn get_disjoint_mut<ISI, const N: usize>(
         &mut self,
         indices: [ISI; N],
-    ) -> Result<[&mut ISI::Output; N], GetDisjointMutError> {
+    ) -> Result<[&mut ISI::Output; N], GetDisjointMutError>
+    where
+        I: Idx,
+        ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
+    {
         let len = self.len_idx();
         // NB: The optimizer should inline the loops into a sequence
         // of instructions without additional branching.
@@ -265,7 +267,7 @@ impl<I: Idx, T> IndexSlice<I, T> {
     }
 }
 
-impl<I: Idx, T: Debug> Debug for IndexSlice<I, T> {
+impl<I, T: Debug> Debug for IndexSlice<I, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
