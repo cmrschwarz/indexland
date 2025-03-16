@@ -42,18 +42,21 @@ macro_rules! index_hash_set {
 }
 
 #[cfg(feature = "std")]
+#[repr(transparent)]
 pub struct IndexHashSet<I, T, S = RandomState> {
     data: IndexSet<T, S>,
     _phantom: PhantomData<fn(I) -> T>,
 }
 
 #[cfg(not(feature = "std"))]
+#[repr(transparent)]
 pub struct IndexHashSet<I, T, S> {
     data: IndexSet<T, S>,
     _phantom: PhantomData<fn(I) -> T>,
 }
 
 #[derive(Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(transparent)]
 pub struct IndexSlice<I, T> {
     _phantom: PhantomData<fn(I) -> T>,
     #[allow(unused)]

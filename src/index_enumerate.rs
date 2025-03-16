@@ -5,7 +5,7 @@ pub struct IndexEnumerate<I, BaseIter> {
     base_iter: BaseIter,
 }
 
-impl<I: Idx, BaseIter: Iterator> IndexEnumerate<I, BaseIter> {
+impl<I, BaseIter: Iterator> IndexEnumerate<I, BaseIter> {
     pub fn new<IntoBaseIter: IntoIterator<IntoIter = BaseIter>>(
         pos: I,
         base_iter: IntoBaseIter,

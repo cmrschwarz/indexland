@@ -39,7 +39,7 @@ pub unsafe trait GetDisjointMutIndex<I>: Clone {
     fn is_overlapping(&self, other: &Self) -> bool;
 }
 
-impl<I: Idx, T> IndexSlice<I, T> {
+impl<I, T> IndexSlice<I, T> {
     #[inline]
     pub fn from_slice(s: &[T]) -> &Self {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
@@ -109,10 +109,16 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn len(&self) -> usize {
         self.data.len()
     }
-    pub fn len_idx(&self) -> I {
+    pub fn len_idx(&self) -> I
+    where
+        I: Idx,
+    {
         I::from_usize(self.data.len())
     }
-    pub fn last_idx(&self) -> Option<I> {
+    pub fn last_idx(&self) -> Option<I>
+    where
+        I: Idx,
+    {
         self.len().checked_sub(1).map(I::from_usize)
     }
     pub fn first(&self) -> Option<&T> {
@@ -133,10 +139,16 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         &mut self.data
     }
-    pub fn get(&self, idx: I) -> Option<&T> {
+    pub fn get(&self, idx: I) -> Option<&T>
+    where
+        I: Idx,
+    {
         self.data.get(idx.into_usize())
     }
-    pub fn get_mut(&mut self, idx: I) -> Option<&mut T> {
+    pub fn get_mut(&mut self, idx: I) -> Option<&mut T>
+    where
+        I: Idx,
+    {
         self.data.get_mut(idx.into_usize())
     }
     pub fn iter(&self) -> core::slice::Iter<T> {
@@ -148,7 +160,10 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn split_at_mut(
         &mut self,
         idx: I,
-    ) -> (&mut IndexSlice<I, T>, &mut IndexSlice<I, T>) {
+    ) -> (&mut IndexSlice<I, T>, &mut IndexSlice<I, T>)
+    where
+        I: Idx,
+    {
         let (l, r) = self.data.split_at_mut(idx.into_usize());
         (IndexSlice::from_mut_slice(l), IndexSlice::from_mut_slice(r))
     }
@@ -266,16 +281,16 @@ impl<I, T, Idx: IndexSliceIndex<IndexSlice<I, T>>> Index<Idx>
     }
 }
 
-impl<I, T, Idx: IndexSliceIndex<IndexSlice<I, T>>> IndexMut<Idx>
+impl<I, T, ISI: IndexSliceIndex<IndexSlice<I, T>>> IndexMut<ISI>
     for IndexSlice<I, T>
 {
     #[inline]
-    fn index_mut(&mut self, index: Idx) -> &mut Self::Output {
+    fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
         index.index_mut(self)
     }
 }
 
-impl<'a, I: Idx, T> IntoIterator for &'a IndexSlice<I, T> {
+impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
     type Item = &'a T;
 
     type IntoIter = core::slice::Iter<'a, T>;
@@ -285,7 +300,7 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexSlice<I, T> {
     }
 }
 
-impl<'a, I: Idx, T> IntoIterator for &'a mut IndexSlice<I, T> {
+impl<'a, I, T> IntoIterator for &'a mut IndexSlice<I, T> {
     type Item = &'a mut T;
 
     type IntoIter = core::slice::IterMut<'a, T>;
@@ -295,51 +310,47 @@ impl<'a, I: Idx, T> IntoIterator for &'a mut IndexSlice<I, T> {
     }
 }
 
-impl<I: Idx, T: PartialEq, const N: usize> PartialEq<IndexSlice<I, T>>
-    for [T; N]
-{
+impl<I, T: PartialEq, const N: usize> PartialEq<IndexSlice<I, T>> for [T; N] {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
         self.as_slice() == &other.data
     }
 }
 
-impl<I: Idx, T: PartialEq, const N: usize> PartialEq<[T; N]>
-    for IndexSlice<I, T>
-{
+impl<I, T: PartialEq, const N: usize> PartialEq<[T; N]> for IndexSlice<I, T> {
     fn eq(&self, other: &[T; N]) -> bool {
         &self.data == other.as_slice()
     }
 }
 
-impl<I: Idx, T: PartialEq> PartialEq<IndexSlice<I, T>> for [T] {
+impl<I, T: PartialEq> PartialEq<IndexSlice<I, T>> for [T] {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
         self == &other.data
     }
 }
 
-impl<I: Idx, T: PartialEq> PartialEq<[T]> for IndexSlice<I, T> {
+impl<I, T: PartialEq> PartialEq<[T]> for IndexSlice<I, T> {
     fn eq(&self, other: &[T]) -> bool {
         &self.data == other
     }
 }
 
-impl<'a, I: Idx, T> From<&'a IndexSlice<I, T>> for &'a [T] {
+impl<'a, I, T> From<&'a IndexSlice<I, T>> for &'a [T] {
     fn from(value: &'a IndexSlice<I, T>) -> Self {
         value.as_slice()
     }
 }
-impl<'a, I: Idx, T> From<&'a mut IndexSlice<I, T>> for &'a mut [T] {
+impl<'a, I, T> From<&'a mut IndexSlice<I, T>> for &'a mut [T] {
     fn from(value: &'a mut IndexSlice<I, T>) -> Self {
         value.as_mut_slice()
     }
 }
 
-impl<'a, I: Idx, T> From<&'a [T]> for &'a IndexSlice<I, T> {
+impl<'a, I, T> From<&'a [T]> for &'a IndexSlice<I, T> {
     fn from(value: &'a [T]) -> Self {
         IndexSlice::from_slice(value)
     }
 }
-impl<'a, I: Idx, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
+impl<'a, I, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
     fn from(value: &'a mut [T]) -> Self {
         IndexSlice::from_mut_slice(value)
     }

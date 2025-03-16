@@ -5,6 +5,7 @@ use crate::{
 };
 
 use core::{
+    borrow::{Borrow, BorrowMut},
     fmt::Debug,
     marker::PhantomData,
     ops::{Deref, DerefMut},
@@ -130,7 +131,7 @@ where
     }
 }
 
-impl<I: Idx, T, const N: usize> IndexArray<I, T, N> {
+impl<I, T, const N: usize> IndexArray<I, T, N> {
     pub const fn new(data: [T; N]) -> Self {
         Self {
             data,
@@ -168,33 +169,49 @@ impl<I: Idx, T, const N: usize> IndexArray<I, T, N> {
         self.data.each_mut().into()
     }
 
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>> {
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
+    ) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, &mut self.data)
     }
     pub fn iter_enumerated_range<R: IndexRangeBounds<I>>(
         &self,
         range: R,
-    ) -> IndexEnumerate<I, core::slice::Iter<T>> {
+    ) -> IndexEnumerate<I, core::slice::Iter<T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(
             I::ZERO,
             &self.data[range.canonicalize(self.len())],
         )
     }
-    pub fn iter_enumerated_range_mut<R: IndexRangeBounds<I>>(
+    pub fn iter_enumerated_range_mut<R>(
         &mut self,
         range: R,
-    ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
+    ) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    where
+        I: Idx,
+        R: IndexRangeBounds<I>,
+    {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IndexEnumerate<I, core::array::IntoIter<T, N>> {
+    ) -> IndexEnumerate<I, core::array::IntoIter<T, N>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(I::ZERO, self.data)
     }
     pub fn into_array(self) -> [T; N] {
@@ -202,18 +219,44 @@ impl<I: Idx, T, const N: usize> IndexArray<I, T, N> {
     }
 }
 
-impl<I: Idx, T, const LEN: usize> From<[T; LEN]> for IndexArray<I, T, LEN> {
+impl<I, T, const LEN: usize> From<[T; LEN]> for IndexArray<I, T, LEN> {
     fn from(value: [T; LEN]) -> Self {
         Self::new(value)
     }
 }
-impl<I: Idx, T, const LEN: usize> From<IndexArray<I, T, LEN>> for [T; LEN] {
+impl<I, T, const LEN: usize> From<IndexArray<I, T, LEN>> for [T; LEN] {
     fn from(value: IndexArray<I, T, LEN>) -> Self {
         value.data
     }
 }
 
-impl<I: Idx, T, const LEN: usize> Deref for IndexArray<I, T, LEN> {
+impl<I, T, const N: usize> AsMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
+    fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
+    }
+}
+
+impl<I, T, const N: usize> AsRef<IndexSlice<I, T>> for IndexArray<I, T, N> {
+    fn as_ref(&self) -> &IndexSlice<I, T> {
+        self.as_index_slice()
+    }
+}
+
+impl<I, T, const N: usize> Borrow<IndexSlice<I, T>> for IndexArray<I, T, N> {
+    fn borrow(&self) -> &IndexSlice<I, T> {
+        self.as_index_slice()
+    }
+}
+
+impl<I, T, const N: usize> BorrowMut<IndexSlice<I, T>>
+    for IndexArray<I, T, N>
+{
+    fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
+    }
+}
+
+impl<I, T, const LEN: usize> Deref for IndexArray<I, T, LEN> {
     type Target = IndexSlice<I, T>;
 
     fn deref(&self) -> &Self::Target {
@@ -221,19 +264,19 @@ impl<I: Idx, T, const LEN: usize> Deref for IndexArray<I, T, LEN> {
     }
 }
 
-impl<I: Idx, T, const LEN: usize> DerefMut for IndexArray<I, T, LEN> {
+impl<I, T, const LEN: usize> DerefMut for IndexArray<I, T, LEN> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_mut_index_slice()
     }
 }
 
-impl<I: Idx, T: Debug, const LEN: usize> Debug for IndexArray<I, T, LEN> {
+impl<I, T: Debug, const LEN: usize> Debug for IndexArray<I, T, LEN> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
 
-impl<I: Idx, T, const LEN: usize> IntoIterator for IndexArray<I, T, LEN> {
+impl<I, T, const LEN: usize> IntoIterator for IndexArray<I, T, LEN> {
     type Item = T;
 
     type IntoIter = core::array::IntoIter<T, LEN>;
@@ -243,9 +286,7 @@ impl<I: Idx, T, const LEN: usize> IntoIterator for IndexArray<I, T, LEN> {
     }
 }
 
-impl<'a, I: Idx, T, const LEN: usize> IntoIterator
-    for &'a IndexArray<I, T, LEN>
-{
+impl<'a, I, T, const LEN: usize> IntoIterator for &'a IndexArray<I, T, LEN> {
     type Item = &'a T;
 
     type IntoIter = core::slice::Iter<'a, T>;
@@ -255,7 +296,7 @@ impl<'a, I: Idx, T, const LEN: usize> IntoIterator
     }
 }
 
-impl<'a, I: Idx, T, const LEN: usize> IntoIterator
+impl<'a, I, T, const LEN: usize> IntoIterator
     for &'a mut IndexArray<I, T, LEN>
 {
     type Item = &'a mut T;
@@ -267,7 +308,7 @@ impl<'a, I: Idx, T, const LEN: usize> IntoIterator
     }
 }
 
-impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
+impl<I, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
     for [T; LEN]
 {
     fn eq(&self, other: &IndexArray<I, T, LEN>) -> bool {
@@ -275,7 +316,7 @@ impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
     }
 }
 
-impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<[T; LEN]>
+impl<I, T: PartialEq, const LEN: usize> PartialEq<[T; LEN]>
     for IndexArray<I, T, LEN>
 {
     fn eq(&self, other: &[T; LEN]) -> bool {
@@ -283,7 +324,7 @@ impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<[T; LEN]>
     }
 }
 
-impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
+impl<I, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
     for [T]
 {
     fn eq(&self, other: &IndexArray<I, T, LEN>) -> bool {
@@ -291,7 +332,7 @@ impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
     }
 }
 
-impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<[T]>
+impl<I, T: PartialEq, const LEN: usize> PartialEq<[T]>
     for IndexArray<I, T, LEN>
 {
     fn eq(&self, other: &[T]) -> bool {
@@ -303,7 +344,7 @@ impl<I: Idx, T: PartialEq, const LEN: usize> PartialEq<[T]>
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(feature = "serde")]
-impl<I: Idx, T, const LEN: usize> Serialize for IndexArray<I, T, LEN>
+impl<I, T, const LEN: usize> Serialize for IndexArray<I, T, LEN>
 where
     [T; LEN]: Serialize,
 {
@@ -316,8 +357,7 @@ where
 }
 
 #[cfg(feature = "serde")]
-impl<'de, I: Idx, T, const LEN: usize> Deserialize<'de>
-    for IndexArray<I, T, LEN>
+impl<'de, I, T, const LEN: usize> Deserialize<'de> for IndexArray<I, T, LEN>
 where
     [T; LEN]: Deserialize<'de>,
 {

@@ -23,6 +23,7 @@ macro_rules! index_array_vec {
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
 pub struct IndexArrayVec<I, T, const CAP: usize> {
     data: ArrayVec<T, CAP>,
     _phantom: PhantomData<fn(I) -> T>,

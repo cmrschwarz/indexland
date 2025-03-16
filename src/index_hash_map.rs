@@ -37,6 +37,7 @@ macro_rules! index_hash_map {
 use std::collections::hash_map::RandomState;
 
 #[cfg(feature = "std")]
+#[repr(transparent)]
 #[derive(Clone)]
 pub struct IndexHashMap<I, K, V, S = RandomState> {
     data: IndexMap<K, V, S>,
@@ -44,12 +45,14 @@ pub struct IndexHashMap<I, K, V, S = RandomState> {
 }
 
 #[cfg(not(feature = "std"))]
+#[repr(transparent)]
 #[derive(Clone)]
 pub struct IndexHashMap<I, K, V, S> {
     data: IndexMap<K, V, S>,
     _phantom: PhantomData<fn(I) -> (K, V)>,
 }
 
+#[repr(transparent)]
 pub struct IndexHashMapSlice<I, K, V> {
     _phantom: PhantomData<fn(I) -> (K, V)>,
     #[allow(unused)]
