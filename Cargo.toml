@@ -127,4 +127,6 @@ rustdoc-args = [
 name = "doubly_linked_list"
 required-features = ["nonmax"]
 
-[package.metadata.xtask]
+[[example]]
+name = "graph_a_star"
+required-features = ["nonmax"]
