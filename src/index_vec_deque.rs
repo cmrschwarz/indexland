@@ -146,7 +146,7 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn as_vec_deque(&self) -> &VecDeque<T> {
         &self.data
     }
-    pub fn as_vec_deque_mut(&mut self) -> &mut VecDeque<T> {
+    pub fn as_mut_vec_deque(&mut self) -> &mut VecDeque<T> {
         &mut self.data
     }
     pub fn push_back_get_id(&mut self, v: T) -> I {
@@ -194,14 +194,14 @@ impl<I: Idx, T> IndexVecDeque<I, T> {
     pub fn as_slices(&self) -> (&[T], &[T]) {
         self.data.as_slices()
     }
-    pub fn as_slices_mut(&mut self) -> (&mut [T], &mut [T]) {
+    pub fn as_mut_slices(&mut self) -> (&mut [T], &mut [T]) {
         self.data.as_mut_slices()
     }
     pub fn as_index_slices(&self) -> (&IndexSlice<I, T>, &IndexSlice<I, T>) {
         let (s1, s2) = self.data.as_slices();
         (IndexSlice::from_slice(s1), IndexSlice::from_slice(s2))
     }
-    pub fn as_index_slices_mut(
+    pub fn as_mut_index_slices(
         &mut self,
     ) -> (&IndexSlice<I, T>, &IndexSlice<I, T>) {
         let (s1, s2) = self.data.as_mut_slices();

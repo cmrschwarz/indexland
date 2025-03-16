@@ -12,8 +12,8 @@ use core::{
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct IndexArray<I, T, const LEN: usize> {
-    data: [T; LEN],
+pub struct IndexArray<I, T, const N: usize> {
+    data: [T; N],
     _phantom: PhantomData<fn(I) -> T>,
 }
 
@@ -118,9 +118,9 @@ macro_rules! enum_index_array {
     };
 }
 
-impl<I, T, const LEN: usize> Default for IndexArray<I, T, LEN>
+impl<I, T, const N: usize> Default for IndexArray<I, T, N>
 where
-    [T; LEN]: Default,
+    [T; N]: Default,
 {
     fn default() -> Self {
         Self {
@@ -130,31 +130,44 @@ where
     }
 }
 
-impl<I: Idx, T, const LEN: usize> IndexArray<I, T, LEN> {
-    pub const fn new(data: [T; LEN]) -> Self {
+impl<I: Idx, T, const N: usize> IndexArray<I, T, N> {
+    pub const fn new(data: [T; N]) -> Self {
         Self {
             data,
             _phantom: PhantomData,
         }
     }
-    pub fn as_array(&self) -> &[T; LEN] {
+    pub fn map<F, U>(self, f: F) -> [U; N]
+    where
+        F: FnMut(T) -> U,
+    {
+        self.data.map(f)
+    }
+    pub fn as_array(&self) -> &[T; N] {
         &self.data
     }
-    pub fn as_array_mut(&mut self) -> &mut [T; LEN] {
+    pub fn as_mut_array(&mut self) -> &mut [T; N] {
         &mut self.data
     }
     pub fn as_slice(&self) -> &[T] {
         &self.data
     }
-    pub fn as_slice_mut(&mut self) -> &mut [T] {
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
         &mut self.data
     }
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
         IndexSlice::from_slice(&self.data)
     }
-    pub fn as_index_slice_mut(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_slice_mut(&mut self.data)
+    pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
+        IndexSlice::from_mut_slice(&mut self.data)
     }
+    pub fn each_ref(&self) -> IndexArray<I, &T, N> {
+        self.data.each_ref().into()
+    }
+    pub fn each_mut(&mut self) -> IndexArray<I, &mut T, N> {
+        self.data.each_mut().into()
+    }
+
     pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>> {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
@@ -181,10 +194,10 @@ impl<I: Idx, T, const LEN: usize> IndexArray<I, T, LEN> {
     }
     pub fn into_iter_enumerated(
         self,
-    ) -> IndexEnumerate<I, core::array::IntoIter<T, LEN>> {
+    ) -> IndexEnumerate<I, core::array::IntoIter<T, N>> {
         IndexEnumerate::new(I::ZERO, self.data)
     }
-    pub fn into_array(self) -> [T; LEN] {
+    pub fn into_array(self) -> [T; N] {
         self.data
     }
 }
@@ -210,7 +223,7 @@ impl<I: Idx, T, const LEN: usize> Deref for IndexArray<I, T, LEN> {
 
 impl<I: Idx, T, const LEN: usize> DerefMut for IndexArray<I, T, LEN> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.as_index_slice_mut()
+        self.as_mut_index_slice()
     }
 }
 

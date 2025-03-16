@@ -45,7 +45,7 @@ impl<I: Idx, T> IndexSlice<I, T> {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline]
-    pub fn from_slice_mut(s: &mut [T]) -> &mut Self {
+    pub fn from_mut_slice(s: &mut [T]) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[cfg(feature = "alloc")]
@@ -130,7 +130,7 @@ impl<I: Idx, T> IndexSlice<I, T> {
     pub fn as_slice(&self) -> &[T] {
         &self.data
     }
-    pub fn as_slice_mut(&mut self) -> &mut [T] {
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
         &mut self.data
     }
     pub fn get(&self, idx: I) -> Option<&T> {
@@ -150,7 +150,7 @@ impl<I: Idx, T> IndexSlice<I, T> {
         idx: I,
     ) -> (&mut IndexSlice<I, T>, &mut IndexSlice<I, T>) {
         let (l, r) = self.data.split_at_mut(idx.into_usize());
-        (IndexSlice::from_slice_mut(l), IndexSlice::from_slice_mut(r))
+        (IndexSlice::from_mut_slice(l), IndexSlice::from_mut_slice(r))
     }
 }
 
@@ -330,7 +330,7 @@ impl<'a, I: Idx, T> From<&'a IndexSlice<I, T>> for &'a [T] {
 }
 impl<'a, I: Idx, T> From<&'a mut IndexSlice<I, T>> for &'a mut [T] {
     fn from(value: &'a mut IndexSlice<I, T>) -> Self {
-        value.as_slice_mut()
+        value.as_mut_slice()
     }
 }
 
@@ -341,7 +341,7 @@ impl<'a, I: Idx, T> From<&'a [T]> for &'a IndexSlice<I, T> {
 }
 impl<'a, I: Idx, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
     fn from(value: &'a mut [T]) -> Self {
-        IndexSlice::from_slice_mut(value)
+        IndexSlice::from_mut_slice(value)
     }
 }
 

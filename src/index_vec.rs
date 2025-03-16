@@ -44,7 +44,7 @@ impl<I: Idx, T> Deref for IndexVec<I, T> {
 }
 impl<I: Idx, T> DerefMut for IndexVec<I, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        IndexSlice::from_slice_mut(&mut self.data)
+        IndexSlice::from_mut_slice(&mut self.data)
     }
 }
 
@@ -130,7 +130,7 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn as_vec(&self) -> &Vec<T> {
         &self.data
     }
-    pub fn as_vec_mut(&mut self) -> &mut Vec<T> {
+    pub fn as_mut_vec(&mut self) -> &mut Vec<T> {
         &mut self.data
     }
     pub fn into_boxed_slice(self) -> Box<IndexSlice<I, T>> {
@@ -179,8 +179,8 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
         IndexSlice::from_slice(&self.data)
     }
-    pub fn as_index_slice_mut(&mut self) -> &IndexSlice<I, T> {
-        IndexSlice::from_slice_mut(&mut self.data)
+    pub fn as_mut_index_slice(&mut self) -> &IndexSlice<I, T> {
+        IndexSlice::from_mut_slice(&mut self.data)
     }
 }
 
@@ -293,7 +293,7 @@ impl<I: Idx, T> Index<Range<I>> for IndexVec<I, T> {
 
 impl<I: Idx, T> IndexMut<Range<I>> for IndexVec<I, T> {
     fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
-        IndexSlice::from_slice_mut(
+        IndexSlice::from_mut_slice(
             &mut self.data[index.start.into_usize()..index.end.into_usize()],
         )
     }

@@ -328,7 +328,7 @@ impl<I: Idx, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn as_index_map(&self) -> &IndexMap<K, V, S> {
         &self.data
     }
-    pub fn as_index_map_mut(&mut self) -> &mut IndexMap<K, V, S> {
+    pub fn as_mut_index_map(&mut self) -> &mut IndexMap<K, V, S> {
         &mut self.data
     }
 

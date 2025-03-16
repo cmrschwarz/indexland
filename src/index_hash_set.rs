@@ -66,7 +66,7 @@ impl<I, T> IndexSlice<I, T> {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline]
-    fn from_slice_mut(s: &mut Slice<T>) -> &mut Self {
+    fn from_mut_slice(s: &mut Slice<T>) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[inline]
@@ -185,7 +185,7 @@ impl<'a, I, T> From<&'a IndexSlice<I, T>> for &'a Slice<T> {
 }
 impl<'a, I, T> From<&'a mut Slice<T>> for &'a mut IndexSlice<I, T> {
     fn from(data: &'a mut Slice<T>) -> Self {
-        IndexSlice::from_slice_mut(data)
+        IndexSlice::from_mut_slice(data)
     }
 }
 impl<'a, I, T> From<&'a mut IndexSlice<I, T>> for &'a mut Slice<T> {
@@ -443,7 +443,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
 
     /// NOTE: in case you need the `difference` of an `IndexHashSet`
-    /// with an `IndexSet` you can use `index_hash_set.as_index_set_mut().difference(index_set)`
+    /// with an `IndexSet` you can use `index_hash_set.as_mut_index_set().difference(index_set)`
     pub fn difference<'a, I2, S2>(
         &'a self,
         other: &'a IndexHashSet<I2, T, S2>,
@@ -457,7 +457,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
 
     /// NOTE: in case you need the `symmetric_difference` of an `IndexHashSet`
-    /// with an `IndexSet` you can use `index_hash_set.as_index_set_mut().symmetric_difference(index_set)`
+    /// with an `IndexSet` you can use `index_hash_set.as_mut_index_set().symmetric_difference(index_set)`
     pub fn symmetric_difference<'a, I2, S2>(
         &'a self,
         other: &'a IndexHashSet<I2, T, S2>,
@@ -471,7 +471,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
 
     /// NOTE: in case you need to intersect an `IndexHashSet` with an `IndexSet`
-    /// you can use `index_hash_set.as_index_set_mut().intersection(index_set)`
+    /// you can use `index_hash_set.as_mut_index_set().intersection(index_set)`
     pub fn intersection<'a, I2, S2>(
         &'a self,
         other: &'a IndexHashSet<I2, T, S2>,
@@ -485,7 +485,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
 
     /// NOTE: in case you need to `union` an `IndexHashSet` with an `IndexSet`
-    /// you can use `index_hash_set.as_index_set_mut().union(index_set)`
+    /// you can use `index_hash_set.as_mut_index_set().union(index_set)`
     pub fn union<'a, I2, S2>(
         &'a self,
         other: &'a IndexHashSet<I2, T, S2>,
@@ -514,7 +514,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
 
     /// NOTE: to `append` to an `IndexHashSet` with an `IndexSet`
-    /// you can use `index_hash_set.as_index_set_mut().append(index_set)`
+    /// you can use `index_hash_set.as_mut_index_set().append(index_set)`
     pub fn append<I2, S2>(&mut self, other: &mut IndexHashSet<I2, T, S2>)
     where
         T: Hash + Eq,
@@ -763,7 +763,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
 
     /// NOTE: to call `is_disjoint` on an `IndexHashSet` with an `IndexSet`
-    /// you can use `index_hash_set.as_index_set_mut().is_disjoint(index_set)`
+    /// you can use `index_hash_set.as_mut_index_set().is_disjoint(index_set)`
     pub fn is_disjoint<I2, S2>(&self, other: &IndexHashSet<I2, T, S2>) -> bool
     where
         T: Eq + Hash,
@@ -775,7 +775,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
 
     /// NOTE: to call `is_subset` on an `IndexHashSet` with an `IndexSet`
-    /// you can use `index_hash_set.as_index_set_mut().is_subset(index_set)`
+    /// you can use `index_hash_set.as_mut_index_set().is_subset(index_set)`
     pub fn is_subset<I2, S2>(&self, other: &IndexHashSet<I2, T, S2>) -> bool
     where
         T: Eq + Hash,
@@ -787,7 +787,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     }
 
     /// NOTE: to `is_superset` to an `IndexHashSet` with an `IndexSet`
-    /// you can use `index_hash_set.as_index_set_mut().is_superset(index_set)`
+    /// you can use `index_hash_set.as_mut_index_set().is_superset(index_set)`
     pub fn is_superset<I2, S2>(&self, other: &IndexHashSet<I2, T, S2>) -> bool
     where
         T: Eq + Hash,
@@ -801,7 +801,7 @@ impl<I: Idx, T, S> IndexHashSet<I, T, S> {
     pub fn as_index_set(&self) -> &IndexSet<T, S> {
         &self.data
     }
-    pub fn as_index_set_mut(&mut self) -> &mut IndexSet<T, S> {
+    pub fn as_mut_index_set(&mut self) -> &mut IndexSet<T, S> {
         &mut self.data
     }
 

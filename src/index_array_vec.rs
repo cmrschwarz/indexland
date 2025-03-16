@@ -37,7 +37,7 @@ impl<I: Idx, T, const CAP: usize> Deref for IndexArrayVec<I, T, CAP> {
 }
 impl<I: Idx, T, const CAP: usize> DerefMut for IndexArrayVec<I, T, CAP> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        IndexSlice::from_slice_mut(&mut self.data)
+        IndexSlice::from_mut_slice(&mut self.data)
     }
 }
 
@@ -140,7 +140,7 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn as_array_vec(&self) -> &ArrayVec<T, CAP> {
         &self.data
     }
-    pub fn as_array_vec_mut(&mut self) -> &mut ArrayVec<T, CAP> {
+    pub fn as_mut_array_vec(&mut self) -> &mut ArrayVec<T, CAP> {
         &mut self.data
     }
     pub fn into_array_vec(self) -> ArrayVec<T, CAP> {
@@ -192,8 +192,8 @@ impl<I: Idx, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
         IndexSlice::from_slice(&self.data)
     }
-    pub fn as_index_slice_mut(&mut self) -> &IndexSlice<I, T> {
-        IndexSlice::from_slice_mut(&mut self.data)
+    pub fn as_mut_index_slice(&mut self) -> &IndexSlice<I, T> {
+        IndexSlice::from_mut_slice(&mut self.data)
     }
 }
 
