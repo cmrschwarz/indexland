@@ -53,6 +53,7 @@ pub struct IndexHashSet<I, T, S> {
     _phantom: PhantomData<fn(I) -> T>,
 }
 
+#[derive(Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct IndexSlice<I, T> {
     _phantom: PhantomData<fn(I) -> T>,
     #[allow(unused)]
@@ -61,26 +62,23 @@ pub struct IndexSlice<I, T> {
 
 impl<I, T> IndexSlice<I, T> {
     #[inline]
-    pub fn from_slice(s: &Slice<T>) -> &Self {
+    fn from_slice(s: &Slice<T>) -> &Self {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline]
-    pub fn from_slice_mut(s: &mut Slice<T>) -> &mut Self {
+    fn from_slice_mut(s: &mut Slice<T>) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[inline]
-    pub fn into_slice(s: &Self) -> &Slice<T> {
+    fn into_slice(s: &Self) -> &Slice<T> {
         unsafe { &*(core::ptr::from_ref(s) as *const Slice<T>) }
     }
     #[inline]
-    pub fn into_slice_mut(s: &mut Self) -> &mut Slice<T> {
+    fn into_slice_mut(s: &mut Self) -> &mut Slice<T> {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Slice<T>) }
     }
-    pub fn from_boxed_slice(slice_box: Box<Slice<T>>) -> Box<Self> {
+    fn from_boxed_slice(slice_box: Box<Slice<T>>) -> Box<Self> {
         unsafe { Box::from_raw(Box::into_raw(slice_box) as *mut Self) }
-    }
-    pub fn into_boxed_slice(self: Box<Self>) -> Box<Slice<T>> {
-        unsafe { Box::from_raw(Box::into_raw(self) as *mut Slice<T>) }
     }
     pub fn len(&self) -> usize {
         self.data.len()
@@ -93,6 +91,85 @@ impl<I, T> IndexSlice<I, T> {
     }
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
+    }
+    pub fn get_index(&self, index: I) -> Option<&T>
+    where
+        I: Idx,
+    {
+        self.data.get_index(index.into_usize())
+    }
+
+    pub fn get_range<R: IndexRangeBounds<I>>(
+        &self,
+        range: R,
+    ) -> Option<&Self> {
+        Some(Self::from_slice(
+            self.data.get_range(range.canonicalize(self.len()))?,
+        ))
+    }
+
+    pub fn first(&self) -> Option<&T> {
+        self.data.first()
+    }
+
+    pub fn last(&self) -> Option<&T> {
+        self.data.last()
+    }
+
+    pub fn split_at(&self, index: I) -> (&Self, &Self)
+    where
+        I: Idx,
+    {
+        let (a, b) = self.data.split_at(index.into_usize());
+
+        (Self::from_slice(a), Self::from_slice(b))
+    }
+
+    pub fn split_first(&self) -> Option<(&T, &Self)> {
+        let (first, rest) = self.data.split_first()?;
+        Some((first, Self::from_slice(rest)))
+    }
+
+    pub fn split_last(&self) -> Option<(&T, &Self)> {
+        let (first, rest) = self.data.split_last()?;
+        Some((first, Self::from_slice(rest)))
+    }
+
+    pub fn iter(&self) -> indexmap::set::Iter<T> {
+        self.data.iter()
+    }
+
+    pub fn binary_search(&self, x: &T) -> Result<usize, usize>
+    where
+        T: Ord,
+    {
+        self.data.binary_search(x)
+    }
+
+    pub fn binary_search_by<'a, F>(&'a self, f: F) -> Result<usize, usize>
+    where
+        F: FnMut(&'a T) -> Ordering,
+    {
+        self.data.binary_search_by(f)
+    }
+
+    pub fn binary_search_by_key<'a, B, F>(
+        &'a self,
+        b: &B,
+        f: F,
+    ) -> Result<usize, usize>
+    where
+        F: FnMut(&'a T) -> B,
+        B: Ord,
+    {
+        self.data.binary_search_by_key(b, f)
+    }
+
+    pub fn partition_point<P>(&self, pred: P) -> usize
+    where
+        P: FnMut(&T) -> bool,
+    {
+        self.data.partition_point(pred)
     }
 }
 
@@ -116,6 +193,46 @@ impl<'a, I, T> From<&'a mut IndexSlice<I, T>> for &'a mut Slice<T> {
         IndexSlice::into_slice_mut(data)
     }
 }
+
+impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
+    type Item = &'a T;
+
+    type IntoIter = indexmap::set::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.into_iter()
+    }
+}
+
+impl<I: Idx, T> Index<I> for IndexSlice<I, T> {
+    type Output = T;
+    fn index(&self, index: I) -> &Self::Output {
+        &self.data[index.into_usize()]
+    }
+}
+
+macro_rules! range_impls {
+    ($($range: path),* $(,)?) => {$(
+        impl<I: Idx, T> Index<$range> for IndexSlice<I, T> {
+            type Output = IndexSlice<I, T>;
+            fn index(&self, index: $range) -> &Self::Output {
+                let range = IndexRangeBounds::<I>::canonicalize(index, self.len());
+                IndexSlice::from_slice(&self.data[range])
+            }
+        }
+    )*};
+}
+range_impls![
+    core::ops::Range<I>,
+    core::ops::RangeInclusive<I>,
+    core::ops::RangeFrom<I>,
+    core::ops::RangeTo<I>,
+    core::ops::RangeToInclusive<I>,
+    core::ops::RangeFull,
+    indexland::IndexRange<I>,
+    indexland::IndexRangeInclusive<I>,
+    indexland::IndexRangeFrom<I>,
+];
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
@@ -851,16 +968,21 @@ impl<I: Idx, T, S: BuildHasher> Index<I> for IndexHashSet<I, T, S> {
     }
 }
 
-impl<I, T, R: IndexRangeBounds<I>> Index<R> for IndexSlice<I, T> {
-    type Output = IndexSlice<I, T>;
-    fn index(&self, index: R) -> &Self::Output {
-        let range = index.canonicalize(self.len());
-        IndexSlice::from_slice(&self.data[range])
-    }
-}
-
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+#[cfg(feature = "serde")]
+impl<I, T> Serialize for IndexSlice<I, T>
+where
+    Slice<T>: Serialize,
+{
+    fn serialize<SR: Serializer>(
+        &self,
+        serializer: SR,
+    ) -> Result<SR::Ok, SR::Error> {
+        self.data.serialize(serializer)
+    }
+}
 
 #[cfg(feature = "serde")]
 impl<I, T, S> Serialize for IndexHashSet<I, T, S>

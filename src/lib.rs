@@ -71,7 +71,9 @@ pub use crate::{
 
 // structs
 #[doc(inline)]
-pub use crate::index_range::IndexRange;
+pub use crate::index_range::{
+    IndexRange, IndexRangeFrom, IndexRangeInclusive,
+};
 
 #[doc(inline)]
 pub use index_slice::IndexSlice;
