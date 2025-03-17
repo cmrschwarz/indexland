@@ -73,7 +73,7 @@ default-features = false
 derive_more = { version = "2.0.1", features = ["full"] }
 
 [features]
-default = ["std", "derive", "arrayvec"]
+default = ["std", "derive"]
 
 full = ["std", "derive", "nonmax", "arrayvec", "smallvec", "indexmap", "serde"]
 

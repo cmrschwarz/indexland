@@ -17,8 +17,10 @@ Newtype Index Support for Rust Collection Types.
 ## Features
 - Strongly typed collection indices for better type safety and readability.
 
-- All array based `std::collections` wrapped in one place through a single
-  [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) trait.
+- All array-based `std::collections` wrapped in one place through a single
+  [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) trait,
+
+  with optional support for the popular `arrayvec`, `smallvec`, and `indexmap` crates.
 
 - All underlying APIs faithfully adapted for `Idx` types.
 
@@ -57,34 +59,29 @@ const STATUS_MESSAGE: EnumIndexArray<Status, &str> = enum_index_array![
 let message = STATUS_MESSAGE[Status::Running];
 ```
 
-## Indexable Collection Wrappers
-- [`IndexSlice<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexSlice.html)
-  wrapping [`[T]`](https://doc.rust-lang.org/std/primitive.slice.html)
-- [`IndexArray<I, T, N>`](https://docs.rs/indexland/latest/indexland/struct.IndexArray.html)
-  wrapping [`[T; N]`](https://doc.rust-lang.org/std/primitive.array.html)
-  (Convenience alias
-  [`EnumIndexArray<E, T>`](https://docs.rs/indexland/latest/indexland/type.EnumIndexArray.html))
-- [`IndexVec<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexVec.html)
-  wrapping [`Vec<T>`](https://doc.rust-lang.org/std/vec/struct.Vec.html)
-- [`IndexVecDeque<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexVecDeque.html)
-  wrapping[`VecDeque<T>`](https://doc.rust-lang.org/std/collections/struct.VecDeque.html)
-- [`IndexSmallVec<I, T, CAP>`](https://docs.rs/indexland/latest/indexland/struct.IndexSmallVec.html)
-  wrapping [`smallvec::SmallVec<[T; CAP]>`](https://docs.rs/smallvec/latest/smallvec/struct.SmallVec.html) (optional)
-- [`IndexArrayVec<I, T, CAP>`](https://docs.rs/indexland/latest/indexland/struct.IndexArrayVec.html)
-  wrapping [`arrayvec::ArrayVec<T, CAP>`](https://docs.rs/arrayvec/latest/arrayvec/struct.ArrayVec.html) (optional)
-- [`IndexHashMap<I, K, V>`](https://docs.rs/indexland/latest/indexland/struct.IndexHashMap.html)
-  wrapping [`indexmap::IndexMap<K, V>`](https://docs.rs/indexmap/latest/indexmap/map/struct.IndexMap.html) (optional)
-- [`IndexHashSet<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexHashSet.html)
-  wrapping [`indexmap::IndexSet<T>`](https://docs.rs/indexmap/latest/indexmap/set/struct.IndexSet.html) (optional)
+## Supported Collections
 
+| `indexland` | Base Collection | Feature Flag |
+|----------|-----------------------|:------------------:|
+| [`IndexSlice<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexSlice.html) | [`[T]`](https://doc.rust-lang.org/std/primitive.slice.html) | - |
+| [`IndexArray<I, T, N>`](https://docs.rs/indexland/latest/indexland/struct.IndexArray.html) | [`[T; N]`](https://doc.rust-lang.org/std/primitive.array.html) | - |
+| [`IndexVec<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexVec.html) | [`Vec<T>`](https://doc.rust-lang.org/std/vec/struct.Vec.html) | `alloc` |
+| [`IndexVecDeque<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexVecDeque.html) | [`VecDeque<T>`](https://doc.rust-lang.org/std/collections/struct.VecDeque.html) |  `alloc` |
+| [`IndexArrayVec<I, T, CAP>`](https://docs.rs/indexland/latest/indexland/struct.IndexArrayVec.html) | [`arrayvec::ArrayVec<T, CAP>`](https://docs.rs/arrayvec/latest/arrayvec/struct.ArrayVec.html) | `arrayvec` |
+| [`IndexSmallVec<I, T, CAP>`](https://docs.rs/indexland/latest/indexland/struct.IndexSmallVec.html) | [`smallvec::SmallVec<[T; CAP]>`](https://docs.rs/smallvec/latest/smallvec/struct.SmallVec.html)  | `smallvec`  |
+| [`IndexHashMap<I, K, V>`](https://docs.rs/indexland/latest/indexland/struct.IndexHashMap.html) | [`indexmap::IndexMap<K, V>`](https://docs.rs/indexmap/latest/indexmap/map/struct.IndexMap.html) | `indexmap` |
+| [`IndexHashSet<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexHashSet.html) | [`indexmap::IndexSet<T>`](https://docs.rs/indexmap/latest/indexmap/set/struct.IndexSet.html) | `indexmap` |
+
+`std` and therefore `alloc` are enabled by default.
+Use the `full` feature to enable all collections.
 
 ## Additional Features
 
 - Every wrapper has an escape hatch
-  to the underlying collection, aswell as bidirectional [`From`](core::convert::From)
+  to the underlying collection, as well as bidirectional [`From`](core::convert::From)
   implementations.
 
-- First class embedded support though
+- First-class embedded support through
   [`#[no_std]`](https://docs.rust-embedded.org/book/intro/no-std.html)
   and even optional
   [`alloc`](https://doc.rust-lang.org/core/alloc/index.html).
@@ -95,51 +92,49 @@ let message = STATUS_MESSAGE[Status::Running];
 
 - [`serde`](::serde) implementations for all Collections.
 
-- All crate dependencies optional through feature flags.
-
-## FAQ
-
-### Why?
-Using indexed collections instead of references or
-smart pointers is a powerful idiom popularized by
+## Why use `indexland` ?
+Indexed collections are a powerful alternative to references or smart pointers.
+Popularized by
 [Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design),
 and even used by
-[the Rust Compiler itself](https://github.com/rust-lang/rust/blob/2b285cd5f0877e30ad1d83e04f8cc46254e43391/compiler/rustc_index/src/vec.rs#L40).
-The pattern solves many borrow checker issues and often increases performance.
-Indexed collections can reduce allocations and memory usage while increasing
+[the Rust Compiler itself](https://github.com/rust-lang/rust/blob/2b285cd5f0877e30ad1d83e04f8cc46254e43391/compiler/rustc_index/src/vec.rs#L40),
+the pattern solves many borrow checker issues and often increases performance.
+Indexed collections can often reduce allocations and memory usage while increasing
 data locality.
 
 Heavy use of this pattern can cause issues though. The standard approach is to
 use `type NodeId = usize`, but this negatively affects:
 
-  1. Type Safety: Type aliases are not unique types.
+  1. **Type Safety**: Type aliases are not unique types.
      This makes it easy to accidentally use the wrong index or container
-     without getting any compiler errors. One of Rust's main strenghts is to
-     enable fearless refactoring because the compiler will guide you through it.
-     Non-newtype type aliases make that a lot harder.
+     without getting any compiler errors. Rust excells at
+     enabling fearless refactoring, the compiler errors become your todo list.
+     Non-newtype type aliases reduce the robustness and refactorability of your code.
 
-  2. Readability: Container type definitions don't tell us what index
+  2. **Readability**: Container type definitions don't tell us what index
      should be used to access them. When structs contain multiple collections
      this becomes hard to read quickly.
 
-Newtypes elegantly solve both of these issues.
+Indexland solves both of these issues.
 
-### Why not use [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
-1.  Indexland offers all common collections in one place,
-    **using the same `Idx` trait**. Sometimes the same index type is used
+## Comparison with [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
+1.  **Unified API**: Indexland offers all common collections in one place,
+    **using a single `Idx` trait**. Sometimes the same index type is used
     for multiple data structures. Sometimes you want to switch from a `Vec<T>`
-    to a `VecDeque<T>`
+    to a `VecDeque<T>`, or can use a static array.
 
-2.  We deliberately **don't** implement
+2.  **Type Safety**: We deliberately **don't** implement
     `Index<usize> for IndexSlice` and `Add<usize> for Idx`,
-    as they compromize type safety. Opt-in support is availabe
-    via [`#[indexland(usize_arith)]`]([indexland_derive::Idx#](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#)indexlandusize_arith).
+    as they negatively impact type safety. Opt-in support is available
+    via [`#[indexland(usize_arith)]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandusize_arith)
+    if you want it.
 
-3.  Our `Idx` derivation syntax is much cleaner than
+3.  **Cleaner Syntax**: Our `Idx` derive macro is much nicer to use than
     `index_vec`'s [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
+    We offer a declarative alternative if you dislike proc-macros though.
 
-### Is there a runtime cost to this?
-There's minimal overhead. The core wrapper functions are
+## Performance
+There's close to zero runtime overhead. The core index conversion functions are
 marked `#[inline(always)]` to reliably eliminate them, even in debug mode.
 
 Type conversions follow the same rules as Rust integer overflow.

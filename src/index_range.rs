@@ -18,10 +18,13 @@
 //! #[derive(Idx)]
 //! struct MyId(u32);
 //!
+//! // example values
 //! let myvec: IndexVec<MyId, i32> = IndexVec::from_iter(0..10);
+//! let start = MyId(1);
+//! let end = MyId(3);
 //!
-//! // !! ranged iteration for custom types does compile in stable rust
-//! for i in MyId(1)..MyId(3) {
+//! // !! Ranged iteration for custom types does **not** compile in stable Rust.
+//! for i in start..end {
 //!     println!("myvec[{i}] = {}", myvec[i]);
 //! }
 //! ```
@@ -34,15 +37,19 @@
 //! #[derive(Idx)]
 //! struct MyId(u32);
 //!
+//! // example values
 //! let myvec: IndexVec<MyId, i32> = IndexVec::from_iter(0..10);
+//! let start = MyId(1);
+//! let end = MyId(3);
 //!
-//! // this works, and is available if you need it
-//! for i in (MyId(0)..MyId(3)).index_range() {
+//! // This works, and is available if you need it.
+//! // See the example below for a more idiomatic version using enumerate.
+//! for i in (start..end).index_range() {
 //!     println!("myvec[{i}] = {}", myvec[i]);
 //! }
 //! ```
 //!
-//! ## Idiomatic Alternative
+//! ## Ergonomic Alternative
 //! ```
 //! # #![cfg(feature="derive")]
 //! use indexland::{Idx, IndexVec};
@@ -50,10 +57,13 @@
 //! #[derive(Idx)]
 //! struct MyId(u32);
 //!
+//! // example values
 //! let myvec: IndexVec<MyId, i32> = IndexVec::from_iter(0..10);
+//! let start = MyId(1);
+//! let end = MyId(3);
 //!
-//! // where applicable, this is the recommended style
-//! for (i, &v) in myvec.iter_enumerated_range(MyId(1)..MyId(3)) {
+//! // Where applicable, this is the recommended style.
+//! for (i, &v) in myvec.iter_enumerated_range(start..end) {
 //!     println!("myvec[{i}] = {v}");
 //! }
 //! ```
