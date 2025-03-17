@@ -83,6 +83,13 @@ pub struct IndexRange<I> {
 
 /// Mirror of [`core::ops::RangeInclusive`].
 /// See this module's [documentation](self) for justification.
+/// Note: there's no way for us to implement
+/// `From<IndexRangeInclusive<I>> for RangeInclusive<I>`
+/// as there's unfortunately no way to construct an exhausted inclusive range
+/// for an `I` that does not implement [`Step`](core::iter::Step).
+// NB: the above holds even if we tried to implement this by wrapping
+// `RangeInclusive<I>` itself. Then there's no way for us to
+// correctly implement `Iterator`.
 #[derive(Clone, Default, PartialEq, Eq, Hash)] // not `Copy`, mirroring std
 pub struct IndexRangeInclusive<I> {
     pub start: I,
@@ -147,6 +154,7 @@ impl<I> IndexRangeInclusive<I> {
         }
     }
 }
+
 /// We unfortunately cannot implement the reverse:
 /// `impl<I> From<IndexRangeInclusive<I>> for RangeInclusive<I>`
 /// because there's no way to construct a [`RangeInclusive`] in it's exhausted
