@@ -19,7 +19,7 @@ proc-macro = true
 [dependencies]
 proc-macro2 = { version = "1.0.94" }
 syn = { version = "2.0.100", features = ["parsing"] }
-quote = "1.0.39"
+quote = "1.0.40"
 
 [dev-dependencies]
 indexland = { workspace = true, features = ["derive", "arrayvec"] }
