@@ -89,12 +89,15 @@ fn run_cargo_with_env<'a>(
 }
 
 fn run_cargo<'a>(args: impl IntoIterator<Item = &'a str>) {
-    run_cargo_with_env([], args);
+    run_cargo_with_env([("RUSTFLAGS", "-D warnings")], args);
 }
 
 fn run_cargo_nightly<'a>(args: impl IntoIterator<Item = &'a str>) {
     run_cargo_with_env(
-        [("RUSTUP_TOOLCHAIN", "nightly")],
+        [
+            ("RUSTFLAGS", "-D warnings"),
+            ("RUSTUP_TOOLCHAIN", "nightly"),
+        ],
         // add +nightly aswell mainly so it shows up in the log
         std::iter::once("+nightly").chain(args),
     );
