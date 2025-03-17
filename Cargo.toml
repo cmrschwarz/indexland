@@ -8,7 +8,10 @@ package.license = "MIT OR Apache-2.0"
 package.authors = ["Christian Schwarz <cmrs@cmrs.io>"]
 package.repository = "https://github.com/cmrschwarz/indexland"
 package.edition = "2021"
-package.rust-version = "1.80"
+
+# MSRV 1.83 needed for `&mut` in `const fn`s, which we need for `enum_index_array!`
+# When changing this don't forget to update in CI config.
+package.rust-version = "1.83"
 package.categories = ["data-structures", "memory-management", "rust-patterns"]
 package.keywords = ["index", "collection", "container", "vec", "slice"]
 members = ["xtask"]
