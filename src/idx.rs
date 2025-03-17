@@ -3,19 +3,18 @@
 use core::{
     fmt::Debug,
     hash::Hash,
-    ops::{Add, AddAssign, Sub, SubAssign},
+    ops::{Add, AddAssign, RangeBounds, Sub, SubAssign},
 };
 
-use crate::{index_range::IndexRangeInclusive, IndexRange};
+use crate::{
+    index_range::IndexRangeInclusive, index_slice_index::IndexSliceIndex,
+    IndexRange,
+};
 
 pub trait Idx:
     Default
     + Debug
-    + Clone
     + Copy
-    + PartialEq
-    + Eq
-    + PartialOrd
     + Ord
     + Hash
     + Add<Output = Self>
@@ -76,6 +75,26 @@ pub trait IdxNewtype: Idx {
     type Base: Idx;
     fn new(inner: Self::Base) -> Self;
     fn into_inner(self) -> Self::Base;
+}
+
+pub trait IdxCompatible<I>: Copy {
+    fn idx_cast(self) -> I;
+    fn into_usize(self) -> usize;
+    fn into_usize_unchecked(self) -> usize;
+}
+
+impl<I: Idx> IdxCompatible<I> for I {
+    fn idx_cast(self) -> I {
+        self
+    }
+
+    fn into_usize(self) -> usize {
+        Idx::into_usize(self)
+    }
+
+    fn into_usize_unchecked(self) -> usize {
+        Idx::into_usize_unchecked(self)
+    }
 }
 
 impl Idx for usize {

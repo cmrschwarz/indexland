@@ -67,15 +67,17 @@
 //!     println!("myvec[{i}] = {v}");
 //! }
 //! ```
-use crate::Idx;
+use crate::{idx::IdxCompatible, Idx};
 use core::ops::{
     Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo,
     RangeToInclusive,
 };
 
-pub trait IndexRangeBounds<I>: RangeBounds<I> {
-    type BaseRange: IndexRangeBounds<I>;
-    type IndexRange: IndexRangeBounds<I>;
+pub trait IndexRangeBounds<I, C: IdxCompatible<I> = I>:
+    RangeBounds<C>
+{
+    type BaseRange: IndexRangeBounds<I, C>;
+    type IndexRange: IndexRangeBounds<I, C>;
     type UsizeRange: IndexRangeBounds<usize>;
     fn base_range(self) -> Self::BaseRange;
     fn index_range(self) -> Self::IndexRange;
@@ -202,9 +204,9 @@ impl<I> RangeBounds<I> for IndexRange<I> {
         Bound::Excluded(&self.end)
     }
 }
-impl<I: Idx> IndexRangeBounds<I> for IndexRange<I> {
-    type BaseRange = Range<I>;
-    type IndexRange = IndexRange<I>;
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for IndexRange<C> {
+    type BaseRange = Range<C>;
+    type IndexRange = IndexRange<C>;
     type UsizeRange = Range<usize>;
     fn base_range(self) -> Self::BaseRange {
         Range::from(self)
@@ -231,9 +233,11 @@ impl<I> RangeBounds<I> for IndexRangeInclusive<I> {
         Bound::Included(&self.end)
     }
 }
-impl<I: Idx> IndexRangeBounds<I> for IndexRangeInclusive<I> {
-    type BaseRange = IndexRangeInclusive<I>;
-    type IndexRange = IndexRangeInclusive<I>;
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C>
+    for IndexRangeInclusive<C>
+{
+    type BaseRange = IndexRangeInclusive<C>;
+    type IndexRange = IndexRangeInclusive<C>;
     type UsizeRange = IndexRangeInclusive<usize>;
     /// !NOTE: this is a hack. Unfortunately, there's no way to construct an
     /// exhaustive [`RangeInclusive`] for a T that isn't `Step`, which we can't
@@ -267,9 +271,9 @@ impl<I> RangeBounds<I> for IndexRangeFrom<I> {
         Bound::Unbounded
     }
 }
-impl<I: Idx> IndexRangeBounds<I> for IndexRangeFrom<I> {
-    type BaseRange = RangeFrom<I>;
-    type IndexRange = IndexRangeFrom<I>;
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for IndexRangeFrom<C> {
+    type BaseRange = RangeFrom<C>;
+    type IndexRange = IndexRangeFrom<C>;
     type UsizeRange = RangeFrom<usize>;
     fn base_range(self) -> Self::BaseRange {
         RangeFrom::from(self)
@@ -290,9 +294,9 @@ impl<I: Idx> IndexRangeBounds<I> for IndexRangeFrom<I> {
     }
 }
 
-impl<I: Idx> IndexRangeBounds<I> for Range<I> {
-    type BaseRange = Range<I>;
-    type IndexRange = IndexRange<I>;
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for Range<C> {
+    type BaseRange = Range<C>;
+    type IndexRange = IndexRange<C>;
     type UsizeRange = Range<usize>;
     fn base_range(self) -> Self::BaseRange {
         self
@@ -311,9 +315,9 @@ impl<I: Idx> IndexRangeBounds<I> for Range<I> {
     }
 }
 
-impl<I: Idx> IndexRangeBounds<I> for RangeInclusive<I> {
-    type BaseRange = RangeInclusive<I>;
-    type IndexRange = IndexRangeInclusive<I>;
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeInclusive<C> {
+    type BaseRange = RangeInclusive<C>;
+    type IndexRange = IndexRangeInclusive<C>;
     type UsizeRange = RangeInclusive<usize>;
     fn base_range(self) -> Self::BaseRange {
         self
@@ -344,9 +348,9 @@ impl<I: Idx> IndexRangeBounds<I> for RangeInclusive<I> {
     }
 }
 
-impl<I: Idx> IndexRangeBounds<I> for RangeFrom<I> {
-    type BaseRange = RangeFrom<I>;
-    type IndexRange = IndexRangeFrom<I>;
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeFrom<C> {
+    type BaseRange = RangeFrom<C>;
+    type IndexRange = IndexRangeFrom<C>;
     type UsizeRange = RangeFrom<usize>;
     fn base_range(self) -> Self::BaseRange {
         self
@@ -367,9 +371,9 @@ impl<I: Idx> IndexRangeBounds<I> for RangeFrom<I> {
     }
 }
 
-impl<I: Idx> IndexRangeBounds<I> for RangeTo<I> {
-    type BaseRange = RangeTo<I>;
-    type IndexRange = RangeTo<I>;
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeTo<C> {
+    type BaseRange = RangeTo<C>;
+    type IndexRange = RangeTo<C>;
     type UsizeRange = RangeTo<usize>;
     fn base_range(self) -> Self::BaseRange {
         self
@@ -390,9 +394,9 @@ impl<I: Idx> IndexRangeBounds<I> for RangeTo<I> {
     }
 }
 
-impl<I: Idx> IndexRangeBounds<I> for RangeToInclusive<I> {
-    type BaseRange = RangeToInclusive<I>;
-    type IndexRange = RangeToInclusive<I>;
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeToInclusive<C> {
+    type BaseRange = RangeToInclusive<C>;
+    type IndexRange = RangeToInclusive<C>;
     type UsizeRange = RangeToInclusive<usize>;
 
     fn base_range(self) -> Self::BaseRange {
@@ -414,7 +418,7 @@ impl<I: Idx> IndexRangeBounds<I> for RangeToInclusive<I> {
     }
 }
 
-impl<I: Idx> IndexRangeBounds<I> for RangeFull {
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeFull {
     type BaseRange = RangeFull;
     type IndexRange = RangeFull;
     type UsizeRange = RangeFull;

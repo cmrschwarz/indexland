@@ -7,7 +7,8 @@ use crate::{
 
 /// # Safety
 /// if the input of `get_unchecked(_mut)` was a valid pointer, so must be the output
-pub unsafe trait IndexSliceIndex<S: ?Sized> {
+pub unsafe trait IndexSliceIndex<I, S: ?Sized> {
+    type RangeBounds: IndexRangeBounds<I>;
     type Output: ?Sized;
     fn get(self, slice: &S) -> Option<&Self::Output>;
     fn get_mut(self, slice: &mut S) -> Option<&mut Self::Output>;
@@ -19,9 +20,12 @@ pub unsafe trait IndexSliceIndex<S: ?Sized> {
     unsafe fn get_unchecked_mut(self, slice: *mut S) -> *mut Self::Output;
     fn index(self, slice: &S) -> &Self::Output;
     fn index_mut(self, slice: &mut S) -> &mut Self::Output;
+    fn fallback<FS: , FM>(single: FS, multiple: FM) -> &Self::Output;
+    fn fallback_mut() -> &Self::Output
 }
 
-unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for I {
+unsafe impl<I: Idx, T> IndexSliceIndex<I, IndexSlice<I, T>> for I {
+    type RangeBounds = I;
     type Output = T;
     #[inline]
     fn get(self, slice: &IndexSlice<I, T>) -> Option<&Self::Output> {
