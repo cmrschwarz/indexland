@@ -102,14 +102,13 @@ Indexed collections can reduce allocations and memory usage while increasing
 data locality.
 
 Heavy use of this pattern can cause issues though. The standard approach is to
-use `type NodeId = usize`, but this negatively affects
+use `type NodeId = usize`, but this negatively affects:
 
-  1. Type Safety: Type aliases are not unique types. The're all the same to the compiler, making it easy to accidentally use the wrong index or container
-     in an [SOA](https://en.wikipedia.org/wiki/AoS_and_SoA) heavy codebase.
-     Using `usize` everywhere can become similar to `void*` in C or
-     `any` in Typescript. One of Rust's main strenghts is to enable fearless
-     refactoring because the compiler will guide you through it. Non-newtype
-     type aliases make that a lot harder.
+  1. Type Safety: Type aliases are not unique types.
+     This makes it easy to accidentally use the wrong index or container
+     without getting any compiler errors. One of Rust's main strenghts is to
+     enable fearless refactoring because the compiler will guide you through it.
+     Non-newtype type aliases make that a lot harder.
 
   2. Readability: Container type definitions don't tell us what index
      should be used to access them. When structs contain multiple collections
