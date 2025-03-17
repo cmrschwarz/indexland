@@ -91,6 +91,8 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
             fn into_usize(self) -> usize  {
                 Self::into_usize_unchecked(self)
             }
+
+            // default impls for wrapping add and wrapping sub suffice
         }
     }
 }

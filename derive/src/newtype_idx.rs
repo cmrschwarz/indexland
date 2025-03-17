@@ -88,11 +88,11 @@ fn derive_idx(ctx: &NewtypeCtx) -> TokenStream {
             fn into_usize_unchecked(self) -> usize {
                 <#base_type as #indexland::Idx>::into_usize_unchecked(self.0)
             }
-            fn wrapping_add(self, other: Self) -> Self {
-                #name(<#base_type as #indexland::Idx>::wrapping_add(self.0, other.0))
+            fn saturating_add(self, other: Self) -> Self {
+                #name(<#base_type as #indexland::Idx>::saturating_add(self.0, other.0))
             }
-            fn wrapping_sub(self, other: Self) -> Self {
-                #name(<#base_type as #indexland::Idx>::wrapping_sub(self.0, other.0))
+            fn saturating_sub(self, other: Self) -> Self {
+                #name(<#base_type as #indexland::Idx>::saturating_sub(self.0, other.0))
             }
         }
     }

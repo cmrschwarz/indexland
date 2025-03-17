@@ -97,6 +97,10 @@ pub trait NonMaxInner<P>:
     fn wrapping_add(self, rhs: Self) -> Self;
     fn wrapping_sub(self, rhs: Self) -> Self;
     fn wrapping_mul(self, rhs: Self) -> Self;
+
+    fn saturating_add(self, rhs: Self) -> Self;
+    fn saturating_sub(self, rhs: Self) -> Self;
+    fn saturating_mul(self, rhs: Self) -> Self;
 }
 
 impl<P: NonMaxPrimitive> NonMax<P> {
@@ -113,6 +117,15 @@ impl<P: NonMaxPrimitive> NonMax<P> {
     }
     pub fn wrapping_mul(self, rhs: Self) -> Self {
         NonMax(self.0.wrapping_mul(rhs.0))
+    }
+    pub fn saturating_add(self, rhs: Self) -> Self {
+        NonMax(self.0.saturating_add(rhs.0))
+    }
+    pub fn saturating_sub(self, rhs: Self) -> Self {
+        NonMax(self.0.saturating_sub(rhs.0))
+    }
+    pub fn saturating_mul(self, rhs: Self) -> Self {
+        NonMax(self.0.saturating_mul(rhs.0))
     }
     pub fn get(self) -> P {
         self.0.get()
@@ -198,6 +211,29 @@ impl<P: NonMaxPrimitive> RemAssign for NonMax<P> {
     }
 }
 
+macro_rules! impl_wrapping_fn {
+    ($primitive: ty => $($func_name: ident),* $(,)?) => {$(
+        fn $func_name(self, rhs: Self) -> Self {
+            #[cfg(all(
+                debug_assertions,
+                not(feature = "disable_debuggable_nonmax")
+            ))]
+            let mut res = <$primitive>::$func_name(self, rhs);
+
+            #[cfg(any(
+                not(debug_assertions),
+                feature = "disable_debuggable_nonmax"
+            ))]
+            let mut res = self.get().$func_name(rhs.get());
+
+            if res == <$primitive>::MAX {
+                res = 0;
+            }
+            unsafe { Self::new_unchecked(res) }
+        }
+    )*};
+}
+
 macro_rules! impl_nonmax {
     ($($primitive: ty),*) => {$(
         impl NonMax<$primitive> {
@@ -267,63 +303,10 @@ macro_rules! impl_nonmax {
                     self.get() ^ <$primitive>::MAX
                 }
             }
-            // we could implement these wrapping functions wihtout unsafe
-            // but that would make them even more expensive in debug mode
-            fn wrapping_add(self, rhs: Self) -> Self {
-
-                #[cfg(all(
-                    debug_assertions,
-                    not(feature = "disable_debuggable_nonmax")
-                ))]
-                let mut res = <$primitive>::wrapping_add(self, rhs);
-
-                #[cfg(any(
-                    not(debug_assertions),
-                    feature = "disable_debuggable_nonmax"
-                ))]
-                let mut res = self.get().wrapping_add(rhs.get());
-
-                if res == <$primitive>::MAX {
-                    res = 0;
-                }
-                unsafe { Self::new_unchecked(res) }
-            }
-            fn wrapping_sub(self, rhs: Self) -> Self {
-                #[cfg(all(
-                    debug_assertions,
-                    not(feature = "disable_debuggable_nonmax")
-                ))]
-                let mut res = <$primitive>::wrapping_sub(self, rhs);
-
-                #[cfg(any(
-                    not(debug_assertions),
-                    feature = "disable_debuggable_nonmax"
-                ))]
-                let mut res = self.get().wrapping_sub(rhs.get());
-
-                if res == <$primitive>::MAX {
-                    res = 0;
-                }
-                unsafe { Self::new_unchecked(res) }
-            }
-            fn wrapping_mul(self, rhs: Self) -> Self {
-                #[cfg(all(
-                    debug_assertions,
-                    not(feature = "disable_debuggable_nonmax")
-                ))]
-                let mut res = <$primitive>::wrapping_mul(self, rhs);
-
-                #[cfg(any(
-                    not(debug_assertions),
-                    feature = "disable_debuggable_nonmax"
-                ))]
-                let mut res = self.get().wrapping_mul(rhs.get());
-
-                if res == <$primitive>::MAX {
-                    res = 0;
-                }
-                unsafe { Self::new_unchecked(res) }
-            }
+            impl_wrapping_fn![ $primitive =>
+                wrapping_add, wrapping_sub, wrapping_mul,
+                saturating_add, saturating_sub, saturating_mul,
+            ];
         }
         impl From<NonMax<$primitive>> for $primitive {
             fn from(v: NonMax<$primitive>) -> $primitive {
@@ -370,6 +353,12 @@ macro_rules! impl_nonmax_idx {
                     clippy::cast_sign_loss,
                 )]
                 self.get() as usize
+            }
+            fn saturating_add(self, other: Self) -> Self {
+                NonMax::<$primitive>::saturating_add(self, other)
+            }
+            fn saturating_sub(self, other: Self) -> Self {
+                NonMax::<$primitive>::saturating_sub(self, other)
             }
         }
     )*};

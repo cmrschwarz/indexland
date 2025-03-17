@@ -38,18 +38,6 @@ pub trait Idx:
     fn into_usize(self) -> usize;
     fn into_usize_unchecked(self) -> usize;
 
-    fn wrapping_add(self, other: Self) -> Self {
-        Self::from_usize(
-            self.into_usize().wrapping_add(other.into_usize())
-                % Self::MAX.into_usize(),
-        )
-    }
-    fn wrapping_sub(self, other: Self) -> Self {
-        Self::from_usize(
-            self.into_usize().wrapping_sub(other.into_usize())
-                % Self::MAX.into_usize(),
-        )
-    }
     fn saturating_add(self, other: Self) -> Self {
         Self::from_usize(
             self.into_usize()
@@ -110,12 +98,6 @@ impl Idx for usize {
     fn from_usize_unchecked(v: usize) -> Self {
         v
     }
-    fn wrapping_add(self, other: usize) -> usize {
-        self.wrapping_add(other)
-    }
-    fn wrapping_sub(self, other: Self) -> Self {
-        self.wrapping_sub(other)
-    }
 }
 
 macro_rules! primitive_idx_implemenation_unsized {
@@ -150,11 +132,11 @@ macro_rules! primitive_idx_implemenation_unsized {
                 )]
                 v as $primitive
             }
-            fn wrapping_add(self, other: Self) -> Self {
-                $primitive::wrapping_add(self, other)
+            fn saturating_add(self, other: Self) -> Self {
+                $primitive::saturating_add(self, other)
             }
-            fn wrapping_sub(self, other: Self) -> Self {
-                $primitive::wrapping_sub(self, other)
+            fn saturating_sub(self, other: Self) -> Self {
+                $primitive::saturating_sub(self, other)
             }
         }
     )*};
@@ -192,11 +174,11 @@ macro_rules! primitive_idx_implemenation_sized {
                 )]
                 v as $primitive
             }
-            fn wrapping_add(self, other: Self) -> Self {
-                $primitive::wrapping_add(self, other)
+            fn saturating_add(self, other: Self) -> Self {
+                $primitive::saturating_add(self, other)
             }
-            fn wrapping_sub(self, other: Self) -> Self {
-                $primitive::wrapping_sub(self, other)
+            fn saturating_sub(self, other: Self) -> Self {
+                $primitive::saturating_sub(self, other)
             }
         }
     )*};
@@ -246,11 +228,11 @@ macro_rules! idx_newtype {
             fn into_usize_unchecked(self) -> usize {
                 <$base_type as $crate::Idx>::into_usize_unchecked(self.0)
             }
-            fn wrapping_add(self, other: Self) -> Self {
-               $name(<$base_type as  $crate::Idx>::wrapping_add(self.0, other.0))
+            fn saturating_add(self, other: Self) -> Self {
+               $name(<$base_type as  $crate::Idx>::saturating_add(self.0, other.0))
             }
-            fn wrapping_sub(self, other: Self) -> Self {
-                $name(<$base_type as $crate::Idx>::wrapping_sub(self.0, other.0))
+            fn saturating_sub(self, other: Self) -> Self {
+                $name(<$base_type as $crate::Idx>::saturating_sub(self.0, other.0))
             }
         }
         impl $crate::IdxNewtype for $name {
