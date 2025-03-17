@@ -89,11 +89,11 @@ let message = STATUS_MESSAGE[Status::Running];
   and even optional
   [`alloc`](https://doc.rust-lang.org/core/alloc/index.html).
 
-- [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) compatible
+- `Idx` compatible
   [`NonMax<T>`](https://docs.rs/indexland/latest/indexland/struct.NonMax.html) for
   [Niche Optimizations](https://doc.rust-lang.org/std/option/index.html#representation).
 
-- [`serde`](https://serde.rs/) implementations for all Collections.
+- [`serde`](::serde) implementations for all Collections.
 
 - All crate dependencies optional through feature flags.
 
@@ -126,23 +126,21 @@ Newtypes elegantly solve both of these issues.
 
 ### Why not use [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
 1.  Indexland offers all common collections in one place,
-    **using the same [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) trait**. Sometimes the same index type is used
-    for multiple data structures. Sometimes you want to switch from a [`Vec<T>`](https://doc.rust-lang.org/std/vec/struct.Vec.html)
-    to a [`VecDeque<T>`](https://doc.rust-lang.org/std/collections/struct.VecDeque.html).
+    **using the same `Idx` trait**. Sometimes the same index type is used
+    for multiple data structures. Sometimes you want to switch from a `Vec<T>`
+    to a `VecDeque<T>`
 
 2.  We deliberately **don't** implement
     `Index<usize> for IndexSlice` and `Add<usize> for Idx`,
     as they compromize type safety. Opt-in support is availabe
     via [`#[indexland(usize_arith)]`]([indexland_derive::Idx#](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#)indexlandusize_arith).
 
-3.  Our
-    [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
-    derivation syntax is much cleaner than
-    [`index_vec`'s `define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
+3.  Our `Idx` derivation syntax is much cleaner than
+    `index_vec`'s [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
 
 ### Is there a runtime cost to this?
 There's minimal overhead. The core wrapper functions are
-marked [`#[inline(always)]`](https://nnethercote.github.io/perf-book/inlining.html) to reliably eliminate them, even in debug mode.
+marked `#[inline(always)]` to reliably eliminate them, even in debug mode.
 
 Type conversions follow the same rules as Rust integer overflow.
 Overflows will panic in debug mode and wrap in release.
