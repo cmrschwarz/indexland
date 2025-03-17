@@ -1,4 +1,4 @@
-# Indexland
+# `indexland`
 
 [![github]](https://github.com/cmrschwarz/indexland/tree/main/crates/indexland)&ensp;
 [![github-build]](https://github.com/cmrschwarz/indexland/actions/workflows/ci.yml)&ensp;
@@ -115,10 +115,10 @@ use `type NodeId = usize`, but this negatively affects:
      should be used to access them. When structs contain multiple collections
      this becomes hard to read quickly.
 
-Indexland solves both of these issues.
+`indexland` solves both of these issues.
 
 ## Comparison with [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
-1.  **Unified API**: Indexland offers all common collections in one place,
+1.  **Unified API**: `indexland` offers all common collections in one place,
     **using a single `Idx` trait**. Sometimes the same index type is used
     for multiple data structures. Sometimes you want to switch from a `Vec<T>`
     to a `VecDeque<T>`, or can use a static array.
