@@ -10,7 +10,10 @@ use core::{
 };
 
 #[cfg(feature = "alloc")]
-use alloc::boxed::Box;
+use alloc::{borrow::ToOwned, boxed::Box};
+
+#[cfg(feature = "alloc")]
+use crate::IndexVec;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -355,6 +358,18 @@ impl<'a, I, T> From<&'a [T]> for &'a IndexSlice<I, T> {
 impl<'a, I, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
     fn from(value: &'a mut [T]) -> Self {
         IndexSlice::from_mut_slice(value)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> ToOwned for IndexSlice<I, T>
+where
+    T: Clone,
+{
+    type Owned = IndexVec<I, T>;
+
+    fn to_owned(&self) -> Self::Owned {
+        IndexVec::from(self.as_slice().to_vec())
     }
 }
 

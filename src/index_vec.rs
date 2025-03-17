@@ -1,6 +1,7 @@
 use crate::{index_enumerate::IndexEnumerate, IndexRangeBounds};
 
 use core::{
+    borrow::{Borrow, BorrowMut},
     fmt::Debug,
     marker::PhantomData,
     ops::{Deref, DerefMut, Index, IndexMut, Range},
@@ -33,49 +34,6 @@ macro_rules! index_vec {
 pub struct IndexVec<I, T> {
     data: Vec<T>,
     _phantom: PhantomData<fn(I) -> T>,
-}
-
-impl<I, T> Deref for IndexVec<I, T> {
-    type Target = IndexSlice<I, T>;
-
-    fn deref(&self) -> &Self::Target {
-        IndexSlice::from_slice(&self.data)
-    }
-}
-impl<I, T> DerefMut for IndexVec<I, T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        IndexSlice::from_mut_slice(&mut self.data)
-    }
-}
-
-impl<I, T> From<Vec<T>> for IndexVec<I, T> {
-    fn from(value: Vec<T>) -> Self {
-        IndexVec {
-            data: value,
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<I, T> From<IndexVec<I, T>> for Vec<T> {
-    fn from(value: IndexVec<I, T>) -> Self {
-        value.data
-    }
-}
-
-impl<I, T> Default for IndexVec<I, T> {
-    fn default() -> Self {
-        Self {
-            data: Vec::new(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<I, T: Debug> Debug for IndexVec<I, T> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        Debug::fmt(&self.data, f)
-    }
 }
 
 impl<I, T> IndexVec<I, T> {
@@ -212,8 +170,94 @@ impl<I, T> IndexVec<I, T> {
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
         IndexSlice::from_slice(&self.data)
     }
-    pub fn as_mut_index_slice(&mut self) -> &IndexSlice<I, T> {
+    pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
         IndexSlice::from_mut_slice(&mut self.data)
+    }
+}
+
+impl<I, T> AsMut<IndexSlice<I, T>> for IndexVec<I, T> {
+    fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
+    }
+}
+impl<I, T> AsMut<[T]> for IndexVec<I, T> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+}
+
+impl<I, T> AsRef<IndexSlice<I, T>> for IndexVec<I, T> {
+    fn as_ref(&self) -> &IndexSlice<I, T> {
+        self.as_index_slice()
+    }
+}
+impl<I, T> AsRef<[T]> for IndexVec<I, T> {
+    fn as_ref(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+
+impl<I, T> Borrow<IndexSlice<I, T>> for IndexVec<I, T> {
+    fn borrow(&self) -> &IndexSlice<I, T> {
+        self.as_index_slice()
+    }
+}
+impl<I, T> Borrow<[T]> for IndexVec<I, T> {
+    fn borrow(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+impl<I, T> BorrowMut<IndexSlice<I, T>> for IndexVec<I, T> {
+    fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
+    }
+}
+impl<I, T> BorrowMut<[T]> for IndexVec<I, T> {
+    fn borrow_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+}
+
+impl<I, T> Deref for IndexVec<I, T> {
+    type Target = IndexSlice<I, T>;
+
+    fn deref(&self) -> &Self::Target {
+        IndexSlice::from_slice(&self.data)
+    }
+}
+impl<I, T> DerefMut for IndexVec<I, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        IndexSlice::from_mut_slice(&mut self.data)
+    }
+}
+
+impl<I, T> From<Vec<T>> for IndexVec<I, T> {
+    fn from(value: Vec<T>) -> Self {
+        IndexVec {
+            data: value,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<I, T> From<IndexVec<I, T>> for Vec<T> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        value.data
+    }
+}
+
+impl<I, T> Default for IndexVec<I, T> {
+    fn default() -> Self {
+        Self {
+            data: Vec::new(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<I, T: Debug> Debug for IndexVec<I, T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(&self.data, f)
     }
 }
 

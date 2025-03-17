@@ -7,11 +7,17 @@ use crate::{
 use core::{
     borrow::{Borrow, BorrowMut},
     fmt::Debug,
+    hash::Hash,
     marker::PhantomData,
     ops::{Deref, DerefMut},
 };
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg(feature = "alloc")]
+use alloc::{borrow::Cow, vec::Vec};
+
+#[cfg(feature = "alloc")]
+use crate::IndexVec;
+
 #[repr(transparent)]
 pub struct IndexArray<I, T, const N: usize> {
     data: [T; N],
@@ -119,18 +125,6 @@ macro_rules! enum_index_array {
     };
 }
 
-impl<I, T, const N: usize> Default for IndexArray<I, T, N>
-where
-    [T; N]: Default,
-{
-    fn default() -> Self {
-        Self {
-            data: Default::default(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
 impl<I, T, const N: usize> IndexArray<I, T, N> {
     pub const fn new(data: [T; N]) -> Self {
         Self {
@@ -219,17 +213,6 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     }
 }
 
-impl<I, T, const LEN: usize> From<[T; LEN]> for IndexArray<I, T, LEN> {
-    fn from(value: [T; LEN]) -> Self {
-        Self::new(value)
-    }
-}
-impl<I, T, const LEN: usize> From<IndexArray<I, T, LEN>> for [T; LEN] {
-    fn from(value: IndexArray<I, T, LEN>) -> Self {
-        value.data
-    }
-}
-
 impl<I, T, const N: usize> AsMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
     fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
         self.as_mut_index_slice()
@@ -248,6 +231,12 @@ impl<I, T, const N: usize> Borrow<IndexSlice<I, T>> for IndexArray<I, T, N> {
     }
 }
 
+impl<I, T, const N: usize> Borrow<[T]> for IndexArray<I, T, N> {
+    fn borrow(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+
 impl<I, T, const N: usize> BorrowMut<IndexSlice<I, T>>
     for IndexArray<I, T, N>
 {
@@ -256,7 +245,26 @@ impl<I, T, const N: usize> BorrowMut<IndexSlice<I, T>>
     }
 }
 
-impl<I, T, const LEN: usize> Deref for IndexArray<I, T, LEN> {
+impl<I, T, const N: usize> BorrowMut<[T]> for IndexArray<I, T, N> {
+    fn borrow_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+}
+
+impl<I, T, const N: usize> Clone for IndexArray<I, T, N>
+where
+    [T; N]: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+            _phantom: PhantomData,
+        }
+    }
+}
+impl<I, T, const N: usize> Copy for IndexArray<I, T, N> where T: Copy {}
+
+impl<I, T, const N: usize> Deref for IndexArray<I, T, N> {
     type Target = IndexSlice<I, T>;
 
     fn deref(&self) -> &Self::Target {
@@ -264,29 +272,118 @@ impl<I, T, const LEN: usize> Deref for IndexArray<I, T, LEN> {
     }
 }
 
-impl<I, T, const LEN: usize> DerefMut for IndexArray<I, T, LEN> {
+impl<I, T, const N: usize> DerefMut for IndexArray<I, T, N> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_mut_index_slice()
     }
 }
 
-impl<I, T: Debug, const LEN: usize> Debug for IndexArray<I, T, LEN> {
+impl<I, T: Debug, const N: usize> Debug for IndexArray<I, T, N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
 
-impl<I, T, const LEN: usize> IntoIterator for IndexArray<I, T, LEN> {
+impl<I, T, const N: usize> Default for IndexArray<I, T, N>
+where
+    [T; N]: Default,
+{
+    fn default() -> Self {
+        Self {
+            data: Default::default(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<I, T, const LEN: usize> From<[T; LEN]> for IndexArray<I, T, LEN> {
+    fn from(value: [T; LEN]) -> Self {
+        Self::new(value)
+    }
+}
+
+impl<I, T, const LEN: usize> From<IndexArray<I, T, LEN>> for [T; LEN] {
+    fn from(value: IndexArray<I, T, LEN>) -> Self {
+        value.data
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+impl<'a, I, T, const N: usize> From<&'a IndexArray<I, T, N>>
+    for Cow<'a, IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &'a IndexArray<I, T, N>) -> Self {
+        Cow::Borrowed(value.as_index_slice())
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+impl<I, T, const N: usize> From<&IndexArray<I, T, N>> for IndexVec<I, T>
+where
+    T: Clone,
+{
+    fn from(value: &IndexArray<I, T, N>) -> Self {
+        IndexVec::from(Vec::from(&value.data))
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+impl<I, T, const N: usize> From<&mut IndexArray<I, T, N>> for IndexVec<I, T>
+where
+    T: Clone,
+{
+    fn from(value: &mut IndexArray<I, T, N>) -> Self {
+        IndexVec::from(Vec::from(&value.data))
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+impl<I, T, const N: usize> From<&IndexArray<I, T, N>> for Vec<T>
+where
+    T: Clone,
+{
+    fn from(value: &IndexArray<I, T, N>) -> Self {
+        Vec::from(&value.data)
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+impl<I, T, const N: usize> From<&mut IndexArray<I, T, N>> for Vec<T>
+where
+    T: Clone,
+{
+    fn from(value: &mut IndexArray<I, T, N>) -> Self {
+        Vec::from(&value.data)
+    }
+}
+
+impl<I, T, const N: usize> Hash for IndexArray<I, T, N>
+where
+    [T; N]: Hash,
+{
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.data.hash(state);
+    }
+}
+
+impl<I, T, const N: usize> IntoIterator for IndexArray<I, T, N> {
     type Item = T;
 
-    type IntoIter = core::array::IntoIter<T, LEN>;
+    type IntoIter = core::array::IntoIter<T, N>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.into_iter()
     }
 }
 
-impl<'a, I, T, const LEN: usize> IntoIterator for &'a IndexArray<I, T, LEN> {
+impl<'a, I, T, const N: usize> IntoIterator for &'a IndexArray<I, T, N> {
     type Item = &'a T;
 
     type IntoIter = core::slice::Iter<'a, T>;
@@ -296,9 +393,7 @@ impl<'a, I, T, const LEN: usize> IntoIterator for &'a IndexArray<I, T, LEN> {
     }
 }
 
-impl<'a, I, T, const LEN: usize> IntoIterator
-    for &'a mut IndexArray<I, T, LEN>
-{
+impl<'a, I, T, const N: usize> IntoIterator for &'a mut IndexArray<I, T, N> {
     type Item = &'a mut T;
 
     type IntoIter = core::slice::IterMut<'a, T>;
@@ -308,33 +403,39 @@ impl<'a, I, T, const LEN: usize> IntoIterator
     }
 }
 
-impl<I, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
-    for [T; LEN]
+impl<I, T: PartialEq, const N: usize> PartialEq<IndexArray<I, T, N>>
+    for IndexArray<I, T, N>
 {
-    fn eq(&self, other: &IndexArray<I, T, LEN>) -> bool {
+    fn eq(&self, other: &IndexArray<I, T, N>) -> bool {
+        self.data == other.data
+    }
+}
+impl<I, T: Eq, const N: usize> Eq for IndexArray<I, T, N> {}
+
+impl<I, T: PartialEq, const N: usize> PartialEq<IndexArray<I, T, N>>
+    for [T; N]
+{
+    fn eq(&self, other: &IndexArray<I, T, N>) -> bool {
         self == &other.data
     }
 }
-
-impl<I, T: PartialEq, const LEN: usize> PartialEq<[T; LEN]>
-    for IndexArray<I, T, LEN>
+impl<I, T: PartialEq, const N: usize> PartialEq<[T; N]>
+    for IndexArray<I, T, N>
 {
-    fn eq(&self, other: &[T; LEN]) -> bool {
+    fn eq(&self, other: &[T; N]) -> bool {
         &self.data == other
     }
 }
 
-impl<I, T: PartialEq, const LEN: usize> PartialEq<IndexArray<I, T, LEN>>
+impl<I, T: PartialEq, const N: usize> PartialEq<IndexArray<I, T, N>>
     for [T]
 {
-    fn eq(&self, other: &IndexArray<I, T, LEN>) -> bool {
+    fn eq(&self, other: &IndexArray<I, T, N>) -> bool {
         self == other.data
     }
 }
 
-impl<I, T: PartialEq, const LEN: usize> PartialEq<[T]>
-    for IndexArray<I, T, LEN>
-{
+impl<I, T: PartialEq, const N: usize> PartialEq<[T]> for IndexArray<I, T, N> {
     fn eq(&self, other: &[T]) -> bool {
         self.data == other
     }
@@ -344,9 +445,9 @@ impl<I, T: PartialEq, const LEN: usize> PartialEq<[T]>
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(feature = "serde")]
-impl<I, T, const LEN: usize> Serialize for IndexArray<I, T, LEN>
+impl<I, T, const N: usize> Serialize for IndexArray<I, T, N>
 where
-    [T; LEN]: Serialize,
+    [T; N]: Serialize,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -357,14 +458,14 @@ where
 }
 
 #[cfg(feature = "serde")]
-impl<'de, I, T, const LEN: usize> Deserialize<'de> for IndexArray<I, T, LEN>
+impl<'de, I, T, const N: usize> Deserialize<'de> for IndexArray<I, T, N>
 where
-    [T; LEN]: Deserialize<'de>,
+    [T; N]: Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        Ok(Self::new(<[T; LEN]>::deserialize(deserializer)?))
+        Ok(Self::new(<[T; N]>::deserialize(deserializer)?))
     }
 }
