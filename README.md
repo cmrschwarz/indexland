@@ -17,7 +17,8 @@ Newtype Index Support for Rust Collection Types.
 ## Features
 - Strongly typed collection indices for better type safety and readability.
 
-- All array based `std::collections` wrapped in one place through a single `Idx` trait.
+- All array based `std::collections` wrapped in one place through a single
+  [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) trait.
 
 - All underlying APIs faithfully adapted for `Idx` types.
 
@@ -57,22 +58,24 @@ let message = STATUS_MESSAGE[Status::Running];
 ```
 
 ## Indexable Collection Wrappers
-- [`IndexSlice<I, T>`](crate::IndexSlice)
-  wrapping [`&[T]`](std::slice)
-- [`IndexArray<I, T, LEN>`](crate::IndexArray)
-  wrapping [`[T; LEN]`](std::array) (Convenience alias [`EnumIndexArray<E, T>`](crate::EnumIndexArray))
-- [`IndexVec<I, T>`](crate::IndexVec)
-  wrapping [`Vec<T>`](alloc::vec::Vec)
-- [`IndexVecDeque<I, T>`](crate::IndexVecDeque)
-  wrapping[`VecDeque<T>`](std::collections::VecDeque)
-- [`IndexSmallVec<I, T, CAP>`](crate::IndexSmallVec)
-  wrapping [`smallvec::SmallVec<[T; CAP]>`](smallvec::SmallVec) (optional)
-- [`IndexArrayVec<I, T, CAP>`](crate::IndexArrayVec)
-  wrapping [`arrayvec::ArrayVec<T, CAP>`](arrayvec::ArrayVec) (optional)
-- [`IndexHashMap<I, K, V>`](crate::IndexHashMap)
-  wrapping [`indexmap::IndexMap<K, V>`](indexmap::IndexMap) (optional)
-- [`IndexHashSet<I, T>`](crate::IndexHashSet)
-  wrapping [`indexmap::IndexSet<T>`](indexmap::IndexSet) (optional)
+- [`IndexSlice<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexSlice.html)
+  wrapping [`[T]`](https://doc.rust-lang.org/std/primitive.slice.html)
+- [`IndexArray<I, T, N>`](https://docs.rs/indexland/latest/indexland/struct.IndexArray.html)
+  wrapping [`[T; N]`](https://doc.rust-lang.org/std/primitive.array.html)
+  (Convenience alias
+  [`EnumIndexArray<E, T>`](https://docs.rs/indexland/latest/indexland/type.EnumIndexArray.html))
+- [`IndexVec<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexVec.html)
+  wrapping [`Vec<T>`](https://doc.rust-lang.org/std/vec/struct.Vec.html)
+- [`IndexVecDeque<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexVecDeque.html)
+  wrapping[`VecDeque<T>`](https://doc.rust-lang.org/std/collections/struct.VecDeque.html)
+- [`IndexSmallVec<I, T, CAP>`](https://docs.rs/indexland/latest/indexland/struct.IndexSmallVec.html)
+  wrapping [`smallvec::SmallVec<[T; CAP]>`](https://docs.rs/smallvec/latest/smallvec/struct.SmallVec.html) (optional)
+- [`IndexArrayVec<I, T, CAP>`](https://docs.rs/indexland/latest/indexland/struct.IndexArrayVec.html)
+  wrapping [`arrayvec::ArrayVec<T, CAP>`](https://docs.rs/arrayvec/latest/arrayvec/struct.ArrayVec.html) (optional)
+- [`IndexHashMap<I, K, V>`](https://docs.rs/indexland/latest/indexland/struct.IndexHashMap.html)
+  wrapping [`indexmap::IndexMap<K, V>`](https://docs.rs/indexmap/latest/indexmap/map/struct.IndexMap.html) (optional)
+- [`IndexHashSet<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexHashSet.html)
+  wrapping [`indexmap::IndexSet<T>`](https://docs.rs/indexmap/latest/indexmap/set/struct.IndexSet.html) (optional)
 
 
 ## Additional Features
@@ -81,11 +84,16 @@ let message = STATUS_MESSAGE[Status::Running];
   to the underlying collection, aswell as bidirectional [`From`](core::convert::From)
   implementations.
 
-- First class embedded support though `#[no_std]` and even optional `alloc`.
+- First class embedded support though
+  [`#[no_std]`](https://docs.rust-embedded.org/book/intro/no-std.html)
+  and even optional
+  [`alloc`](https://doc.rust-lang.org/core/alloc/index.html).
 
-- [`Idx`](crate::Idx) compatible [`NonMax<T>`](crate::nonmax) for [Niche Optimizations](https://doc.rust-lang.org/std/option/index.html#representation).
+- [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) compatible
+  [`NonMax<T>`](https://docs.rs/indexland/latest/indexland/struct.NonMax.html) for
+  [Niche Optimizations](https://doc.rust-lang.org/std/option/index.html#representation).
 
-- [`serde`](::serde) implementations for all Collections.
+- [`serde`](https://serde.rs/) implementations for all Collections.
 
 - All crate dependencies optional through feature flags.
 
@@ -118,27 +126,30 @@ Newtypes elegantly solve both of these issues.
 
 ### Why not use [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
 1.  Indexland offers all common collections in one place,
-    **using the same `Idx` trait**. Sometimes the same index type is used
-    for multiple data structures. Sometimes you want to switch from a `Vec`
-    to a `VecDeque`.
+    **using the same [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) trait**. Sometimes the same index type is used
+    for multiple data structures. Sometimes you want to switch from a [`Vec<T>`](https://doc.rust-lang.org/std/vec/struct.Vec.html)
+    to a [`VecDeque<T>`](https://doc.rust-lang.org/std/collections/struct.VecDeque.html).
 
 2.  We deliberately **don't** implement
     `Index<usize> for IndexSlice` and `Add<usize> for Idx`,
     as they compromize type safety. Opt-in support is availabe
-    via [`#[indexland(usize_arith)]`](indexland_derive::Idx#indexlandusize_arith).
+    via [`#[indexland(usize_arith)]`]([indexland_derive::Idx#](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#)indexlandusize_arith).
 
-3.  Our `Idx` derivation syntax is much cleaner than `index_vec`'s
-    [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
+3.  Our
+    [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
+    derivation syntax is much cleaner than
+    [`index_vec`'s `define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
 
 ### Is there a runtime cost to this?
 There's minimal overhead. The core wrapper functions are
-marked `#[inline(always)]` to reliably eliminate them, even in debug mode.
+marked [`#[inline(always)]`](https://nnethercote.github.io/perf-book/inlining.html) to reliably eliminate them, even in debug mode.
 
 Type conversions follow the same rules as Rust integer overflow.
 Overflows will panic in debug mode and wrap in release.
 Newtypes can customize this via
-[`#[indexland(bounds_checks = "..")]`](crate::indexland_derive::Idx#indexlandbounds_checks--),
-or bypass it through [`into_usize_unchecked`](crate::idx::Idx::into_usize_unchecked).
+[`#[indexland(bounds_checks = "..")]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandbounds_checks--),
+or bypass it through
+[`into_usize_unchecked`](https://docs.rs/indexland/latest/indexland/trait.Idx.html#tymethod.into_usize).
 
 
 ## License
