@@ -27,9 +27,9 @@ pub mod index_range;
 
 pub mod index_enumerate;
 
-pub mod generic_index;
 pub mod index_slice;
 pub mod index_slice_index;
+pub mod raw_index_container;
 
 pub mod index_array;
 

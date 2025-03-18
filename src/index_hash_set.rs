@@ -1,6 +1,7 @@
 use super::{idx::Idx, index_range::IndexRange};
 use crate::{
-    generic_index::GenericIndex, index_enumerate::IndexEnumerate,
+    index_enumerate::IndexEnumerate,
+    raw_index_container::{GenericIndex, RawIndexContainer},
     IndexRangeBounds,
 };
 use alloc::boxed::Box;
@@ -210,18 +211,55 @@ impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
     }
 }
 
+unsafe impl<I, T> RawIndexContainer for IndexSlice<I, T> {
+    type Element = T;
+    type Slice = IndexSlice<I, T>;
+
+    unsafe fn len_from_ptr(this: *const Self) -> usize {
+        unsafe { &*this }.len()
+    }
+    fn len(&self) -> usize {
+        self.len()
+    }
+
+    fn get(&self, idx: usize) -> Option<&Self::Element> {
+        self.data.get_index(idx)
+    }
+
+    unsafe fn get_unchecked(
+        this: *const Self,
+        idx: usize,
+    ) -> *const Self::Element {
+        // not ideal, but the best we can do with their api
+        unsafe { &*this }.data.index(idx)
+    }
+
+    fn index(&self, idx: usize) -> &Self::Element {
+        &self.data[idx]
+    }
+    fn get_range(&self, r: core::ops::Range<usize>) -> Option<&Self::Slice> {
+        Some(IndexSlice::from_slice(self.data.get_range(r)?))
+    }
+
+    unsafe fn get_range_unchecked(
+        this: *const Self,
+        r: core::ops::Range<usize>,
+    ) -> *const Self::Slice {
+        &raw const unsafe { &*this }.data[r] as *const IndexSlice<I, T>
+    }
+
+    fn index_range(&self, r: core::ops::Range<usize>) -> &Self::Slice {
+        IndexSlice::from_slice(&self.data[r])
+    }
+}
+
 impl<I, T, X> Index<X> for IndexSlice<I, T>
 where
     X: GenericIndex<I, T, IndexSlice<I, T>, IndexSlice<I, T>>,
 {
     type Output = X::Output;
     fn index(&self, index: X) -> &Self::Output {
-        index.index(
-            self,
-            self.len(),
-            |c, i| &c.data[i],
-            |c, r| IndexSlice::from_slice(&c.data[r]),
-        )
+        index.index(self)
     }
 }
 

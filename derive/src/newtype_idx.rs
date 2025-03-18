@@ -563,7 +563,7 @@ pub fn derive_idx_newtype_inner(
     for compat in &newtype_ctx.attrs.compatible_list {
         derivations.push(derive_compatible(
             &newtype_ctx.attrs.indexland_path,
-            &newtype_ctx.name,
+            newtype_ctx.name,
             compat,
         ));
     }

@@ -145,6 +145,19 @@ fn usize_compatible() {
 }
 
 #[test]
+fn multi_integer_compatible() {
+    #[derive(Idx)]
+    #[indexland(compatible(usize, u8))]
+    struct FooId(u32);
+
+    let v: IndexArray<FooId, i32, 3> = index_array![1, 2, 3];
+
+    assert_eq!(v[1 as usize], 2);
+
+    assert_eq!(v[2 as u8], 3);
+}
+
+#[test]
 fn ui() {
     let t = trybuild::TestCases::new();
     t.compile_fail("tests/ui/**/*.rs");
