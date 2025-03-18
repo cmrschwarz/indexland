@@ -4,6 +4,7 @@
 mod context;
 mod enum_idx;
 mod newtype_idx;
+mod shared;
 mod utils;
 
 use enum_idx::derive_idx_enum_inner;
@@ -166,6 +167,9 @@ pub fn derive_idx_enum(
 ///
 /// #### `#[indexland(only(..))]`
 /// Suppress the derivation of all traits except the specified ones (whitelist).
+///
+/// #### `#[indexland(compatible(..))]`
+/// Allow other types to be used to index containers of this type.
 ///
 /// # Attributes Examples
 ///

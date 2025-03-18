@@ -77,7 +77,7 @@ pub unsafe trait GenericIndex<I, S: ?Sized, R: ?Sized, C: ?Sized>:
         len: usize,
         single: FS,
         range: FR,
-    ) -> &Self::Output
+    ) -> &mut Self::Output
     where
         FS: Fn(&mut C, usize) -> &mut S,
         FR: Fn(&mut C, Range<usize>) -> &mut R;
@@ -170,7 +170,7 @@ unsafe impl<I: Idx, S: ?Sized, R: ?Sized, C: ?Sized> GenericIndex<I, S, R, C>
         _len: usize,
         single: FS,
         _range: FR,
-    ) -> &Self::Output
+    ) -> &mut Self::Output
     where
         FS: Fn(&mut C, usize) -> &mut S,
         FR: Fn(&mut C, Range<usize>) -> &mut R,
@@ -266,7 +266,7 @@ unsafe impl<I: Idx, S: ?Sized, R: ?Sized, C: ?Sized> GenericIndex<I, S, R, C>
         _len: usize,
         _single: FS,
         range: FR,
-    ) -> &Self::Output
+    ) -> &mut Self::Output
     where
         FS: Fn(&mut C, usize) -> &mut S,
         FR: Fn(&mut C, Range<usize>) -> &mut R,
@@ -362,7 +362,7 @@ unsafe impl<I: Idx, S: ?Sized, R: ?Sized, C: ?Sized> GenericIndex<I, S, R, C>
         len: usize,
         _single: FS,
         range: FR,
-    ) -> &Self::Output
+    ) -> &mut Self::Output
     where
         FS: Fn(&mut C, usize) -> &mut S,
         FR: Fn(&mut C, Range<usize>) -> &mut R,
@@ -471,7 +471,7 @@ macro_rules! index_slice_partial_range_impl {
                 len: usize,
                 _single: FS,
                 range: FR,
-            ) -> &Self::Output
+            ) -> &mut Self::Output
             where
                 FS: Fn(&mut C, usize) -> &mut S,
                 FR: Fn(&mut C, Range<usize>) -> &mut R,

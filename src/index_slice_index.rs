@@ -8,21 +8,30 @@ use crate::{
 
 /// # Safety
 /// if the input of `get_unchecked(_mut)` was a valid pointer, so must be the output
-pub unsafe trait IndexSliceIndex<S: ?Sized> {
+pub unsafe trait IndexSliceIndex<I, T> {
     type Output: ?Sized;
-    fn get(self, slice: &S) -> Option<&Self::Output>;
-    fn get_mut(self, slice: &mut S) -> Option<&mut Self::Output>;
+    fn get(self, slice: &IndexSlice<I, T>) -> Option<&Self::Output>;
+    fn get_mut(
+        self,
+        slice: &mut IndexSlice<I, T>,
+    ) -> Option<&mut Self::Output>;
     /// # Safety
     /// `slice` must be a valid pointer for the expected range
-    unsafe fn get_unchecked(self, slice: *const S) -> *const Self::Output;
+    unsafe fn get_unchecked(
+        self,
+        slice: *const IndexSlice<I, T>,
+    ) -> *const Self::Output;
     /// # Safety
     /// `slice` must be a valid pointer for the expected range
-    unsafe fn get_unchecked_mut(self, slice: *mut S) -> *mut Self::Output;
-    fn index(self, slice: &S) -> &Self::Output;
-    fn index_mut(self, slice: &mut S) -> &mut Self::Output;
+    unsafe fn get_unchecked_mut(
+        self,
+        slice: *mut IndexSlice<I, T>,
+    ) -> *mut Self::Output;
+    fn index(self, slice: &IndexSlice<I, T>) -> &Self::Output;
+    fn index_mut(self, slice: &mut IndexSlice<I, T>) -> &mut Self::Output;
 }
 
-unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for I {
+unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for I {
     type Output = T;
     #[inline]
     fn get(self, slice: &IndexSlice<I, T>) -> Option<&Self::Output> {
@@ -59,7 +68,7 @@ unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for I {
     }
 }
 
-unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<IndexSlice<I, T>>
+unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<I, T>
     for core::ops::Range<C>
 {
     type Output = IndexSlice<I, T>;
@@ -135,7 +144,7 @@ unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<IndexSlice<I, T>>
 macro_rules! index_slice_partial_range_impl {
     ($($range: path),*) => {$(
         unsafe impl<I: Idx, T, C: IdxCompatible<I>>
-            IndexSliceIndex<IndexSlice<I, T>>
+            IndexSliceIndex<I, T>
         for $range {
             type Output = IndexSlice<I, T>;
             #[inline]
@@ -206,7 +215,7 @@ index_slice_partial_range_impl![
     IndexRangeFrom<C>
 ];
 
-unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for RangeFull {
+unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for RangeFull {
     type Output = IndexSlice<I, T>;
     #[inline]
     fn get(self, slice: &IndexSlice<I, T>) -> Option<&IndexSlice<I, T>> {
@@ -243,7 +252,7 @@ unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for RangeFull {
     }
 }
 
-unsafe impl<I: Idx, T> IndexSliceIndex<IndexSlice<I, T>> for IndexRange<I> {
+unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for IndexRange<I> {
     type Output = IndexSlice<I, T>;
     #[inline]
     fn get(self, slice: &IndexSlice<I, T>) -> Option<&IndexSlice<I, T>> {

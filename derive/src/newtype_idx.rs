@@ -4,6 +4,7 @@ use syn::{Data, DeriveInput, Fields, Generics, Ident, Type};
 
 use crate::{
     context::{Attrs, BoundsChecksMode, Context, ErrorList},
+    shared::derive_compatible,
     utils::{token_stream_to_compact_string, Derivations},
 };
 
@@ -557,6 +558,14 @@ pub fn derive_idx_newtype_inner(
             }
             None => push_unknown_entry_error(&newtype_ctx, entry, &descr),
         }
+    }
+
+    for compat in &newtype_ctx.attrs.compatible_list {
+        derivations.push(derive_compatible(
+            &newtype_ctx.attrs.indexland_path,
+            &newtype_ctx.name,
+            compat,
+        ));
     }
 
     newtype_ctx.error_list.check()?;

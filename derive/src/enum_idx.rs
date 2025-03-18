@@ -4,6 +4,7 @@ use syn::{Data, DeriveInput, Fields, Generics};
 
 use crate::{
     context::{Attrs, BoundsChecksMode, Context, ErrorList},
+    shared::derive_compatible,
     utils::{token_stream_to_compact_string, Derivations},
 };
 
@@ -594,6 +595,14 @@ pub fn derive_idx_enum_inner(
             }
             None => push_unknown_entry_error(&enum_ctx, entry, &descr),
         }
+    }
+
+    for compat in &enum_ctx.attrs.compatible_list {
+        derivations.push(derive_compatible(
+            &enum_ctx.attrs.indexland_path,
+            &enum_ctx.name,
+            compat,
+        ));
     }
 
     enum_ctx.error_list.check()?;

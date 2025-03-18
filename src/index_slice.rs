@@ -222,7 +222,7 @@ impl<I, T> IndexSlice<I, T> {
     ) -> [&mut ISI::Output; N]
     where
         I: Idx,
-        ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
+        ISI: IndexSliceIndex<I, T> + GetDisjointMutIndex<I>,
     {
         let slice = self as *mut IndexSlice<I, T>;
         let mut arr: core::mem::MaybeUninit<[&mut ISI::Output; N]> =
@@ -249,7 +249,7 @@ impl<I, T> IndexSlice<I, T> {
     ) -> Result<[&mut ISI::Output; N], GetDisjointMutError>
     where
         I: Idx,
-        ISI: IndexSliceIndex<IndexSlice<I, T>> + GetDisjointMutIndex<I>,
+        ISI: IndexSliceIndex<I, T> + GetDisjointMutIndex<I>,
     {
         let len = self.len_idx();
         // NB: The optimizer should inline the loops into a sequence
@@ -276,9 +276,7 @@ impl<I, T: Debug> Debug for IndexSlice<I, T> {
     }
 }
 
-impl<I, T, Idx: IndexSliceIndex<IndexSlice<I, T>>> Index<Idx>
-    for IndexSlice<I, T>
-{
+impl<I, T, Idx: IndexSliceIndex<I, T>> Index<Idx> for IndexSlice<I, T> {
     type Output = Idx::Output;
     #[inline]
     fn index(&self, index: Idx) -> &Self::Output {
@@ -286,9 +284,7 @@ impl<I, T, Idx: IndexSliceIndex<IndexSlice<I, T>>> Index<Idx>
     }
 }
 
-impl<I, T, ISI: IndexSliceIndex<IndexSlice<I, T>>> IndexMut<ISI>
-    for IndexSlice<I, T>
-{
+impl<I, T, ISI: IndexSliceIndex<I, T>> IndexMut<ISI> for IndexSlice<I, T> {
     #[inline]
     fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
         index.index_mut(self)

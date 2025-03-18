@@ -134,6 +134,17 @@ fn usize_arith() {
 }
 
 #[test]
+fn usize_compatible() {
+    #[derive(Idx)]
+    #[indexland(compatible(usize))]
+    struct FooId(u32);
+
+    let v: IndexArray<FooId, i32, 3> = index_array![1, 2, 3];
+
+    assert_eq!(v[1], 2);
+}
+
+#[test]
 fn ui() {
     let t = trybuild::TestCases::new();
     t.compile_fail("tests/ui/**/*.rs");

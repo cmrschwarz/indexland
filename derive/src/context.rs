@@ -4,7 +4,7 @@ use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::ToTokens;
 use syn::{
     parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput,
-    Ident, LitStr, PathSegment,
+    Ident, LitStr, PathSegment, Token,
 };
 
 const INDEXLAND: &str = "indexland";
@@ -12,6 +12,7 @@ const CRATE: &str = "crate";
 const ONLY: &str = "only";
 const OMIT: &str = "omit";
 const EXTRA: &str = "extra";
+const COMPATIBLE: &str = "compatible";
 const BOUNDS_CHECKS: &str = "bounds_checks";
 
 const USIZE_ARITH: &str = "usize_arith";
@@ -32,6 +33,7 @@ pub struct Attrs {
     pub indexland_path: syn::Path,
     pub blacklist: Vec<TokenStream>,
     pub whitelist: Vec<TokenStream>,
+    pub compatible_list: Vec<syn::Path>,
     pub extra_list: Vec<TokenStream>,
     // could be active despite being empty
     pub whitelist_active: bool,
@@ -118,6 +120,7 @@ impl Context {
         let mut first_whitelist = None;
         let mut extra_list = Vec::new();
         let mut first_extra_list = None;
+        let mut compatible_list = Vec::new();
         let mut bounds_checks_mode = BoundsChecksMode::default();
         let mut enable_usize_arith = false;
         for attr in &ast.attrs {
@@ -195,7 +198,15 @@ impl Context {
                         first_extra_list = Some(meta.path.span());
                     }
                     extra_list.extend(elements);
-                } else {
+                }
+                else if meta.path.is_ident(COMPATIBLE) {
+                    // e.g. #[indexland(compatible(usize))]
+                    let compatible;
+                    parenthesized!(compatible in meta.input);
+                    let elements = Punctuated::<syn::Path, Token![,]>::parse_terminated(&compatible)?;
+                    compatible_list.extend(elements);
+                }
+                else {
                     errs.push(meta.error(format!(
                         "unknown {INDEXLAND} attribute {}",
                         meta.path.to_token_stream()
@@ -230,6 +241,7 @@ impl Context {
                 whitelist,
                 blacklist,
                 extra_list,
+                compatible_list,
                 whitelist_active: first_whitelist.is_some(),
                 bounds_checks_mode,
                 enable_usize_arith,

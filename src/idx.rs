@@ -71,23 +71,13 @@ pub trait IdxNewtype: Idx {
     fn into_inner(self) -> Self::Base;
 }
 
-pub trait IdxCompatible<I>: Copy {
+pub trait IdxCompatible<I>: Idx {
     fn idx_cast(self) -> I;
-    fn into_usize(self) -> usize;
-    fn into_usize_unchecked(self) -> usize;
 }
 
 impl<I: Idx> IdxCompatible<I> for I {
     fn idx_cast(self) -> I {
         self
-    }
-
-    fn into_usize(self) -> usize {
-        Idx::into_usize(self)
-    }
-
-    fn into_usize_unchecked(self) -> usize {
-        Idx::into_usize_unchecked(self)
     }
 }
 
