@@ -150,7 +150,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn into_array_vec(self) -> ArrayVec<T, CAP> {
         self.data
     }
-    pub fn push_get_id(&mut self, v: T) -> I
+    pub fn push_get_idx(&mut self, v: T) -> I
     where
         I: Idx,
     {

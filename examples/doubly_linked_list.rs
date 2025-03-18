@@ -50,8 +50,8 @@ impl<T> LinkedList<T> {
             next: None,
         };
 
-        // NOTE: `push_get_id` is a nice convenience helper
-        let new_id = self.nodes.push_get_id(node);
+        // NOTE: `push_get_idx` is a nice convenience helper
+        let new_id = self.nodes.push_get_idx(node);
 
         if let Some(tail) = self.tail {
             self.nodes[tail].next = Some(new_id);

@@ -106,7 +106,7 @@ impl<I, T> IndexVec<I, T> {
     pub fn into_boxed_slice(self) -> Box<IndexSlice<I, T>> {
         IndexSlice::from_boxed_slice(self.data.into_boxed_slice())
     }
-    pub fn push_get_id(&mut self, v: T) -> I
+    pub fn push_get_idx(&mut self, v: T) -> I
     where
         I: Idx,
     {

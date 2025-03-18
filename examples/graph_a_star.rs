@@ -95,10 +95,10 @@ impl Graph {
         x: i32,
         y: i32,
     ) -> NodeId {
-        // NOTE: `push_get_id` is a useful convenience helper added by indexland.
+        // NOTE: `push_get_idx` is a useful convenience helper added by indexland.
         // There's quite a few more of these to help make working with typed
         // indices as pleasant as possible.
-        self.nodes.push_get_id(Node {
+        self.nodes.push_get_idx(Node {
             name: name.into(),
             edges: Vec::new(),
             pos: Position { x, y },
@@ -111,10 +111,10 @@ impl Graph {
     // other types like and `EdgeId` here and can often lead to other helful
     // errors e.g. when when refactoring parameter order.
     pub fn add_bidi_edge(&mut self, from: NodeId, to: NodeId, cost: i32) {
-        let edge_id_fwd = self.edges.push_get_id(Edge { from, to, cost });
+        let edge_id_fwd = self.edges.push_get_idx(Edge { from, to, cost });
         self.nodes[from].edges.push(edge_id_fwd);
 
-        let edge_id_bwd = self.edges.push_get_id(Edge {
+        let edge_id_bwd = self.edges.push_get_idx(Edge {
             from: to,
             to: from,
             cost,
