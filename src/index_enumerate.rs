@@ -45,7 +45,7 @@ where
         match self.base_iter.nth(n) {
             Some(v) => {
                 let pos = self.pos;
-                self.pos += I::from_usize(n + 1);
+                self.pos = self.pos + I::from_usize(n + 1);
                 Some((pos + I::from_usize(n), v))
             }
             None => None,

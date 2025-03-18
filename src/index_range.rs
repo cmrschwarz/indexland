@@ -441,7 +441,7 @@ impl<I: Idx> Iterator for IndexRange<I> {
             return None;
         }
         let curr = self.start;
-        self.start += I::ONE;
+        self.start = self.start + I::ONE;
         Some(curr)
     }
 }
@@ -450,7 +450,7 @@ impl<I: Idx> DoubleEndedIterator for IndexRange<I> {
         if self.start == self.end {
             return None;
         }
-        self.end -= I::ONE;
+        self.end = self.end - I::ONE;
         Some(self.end)
     }
 }
@@ -465,7 +465,7 @@ impl<I: Idx> Iterator for IndexRangeInclusive<I> {
             }
             self.exclusive = true;
         } else {
-            self.start += I::ONE;
+            self.start = self.start + I::ONE;
         }
         Some(curr)
     }
@@ -479,7 +479,7 @@ impl<I: Idx> DoubleEndedIterator for IndexRangeInclusive<I> {
             }
             self.exclusive = true;
         } else {
-            self.end -= I::ONE;
+            self.end = self.end - I::ONE;
         }
         Some(curr)
     }
@@ -491,7 +491,7 @@ impl<I: Idx> Iterator for IndexRangeFrom<I> {
         let curr = self.start;
         // NOTE: this might overflow or wrap. This is intentional and the
         // same that std does.
-        self.start += I::ONE;
+        self.start = self.start - I::ONE;
         Some(curr)
     }
 }

@@ -8,3 +8,6 @@ mod no_derive_no_std;
 
 #[cfg(feature = "smallvec")]
 mod smallvec;
+
+#[cfg(feature = "arrayvec")]
+mod arrayvec;

@@ -6,8 +6,12 @@ use crate::{
     attrs::{Attrs, BoundsChecksMode},
     derive_context::DeriveContext,
     shared_derives::{
-        derive_add_assign, derive_clone, derive_copy, derive_default,
-        derive_eq, derive_rem_assign, derive_sub_assign,
+        derive_add, derive_add_assign, derive_add_assign_usize,
+        derive_add_usize, derive_clone, derive_copy, derive_default,
+        derive_eq, derive_from_self_for_usize, derive_from_usize, derive_ord,
+        derive_partial_ord, derive_rem, derive_rem_assign,
+        derive_rem_assign_usize, derive_rem_usize, derive_sub,
+        derive_sub_assign, derive_sub_assign_usize, derive_sub_usize,
     },
 };
 
@@ -18,7 +22,8 @@ struct EnumCtxCustom<'a> {
 
 type EnumCtx<'a> = DeriveContext<EnumCtxCustom<'a>>;
 
-fn derive_idx(ctx: &EnumCtx) -> TokenStream {
+fn enum_derive_idx(ctx: &EnumCtx) -> TokenStream {
+    let self_as_idx = &ctx.base.self_as_idx;
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
 
@@ -75,6 +80,7 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
             const ZERO: Self = #name::#var_zero;
             const ONE: Self = #name::#var_one;
             const MAX: Self = #name::#var_max;
+
             #[inline(always)]
             fn from_usize_unchecked(v: usize) -> Self {
                 match v {
@@ -82,48 +88,67 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
                     _ => #name::#var_zero
                 }
             }
+
             #from_usize
+
             #[inline(always)]
             fn into_usize_unchecked(self) -> usize  {
                 self as usize
             }
+
             #[inline(always)]
             fn into_usize(self) -> usize  {
-                Self::into_usize_unchecked(self)
+                #self_as_idx::into_usize_unchecked(self)
             }
-            fn wrapping_add(self, other: Self) -> Self {
-                Self::from_usize(
-                    self.into_usize()
-                        .wrapping_add(other.into_usize())
-                        .min(<Self as #indexland::Idx>::MAX.into_usize()),
-                )
-            }
-            fn wrapping_sub(self, other: Self) -> Self {
-                Self::from_usize(
-                    self.into_usize()
-                        .wrapping_sub(other.into_usize())
-                        .min(<Self as #indexland::Idx>::MAX.into_usize()),
-                )
-            }
+
             fn saturating_add(self, other: Self) -> Self {
-                Self::from_usize(
-                    self.into_usize()
-                        .saturating_add(other.into_usize())
-                        .min(<Self as #indexland::Idx>::MAX.into_usize()),
+                #self_as_idx::from_usize(
+                    #self_as_idx::into_usize(self)
+                        .saturating_add(#self_as_idx::into_usize(other))
+                        .min(#self_as_idx::into_usize(#self_as_idx::MAX))
                 )
             }
+
             fn saturating_sub(self, other: Self) -> Self {
-                Self::from_usize(
-                    self.into_usize()
-                        .saturating_sub(other.into_usize())
-                        .min(<Self as #indexland::Idx>::MAX.into_usize()),
+                #self_as_idx::from_usize(
+                    #self_as_idx::into_usize(self).saturating_sub(other.into_usize())
                 )
+            }
+
+            fn wrapping_add(self, other: Self) -> Self {
+                let max = #self_as_idx::MAX.into_usize();
+                let offset_on_wrap =
+                    (::core::primitive::usize::MAX % max).saturating_add(1);
+                let (sum, of) = #self_as_idx::into_usize(self)
+                    .overflowing_add( #self_as_idx::into_usize(other));
+                if of {
+                    return #self_as_idx::from_usize(sum + offset_on_wrap);
+                }
+                if sum < max {
+                    return #self_as_idx::from_usize(sum);
+                }
+                return #self_as_idx::from_usize(sum % max);
+            }
+
+            fn wrapping_sub(self, other: Self) -> Self {
+                let max = #self_as_idx::MAX.into_usize();
+                let offset_on_wrap =
+                    (::core::primitive::usize::MAX % max).saturating_add(1);
+                let (diff, of) = #self_as_idx::into_usize(self)
+                    .overflowing_sub(#self_as_idx::into_usize(other));
+                if of {
+                    return #self_as_idx::from_usize(diff - offset_on_wrap);
+                }
+                if diff < max {
+                    return #self_as_idx::from_usize(diff);
+                }
+                #self_as_idx::from_usize(diff % max)
             }
         }
     }
 }
 
-fn derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
+fn enum_derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     let (impl_generics, ty_generics, where_clause) =
@@ -140,7 +165,7 @@ fn derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derive_hash(ctx: &EnumCtx) -> TokenStream {
+fn enum_derive_hash(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -152,7 +177,7 @@ fn derive_hash(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derive_debug(ctx: &EnumCtx) -> TokenStream {
+fn enum_derive_debug(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.base.name;
     let idents = &ctx.custom.idents;
     let ident_strings = &ctx.custom.ident_strings;
@@ -168,7 +193,7 @@ fn derive_debug(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derive_display(ctx: &EnumCtx) -> TokenStream {
+fn enum_derive_display(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.base.name;
     let idents = &ctx.custom.idents;
     let ident_strings = &ctx.custom.ident_strings;
@@ -184,83 +209,7 @@ fn derive_display(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derive_add(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Add for #name {
-            type Output = Self;
-            fn add(self, rhs: Self) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) + #indexland::Idx::into_usize(rhs),
-                )
-            }
-        }
-    }
-}
-
-fn derive_sub(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Sub for #name {
-            type Output = Self;
-            fn sub(self, rhs: Self) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) - #indexland::Idx::into_usize(rhs),
-                )
-            }
-        }
-    }
-}
-
-fn derive_rem(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Rem for #name {
-            type Output = Self;
-            fn rem(self, rhs: Self) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) % #indexland::Idx::into_usize(rhs),
-                )
-            }
-        }
-    }
-}
-
-fn derive_partial_ord(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::cmp::PartialOrd for #name {
-            fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-                #indexland::Idx::into_usize(*self)
-                    .partial_cmp(&#indexland::Idx::into_usize(*other))
-            }
-        }
-    }
-}
-
-fn derive_ord(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::cmp::Ord for #name {
-            fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-                #indexland::Idx::into_usize(*self)
-                    .cmp(&#indexland::Idx::into_usize(*other))
-            }
-        }
-    }
-}
-
-fn derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
+fn enum_derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -272,161 +221,46 @@ fn derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derive_from_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::convert::From<usize> for #name {
-            #[inline]
-            fn from(v: usize) -> #name {
-                #indexland::Idx::from_usize(v)
-            }
-        }
-    }
-}
-
-fn derive_from_self_for_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::convert::From<#name> for usize {
-            #[inline]
-            fn from(v: #name) -> usize {
-                #indexland::Idx::into_usize(v)
-            }
-        }
-    }
-}
-
-fn derive_add_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Add<usize> for #name {
-            type Output = Self;
-            fn add(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) + rhs,
-                )
-            }
-        }
-    }
-}
-
-fn derive_sub_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Sub<usize> for #name {
-            type Output = Self;
-            fn sub(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) - rhs,
-                )
-            }
-        }
-    }
-}
-
-fn derive_rem_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Rem<usize> for #name {
-            type Output = Self;
-            fn rem(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) % rhs,
-                )
-            }
-        }
-    }
-}
-
-fn derive_add_assign_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::AddAssign<usize> for #name {
-            fn add_assign(&mut self, rhs: usize) {
-                *self = *self + <#name as #indexland::Idx>::from_usize(rhs);
-            }
-        }
-    }
-}
-
-fn derive_sub_assign_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::SubAssign<usize> for #name {
-            fn sub_assign(&mut self, rhs: usize) {
-                *self = *self - <#name as #indexland::Idx>::from_usize(rhs);
-            }
-        }
-    }
-}
-
-fn derive_rem_assign_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::RemAssign<usize> for #name {
-            fn rem_assign(&mut self, rhs: usize) {
-                *self = *self % <#name as #indexland::Idx>::from_usize(rhs);
-            }
-        }
-    }
-}
-
 fn fill_derivation_list(ctx: &mut EnumCtx) {
     let usize_arith = ctx.base.attrs.enable_usize_arith;
-    ctx.add_deriv_custom(true, "Idx", derive_idx);
-    ctx.add_deriv_custom(true, "IdxEnum", derive_idx_enum);
-    ctx.add_deriv_custom(true, "Debug", derive_debug);
-    ctx.add_deriv_custom(false, "Display", derive_display);
+    ctx.add_deriv_custom(true, "Idx", enum_derive_idx);
+    ctx.add_deriv_custom(true, "IdxEnum", enum_derive_idx_enum);
+    ctx.add_deriv_custom(true, "Debug", enum_derive_debug);
+    ctx.add_deriv_custom(false, "Display", enum_derive_display);
     ctx.add_deriv_shared(true, "Default", derive_default);
     ctx.add_deriv_shared(true, "Clone", derive_clone);
     ctx.add_deriv_shared(true, "Copy", derive_copy);
-    ctx.add_deriv_custom(true, "Add", derive_add);
+    ctx.add_deriv_shared(true, "Add", derive_add);
     ctx.add_deriv_shared(true, "AddAssign", derive_add_assign);
-    ctx.add_deriv_custom(true, "Sub", derive_sub);
+    ctx.add_deriv_shared(true, "Sub", derive_sub);
     ctx.add_deriv_shared(true, "SubAssign", derive_sub_assign);
-    ctx.add_deriv_custom(true, "Rem", derive_rem);
+    ctx.add_deriv_shared(true, "Rem", derive_rem);
     ctx.add_deriv_shared(true, "RemAssign", derive_rem_assign);
-    ctx.add_deriv_custom(true, "Hash", derive_hash);
-    ctx.add_deriv_custom(true, "PartialOrd", derive_partial_ord);
-    ctx.add_deriv_custom(true, "Ord", derive_ord);
-    ctx.add_deriv_custom(true, "PartialEq", derive_partial_eq);
+    ctx.add_deriv_custom(true, "Hash", enum_derive_hash);
+    ctx.add_deriv_shared(true, "PartialOrd", derive_partial_ord);
+    ctx.add_deriv_shared(true, "Ord", derive_ord);
+    ctx.add_deriv_custom(true, "PartialEq", enum_derive_partial_eq);
     ctx.add_deriv_shared(true, "Eq", derive_eq);
-    ctx.add_deriv_custom(true, "From<usize>", derive_from_usize);
-    ctx.add_deriv_custom(
+    ctx.add_deriv_shared(true, "From<usize>", derive_from_usize);
+    ctx.add_deriv_shared(
         true,
         "From<Self> for usize",
         derive_from_self_for_usize,
     );
-    ctx.add_deriv_custom(usize_arith, "Add<usize>", derive_add_usize);
-    ctx.add_deriv_custom(usize_arith, "Sub<usize>", derive_sub_usize);
-    ctx.add_deriv_custom(usize_arith, "Rem<usize>", derive_rem_usize);
-    ctx.add_deriv_custom(
+    ctx.add_deriv_shared(usize_arith, "Add<usize>", derive_add_usize);
+    ctx.add_deriv_shared(usize_arith, "Sub<usize>", derive_sub_usize);
+    ctx.add_deriv_shared(usize_arith, "Rem<usize>", derive_rem_usize);
+    ctx.add_deriv_shared(
         usize_arith,
         "AddAssign<usize>",
         derive_add_assign_usize,
     );
-    ctx.add_deriv_custom(
+    ctx.add_deriv_shared(
         usize_arith,
         "SubAssign<usize>",
         derive_sub_assign_usize,
     );
-    ctx.add_deriv_custom(
+    ctx.add_deriv_shared(
         usize_arith,
         "RemAssign<usize>",
         derive_rem_assign_usize,

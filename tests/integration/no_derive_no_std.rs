@@ -37,15 +37,12 @@ fn derive_idx_enum_manual() {
         fn wrapping_add(self, _other: Self) -> Self {
             unimplemented!()
         }
-
         fn wrapping_sub(self, _other: Self) -> Self {
             unimplemented!()
         }
-
         fn saturating_add(self, _other: Self) -> Self {
             unimplemented!()
         }
-
         fn saturating_sub(self, _other: Self) -> Self {
             unimplemented!()
         }

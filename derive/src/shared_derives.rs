@@ -191,3 +191,200 @@ pub fn derive_eq(ctx: &DeriveContextBase) -> TokenStream {
         impl ::core::cmp::Eq for #name {}
     }
 }
+
+// The following impls could be shared because they dont rely on
+// enum or newtype specifics but are currently only used by
+// enum because for newtype it's more efficient to perform
+// the operation on the base type.
+
+pub fn derive_add(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Add for #name {
+            type Output = Self;
+            fn add(self, rhs: Self) -> Self::Output {
+                #self_as_idx::from_usize(
+                    #self_as_idx::into_usize(self) + #self_as_idx::into_usize(rhs),
+                )
+            }
+        }
+    }
+}
+
+pub fn derive_sub(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Sub for #name {
+            type Output = Self;
+            fn sub(self, rhs: Self) -> Self::Output {
+                #self_as_idx::from_usize(
+                    #self_as_idx::into_usize(self) - #self_as_idx::into_usize(rhs),
+                )
+            }
+        }
+    }
+}
+
+pub fn derive_rem(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Rem for #name {
+            type Output = Self;
+            fn rem(self, rhs: Self) -> Self::Output {
+                #self_as_idx::from_usize(
+                    #self_as_idx::into_usize(self) % #self_as_idx::into_usize(rhs),
+                )
+            }
+        }
+    }
+}
+
+pub fn derive_partial_ord(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::cmp::PartialOrd for #name {
+            fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+                #self_as_idx::into_usize(*self)
+                    .partial_cmp(&#self_as_idx::into_usize(*other))
+            }
+        }
+    }
+}
+
+pub fn derive_ord(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::cmp::Ord for #name {
+            fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+                #self_as_idx::into_usize(*self)
+                    .cmp(&#self_as_idx::into_usize(*other))
+            }
+        }
+    }
+}
+
+pub fn derive_from_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::convert::From<usize> for #name {
+            #[inline]
+            fn from(v: usize) -> #name {
+                #self_as_idx::from_usize(v)
+            }
+        }
+    }
+}
+
+pub fn derive_from_self_for_usize(ctx: &DeriveContextBase) -> TokenStream {
+    // !! Can't use self_as_idx here because self is `usize`. !!
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::convert::From<#name> for usize {
+            #[inline]
+            fn from(v: #name) -> usize {
+                <#name as #indexland::Idx>::into_usize(v)
+            }
+        }
+    }
+}
+
+pub fn derive_add_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Add<usize> for #name {
+            type Output = Self;
+            fn add(self, rhs: usize) -> Self::Output {
+                #indexland::Idx::from_usize(
+                    #indexland::Idx::into_usize(self) + rhs,
+                )
+            }
+        }
+    }
+}
+
+pub fn derive_sub_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Sub<usize> for #name {
+            type Output = Self;
+            fn sub(self, rhs: usize) -> Self::Output {
+                #indexland::Idx::from_usize(
+                    #indexland::Idx::into_usize(self) - rhs,
+                )
+            }
+        }
+    }
+}
+
+pub fn derive_rem_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Rem<usize> for #name {
+            type Output = Self;
+            fn rem(self, rhs: usize) -> Self::Output {
+                #indexland::Idx::from_usize(
+                    #indexland::Idx::into_usize(self) % rhs,
+                )
+            }
+        }
+    }
+}
+
+pub fn derive_add_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::AddAssign<usize> for #name {
+            fn add_assign(&mut self, rhs: usize) {
+                *self = *self + <#name as #indexland::Idx>::from_usize(rhs);
+            }
+        }
+    }
+}
+
+pub fn derive_sub_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::SubAssign<usize> for #name {
+            fn sub_assign(&mut self, rhs: usize) {
+                *self = *self - #self_as_idx::from_usize(rhs);
+            }
+        }
+    }
+}
+
+pub fn derive_rem_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::RemAssign<usize> for #name {
+            fn rem_assign(&mut self, rhs: usize) {
+                *self = *self % #self_as_idx::from_usize(rhs);
+            }
+        }
+    }
+}

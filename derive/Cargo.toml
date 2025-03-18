@@ -21,13 +21,13 @@ proc-macro2 = { version = "1.0.94" }
 syn = { version = "2.0.100", features = ["parsing"] }
 quote = "1.0.40"
 
+
 [dev-dependencies]
 indexland = { workspace = true, features = ["derive", "arrayvec"] }
 trybuild = "1.0.104"
 
 
 [package.metadata.docs.rs]
-
 rustdoc-args = [
     # link to stable instead of nightly
     "--generate-link-to-definition",

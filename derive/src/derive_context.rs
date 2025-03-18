@@ -12,6 +12,7 @@ pub struct DeriveContextBase {
     pub attrs: Attrs,
     pub name: Ident,
     pub generics: Generics,
+    pub self_as_idx: TokenStream,
 }
 
 pub struct DeriveContext<C> {
@@ -42,15 +43,29 @@ impl<C> DeriveContext<C> {
         generics: Generics,
         custom: C,
     ) -> Self {
+        let indexland = &attrs.indexland_path;
+        let self_as_idx = quote! { <Self as #indexland::Idx> };
         Self {
             base: DeriveContextBase {
                 attrs,
                 name,
                 generics,
+                self_as_idx,
             },
             derivs_catalog: Default::default(),
             derivs_default: Default::default(),
             custom,
+        }
+    }
+    pub fn add_deriv(
+        &mut self,
+        default: bool,
+        name: &'static str,
+        f: DeriveCatalogEntry<C>,
+    ) {
+        self.derivs_catalog.insert(name, f);
+        if default {
+            self.derivs_default.push(name);
         }
     }
     pub fn add_deriv_shared(
@@ -59,11 +74,7 @@ impl<C> DeriveContext<C> {
         name: &'static str,
         f: fn(&DeriveContextBase) -> TokenStream,
     ) {
-        self.derivs_catalog
-            .insert(name, DeriveCatalogEntry::Base(f));
-        if default {
-            self.derivs_default.push(name);
-        }
+        self.add_deriv(default, name, DeriveCatalogEntry::Base(f));
     }
     pub fn add_deriv_custom(
         &mut self,
@@ -71,11 +82,7 @@ impl<C> DeriveContext<C> {
         name: &'static str,
         f: fn(&Self) -> TokenStream,
     ) {
-        self.derivs_catalog
-            .insert(name, DeriveCatalogEntry::Custom(f));
-        if default {
-            self.derivs_default.push(name);
-        }
+        self.add_deriv(default, name, DeriveCatalogEntry::Custom(f));
     }
 
     pub fn push_unknown_entry_error(&self, entry: &TokenStream, descr: &str) {

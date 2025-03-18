@@ -13,29 +13,30 @@ use crate::{
 
 struct NewtypeCtxCustom<'a> {
     base_type: &'a Type,
+    base_as_idx: TokenStream,
 }
 
 type NewtypeCtx<'a> = DeriveContext<NewtypeCtxCustom<'a>>;
 
-fn derive_idx(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_idx(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
 
     let (impl_generics, ty_generics, where_clause) =
         ctx.base.generics.split_for_impl();
 
-    let base_type = &ctx.custom.base_type;
+    let base_as_idx = &ctx.custom.base_as_idx;
 
     let checked_conversions = match ctx.base.attrs.bounds_checks_mode {
         BoundsChecksMode::Never => {
             quote! {
                 #[inline(always)]
                 fn from_usize(v: usize) -> Self {
-                    #name(<#base_type as #indexland::Idx>::from_usize_unchecked(v))
+                    #name(#base_as_idx::from_usize_unchecked(v))
                 }
                 #[inline(always)]
                 fn into_usize(self) -> usize {
-                    <#base_type as #indexland::Idx>::into_usize_unchecked(self.0)
+                    #base_as_idx::into_usize_unchecked(self.0)
                 }
             }
         }
@@ -44,18 +45,18 @@ fn derive_idx(ctx: &NewtypeCtx) -> TokenStream {
                 #[inline(always)]
                 fn from_usize(v: usize) -> Self {
                     #[cfg(debug_assertions)]
-                    return #name(<#base_type as #indexland::Idx>::from_usize(v));
+                    return #name(#base_as_idx::from_usize(v));
 
                     #[cfg(not(debug_assertions))]
-                    #name(<#base_type as #indexland::Idx>::from_usize_unchecked(v))
+                    #name(#base_as_idx::from_usize_unchecked(v))
                 }
                 #[inline(always)]
                 fn into_usize(self) -> usize {
                     #[cfg(debug_assertions)]
-                    return <#base_type as #indexland::Idx>::into_usize(self.0);
+                    return #base_as_idx::into_usize(self.0);
 
                     #[cfg(not(debug_assertions))]
-                    <#base_type as #indexland::Idx>::into_usize_unchecked(self.0)
+                    #base_as_idx::into_usize_unchecked(self.0)
                 }
             }
         }
@@ -63,11 +64,11 @@ fn derive_idx(ctx: &NewtypeCtx) -> TokenStream {
             quote! {
                 #[inline(always)]
                 fn from_usize(v: usize) -> Self {
-                    #name(<#base_type as #indexland::Idx>::from_usize(v))
+                    #name(#base_as_idx::from_usize(v))
                 }
                 #[inline(always)]
                 fn into_usize(self) -> usize {
-                    <#base_type as #indexland::Idx>::into_usize(self.0)
+                    #base_as_idx::into_usize(self.0)
                 }
             }
         }
@@ -76,35 +77,35 @@ fn derive_idx(ctx: &NewtypeCtx) -> TokenStream {
     quote! {
         #[automatically_derived]
         impl #impl_generics #indexland::Idx for #name #ty_generics #where_clause {
-            const ZERO: Self = #name(<#base_type as #indexland::Idx>::ZERO);
-            const ONE: Self = #name(<#base_type as #indexland::Idx>::ONE);
-            const MAX: Self = #name(<#base_type as #indexland::Idx>::MAX);
+            const ZERO: Self = #name(#base_as_idx::ZERO);
+            const ONE: Self = #name(#base_as_idx::ONE);
+            const MAX: Self = #name(#base_as_idx::MAX);
             #checked_conversions
             #[inline(always)]
             fn from_usize_unchecked(v: usize) -> Self {
-                #name(<#base_type as #indexland::Idx>::from_usize_unchecked(v))
+                #name(#base_as_idx::from_usize_unchecked(v))
             }
             #[inline(always)]
             fn into_usize_unchecked(self) -> usize {
-                <#base_type as #indexland::Idx>::into_usize_unchecked(self.0)
+                #base_as_idx::into_usize_unchecked(self.0)
             }
             fn wrapping_add(self, other: Self) -> Self {
-                #name(<#base_type as #indexland::Idx>::wrapping_add(self.0, other.0))
+                #name(#base_as_idx::wrapping_add(self.0, other.0))
             }
             fn wrapping_sub(self, other: Self) -> Self {
-                #name(<#base_type as #indexland::Idx>::wrapping_sub(self.0, other.0))
+                #name(#base_as_idx::wrapping_sub(self.0, other.0))
             }
             fn saturating_add(self, other: Self) -> Self {
-                #name(<#base_type as #indexland::Idx>::saturating_add(self.0, other.0))
+                #name(#base_as_idx::saturating_add(self.0, other.0))
             }
             fn saturating_sub(self, other: Self) -> Self {
-                #name(<#base_type as #indexland::Idx>::saturating_sub(self.0, other.0))
+                #name(#base_as_idx::saturating_sub(self.0, other.0))
             }
         }
     }
 }
 
-fn derive_idx_newtype(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_idx_newtype(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     let (impl_generics, ty_generics, where_clause) =
@@ -126,7 +127,7 @@ fn derive_idx_newtype(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_hash(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_hash(ctx: &NewtypeCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -140,7 +141,7 @@ fn derive_hash(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_from_usize(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_from_usize(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     let base_type = &ctx.custom.base_type;
@@ -155,7 +156,7 @@ fn derive_from_usize(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_from_self_for_usize(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_from_self_for_usize(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     let base_type = &ctx.custom.base_type;
@@ -170,7 +171,7 @@ fn derive_from_self_for_usize(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_debug(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_debug(ctx: &NewtypeCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -182,7 +183,7 @@ fn derive_debug(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_display(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_display(ctx: &NewtypeCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -194,7 +195,7 @@ fn derive_display(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_add(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_add(ctx: &NewtypeCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -207,7 +208,7 @@ fn derive_add(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_sub(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_sub(ctx: &NewtypeCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -220,7 +221,7 @@ fn derive_sub(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_rem(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_rem(ctx: &NewtypeCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -233,7 +234,7 @@ fn derive_rem(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_partial_ord(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_partial_ord(ctx: &NewtypeCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -245,7 +246,7 @@ fn derive_partial_ord(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_ord(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_ord(ctx: &NewtypeCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -257,7 +258,7 @@ fn derive_ord(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_partial_eq(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_partial_eq(ctx: &NewtypeCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
@@ -269,7 +270,7 @@ fn derive_partial_eq(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_add_usize(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_add_usize(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     quote! {
@@ -285,7 +286,7 @@ fn derive_add_usize(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_sub_usize(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_sub_usize(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     quote! {
@@ -301,7 +302,7 @@ fn derive_sub_usize(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_rem_usize(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_rem_usize(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     quote! {
@@ -317,7 +318,7 @@ fn derive_rem_usize(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_add_assign_usize(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_add_assign_usize(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     quote! {
@@ -330,7 +331,7 @@ fn derive_add_assign_usize(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_sub_assign_usize(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_sub_assign_usize(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     quote! {
@@ -343,7 +344,7 @@ fn derive_sub_assign_usize(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn derive_rem_assign_usize(ctx: &NewtypeCtx) -> TokenStream {
+fn newtype_derive_rem_assign_usize(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
     quote! {
@@ -358,47 +359,47 @@ fn derive_rem_assign_usize(ctx: &NewtypeCtx) -> TokenStream {
 
 fn fill_derivation_list(ctx: &mut NewtypeCtx) {
     let usize_arith = ctx.base.attrs.enable_usize_arith;
-    ctx.add_deriv_custom(true, "Idx", derive_idx);
-    ctx.add_deriv_custom(true, "IdxEnum", derive_idx_newtype);
-    ctx.add_deriv_custom(true, "Debug", derive_debug);
-    ctx.add_deriv_custom(true, "Display", derive_display);
+    ctx.add_deriv_custom(true, "Idx", newtype_derive_idx);
+    ctx.add_deriv_custom(true, "IdxEnum", newtype_derive_idx_newtype);
+    ctx.add_deriv_custom(true, "Debug", newtype_derive_debug);
+    ctx.add_deriv_custom(true, "Display", newtype_derive_display);
     ctx.add_deriv_shared(true, "Default", derive_default);
     ctx.add_deriv_shared(true, "Clone", derive_clone);
     ctx.add_deriv_shared(true, "Copy", derive_copy);
-    ctx.add_deriv_custom(true, "Add", derive_add);
-    ctx.add_deriv_custom(true, "Sub", derive_sub);
-    ctx.add_deriv_custom(true, "Rem", derive_rem);
+    ctx.add_deriv_custom(true, "Add", newtype_derive_add);
+    ctx.add_deriv_custom(true, "Sub", newtype_derive_sub);
+    ctx.add_deriv_custom(true, "Rem", newtype_derive_rem);
     ctx.add_deriv_shared(true, "AddAssign", derive_add_assign);
     ctx.add_deriv_shared(true, "SubAssign", derive_sub_assign);
     ctx.add_deriv_shared(true, "RemAssign", derive_rem_assign);
-    ctx.add_deriv_custom(true, "Hash", derive_hash);
-    ctx.add_deriv_custom(true, "PartialOrd", derive_partial_ord);
-    ctx.add_deriv_custom(true, "Ord", derive_ord);
-    ctx.add_deriv_custom(true, "PartialEq", derive_partial_eq);
+    ctx.add_deriv_custom(true, "Hash", newtype_derive_hash);
+    ctx.add_deriv_custom(true, "PartialOrd", newtype_derive_partial_ord);
+    ctx.add_deriv_custom(true, "Ord", newtype_derive_ord);
+    ctx.add_deriv_custom(true, "PartialEq", newtype_derive_partial_eq);
     ctx.add_deriv_shared(true, "Eq", derive_eq);
-    ctx.add_deriv_custom(true, "From<usize>", derive_from_usize);
+    ctx.add_deriv_custom(true, "From<usize>", newtype_derive_from_usize);
     ctx.add_deriv_custom(
         true,
         "From<Self> for usize",
-        derive_from_self_for_usize,
+        newtype_derive_from_self_for_usize,
     );
-    ctx.add_deriv_custom(usize_arith, "Add<usize>", derive_add_usize);
-    ctx.add_deriv_custom(usize_arith, "Sub<usize>", derive_sub_usize);
-    ctx.add_deriv_custom(usize_arith, "Rem<usize>", derive_rem_usize);
+    ctx.add_deriv_custom(usize_arith, "Add<usize>", newtype_derive_add_usize);
+    ctx.add_deriv_custom(usize_arith, "Sub<usize>", newtype_derive_sub_usize);
+    ctx.add_deriv_custom(usize_arith, "Rem<usize>", newtype_derive_rem_usize);
     ctx.add_deriv_custom(
         usize_arith,
         "AddAssign<usize>",
-        derive_add_assign_usize,
+        newtype_derive_add_assign_usize,
     );
     ctx.add_deriv_custom(
         usize_arith,
         "SubAssign<usize>",
-        derive_sub_assign_usize,
+        newtype_derive_sub_assign_usize,
     );
     ctx.add_deriv_custom(
         usize_arith,
         "RemAssign<usize>",
-        derive_rem_assign_usize,
+        newtype_derive_rem_assign_usize,
     );
 }
 
@@ -431,13 +432,14 @@ pub fn derive_idx_newtype_inner(
     let attrs = Attrs::from_input(&ast);
     let base_type = &inner.ty;
     let name = ast.ident;
+    let indexland = &attrs.indexland_path;
 
-    let mut ctx = NewtypeCtx::new(
-        attrs,
-        name,
-        ast.generics,
-        NewtypeCtxCustom { base_type },
-    );
+    let custom = NewtypeCtxCustom {
+        base_type,
+        base_as_idx: quote! { <#base_type as #indexland::Idx> },
+    };
+
+    let mut ctx = NewtypeCtx::new(attrs, name, ast.generics, custom);
 
     // we don't derive if the type definition is already borked
     ctx.base.attrs.error_list.check()?;

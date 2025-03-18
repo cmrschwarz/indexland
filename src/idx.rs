@@ -1,25 +1,12 @@
 #![allow(clippy::inline_always)]
 
 use core::{
-    fmt::Debug,
     hash::Hash,
-    ops::{Add, AddAssign, Rem, RemAssign, Sub, SubAssign},
+    ops::{Add, Sub},
 };
 
-use crate::{index_range::IndexRangeInclusive, IndexRange};
-
 pub trait Idx:
-    Default
-    + Debug
-    + Copy
-    + Ord
-    + Hash
-    + Add<Output = Self>
-    + Sub<Output = Self>
-    + Rem<Output = Self>
-    + AddAssign
-    + SubAssign
-    + RemAssign
+    'static + Copy + Ord + Hash + Add<Output = Self> + Sub<Output = Self>
 {
     const ZERO: Self;
     const ONE: Self;
@@ -36,18 +23,29 @@ pub trait Idx:
     fn into_usize(self) -> usize;
     fn into_usize_unchecked(self) -> usize;
 
-    // we cannot supply default impls for these as
+    /// Careful with signed integers as this might make them negative.
+    ///
+    /// That would cause the next `into_usize` conversion to panic.
     fn wrapping_add(self, other: Self) -> Self;
+
+    /// Careful with signed integers as this might make them negative.
+    ///
+    /// That would cause the next `into_usize` conversion to panic.
     fn wrapping_sub(self, other: Self) -> Self;
 
-    fn saturating_add(self, other: Self) -> Self;
-    fn saturating_sub(self, other: Self) -> Self;
-
-    fn range_to(&self, end: Self) -> IndexRange<Self> {
-        IndexRange::new(*self..end)
+    fn saturating_add(self, other: Self) -> Self {
+        Self::from_usize(
+            self.into_usize()
+                .saturating_add(other.into_usize())
+                .min(Self::MAX.into_usize()),
+        )
     }
-    fn range_through(&self, end: Self) -> IndexRangeInclusive<Self> {
-        IndexRangeInclusive::new(*self..=end)
+    fn saturating_sub(self, other: Self) -> Self {
+        Self::from_usize(
+            self.into_usize()
+                .saturating_sub(other.into_usize())
+                .min(Self::MAX.into_usize()),
+        )
     }
 }
 

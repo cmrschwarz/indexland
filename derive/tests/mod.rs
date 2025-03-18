@@ -97,7 +97,6 @@ fn derive_newtype_omit() {
 fn bounds_checks_debug_only() {
     #[derive(Idx)]
     struct FooId(u32);
-
     FooId::from_usize(usize::MAX);
 }
 

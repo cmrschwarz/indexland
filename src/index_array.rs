@@ -69,11 +69,14 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 /// ```
 #[macro_export]
 macro_rules! index_array {
-    ($($value:expr),+ $(,)?) => {
-        $crate::IndexArray::new([$($value),*])
+    () => {
+        $crate::IndexArray::new([])
     };
     ($value:expr; $count: expr) => {
         $crate::IndexArray::new([ $value; $count])
+    };
+    ($($value:expr),+ $(,)?) => {
+        $crate::IndexArray::new([$($value),*])
     };
     ($($key:expr => $value:expr),* $(,)?) => {{
         use core::mem::MaybeUninit;
