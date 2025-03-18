@@ -73,9 +73,7 @@ use core::ops::{
     RangeToInclusive,
 };
 
-pub trait IndexRangeBounds<I, C: IdxCompatible<I> = I>:
-    RangeBounds<C>
-{
+pub trait IndexRangeBounds<I, C = I>: RangeBounds<C> {
     type BaseRange: IndexRangeBounds<I, C>;
     type IndexRange: IndexRangeBounds<I, C>;
     type UsizeRange: IndexRangeBounds<usize>;

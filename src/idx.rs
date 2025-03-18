@@ -36,18 +36,13 @@ pub trait Idx:
     fn into_usize(self) -> usize;
     fn into_usize_unchecked(self) -> usize;
 
-    fn saturating_add(self, other: Self) -> Self {
-        Self::from_usize(
-            self.into_usize()
-                .saturating_add(other.into_usize())
-                .min(Self::MAX.into_usize()),
-        )
-    }
-    fn saturating_sub(self, other: Self) -> Self {
-        Self::from_usize(
-            self.into_usize().saturating_add(other.into_usize()).max(0),
-        )
-    }
+    // we cannot supply default impls for these as
+    fn wrapping_add(self, other: Self) -> Self;
+    fn wrapping_sub(self, other: Self) -> Self;
+
+    fn saturating_add(self, other: Self) -> Self;
+    fn saturating_sub(self, other: Self) -> Self;
+
     fn range_to(&self, end: Self) -> IndexRange<Self> {
         IndexRange::new(*self..end)
     }
@@ -116,6 +111,22 @@ impl Idx for usize {
     fn from_usize_unchecked(v: usize) -> Self {
         v
     }
+    #[inline(always)]
+    fn wrapping_add(self, other: Self) -> Self {
+        self.wrapping_add(other)
+    }
+    #[inline(always)]
+    fn wrapping_sub(self, other: Self) -> Self {
+        self.wrapping_sub(other)
+    }
+    #[inline(always)]
+    fn saturating_add(self, other: Self) -> Self {
+        self.saturating_add(other)
+    }
+    #[inline(always)]
+    fn saturating_sub(self, other: Self) -> Self {
+        self.saturating_sub(other)
+    }
 }
 
 macro_rules! primitive_idx_implemenation_unsized {
@@ -150,9 +161,19 @@ macro_rules! primitive_idx_implemenation_unsized {
                 )]
                 v as $primitive
             }
+            #[inline(always)]
+            fn wrapping_add(self, other: Self) -> Self {
+                $primitive::wrapping_add(self, other)
+            }
+            #[inline(always)]
+            fn wrapping_sub(self, other: Self) -> Self {
+                $primitive::wrapping_sub(self, other)
+            }
+            #[inline(always)]
             fn saturating_add(self, other: Self) -> Self {
                 $primitive::saturating_add(self, other)
             }
+            #[inline(always)]
             fn saturating_sub(self, other: Self) -> Self {
                 $primitive::saturating_sub(self, other)
             }
@@ -191,6 +212,12 @@ macro_rules! primitive_idx_implemenation_sized {
                     clippy::cast_possible_wrap
                 )]
                 v as $primitive
+            }
+            fn wrapping_add(self, other: Self) -> Self {
+                $primitive::wrapping_add(self, other)
+            }
+            fn wrapping_sub(self, other: Self) -> Self {
+                $primitive::wrapping_sub(self, other)
             }
             fn saturating_add(self, other: Self) -> Self {
                 $primitive::saturating_add(self, other)
@@ -252,6 +279,12 @@ macro_rules! idx_newtype {
             fn saturating_sub(self, other: Self) -> Self {
                 $name(<$base_type as $crate::Idx>::saturating_sub(self.0, other.0))
             }
+            fn wrapping_add(self, other: Self) -> Self {
+                $name(<$base_type as  $crate::Idx>::wrapping_add(self.0, other.0))
+            }
+            fn wrapping_sub(self, other: Self) -> Self {
+                $name(<$base_type as $crate::Idx>::wrapping_sub(self.0, other.0))
+            }
         }
         impl $crate::IdxNewtype for $name {
             type Base = $base_type;
@@ -300,6 +333,13 @@ macro_rules! idx_newtype {
                 $name(self.0 - other.0)
             }
         }
+        impl ::core::ops::Rem for $name {
+            type Output = Self;
+            #[inline]
+            fn rem(self, other: Self) -> Self {
+                $name(self.0 % other.0)
+            }
+        }
         impl ::core::ops::AddAssign for $name {
             #[inline]
             fn add_assign(&mut self, other: Self) {
@@ -310,6 +350,12 @@ macro_rules! idx_newtype {
             #[inline]
             fn sub_assign(&mut self, other: Self) {
                 self.0 -= other.0;
+            }
+        }
+        impl ::core::ops::RemAssign for $name {
+            #[inline]
+            fn rem_assign(&mut self, other: Self) {
+                self.0 %= other.0;
             }
         }
     )*};

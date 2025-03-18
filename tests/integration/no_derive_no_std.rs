@@ -34,6 +34,21 @@ fn derive_idx_enum_manual() {
         fn into_usize_unchecked(self) -> usize {
             self as usize
         }
+        fn wrapping_add(self, _other: Self) -> Self {
+            unimplemented!()
+        }
+
+        fn wrapping_sub(self, _other: Self) -> Self {
+            unimplemented!()
+        }
+
+        fn saturating_add(self, _other: Self) -> Self {
+            unimplemented!()
+        }
+
+        fn saturating_sub(self, _other: Self) -> Self {
+            unimplemented!()
+        }
     }
 
     impl core::ops::Add for Foo {
@@ -50,6 +65,13 @@ fn derive_idx_enum_manual() {
             Idx::from_usize(self.into_usize() - rhs.into_usize())
         }
     }
+    impl core::ops::Rem for Foo {
+        type Output = Self;
+
+        fn rem(self, rhs: Self) -> Self::Output {
+            Idx::from_usize(self.into_usize() % rhs.into_usize())
+        }
+    }
     impl core::ops::AddAssign for Foo {
         fn add_assign(&mut self, rhs: Self) {
             *self = *self + rhs;
@@ -58,6 +80,11 @@ fn derive_idx_enum_manual() {
     impl core::ops::SubAssign for Foo {
         fn sub_assign(&mut self, rhs: Self) {
             *self = *self - rhs;
+        }
+    }
+    impl core::ops::RemAssign for Foo {
+        fn rem_assign(&mut self, rhs: Self) {
+            *self = *self % rhs;
         }
     }
     impl IdxEnum for Foo {

@@ -354,6 +354,12 @@ macro_rules! impl_nonmax_idx {
                 )]
                 self.get() as usize
             }
+            fn wrapping_add(self, other: Self) -> Self {
+                NonMax::<$primitive>::wrapping_add(self, other)
+            }
+            fn wrapping_sub(self, other: Self) -> Self {
+                NonMax::<$primitive>::wrapping_sub(self, other)
+            }
             fn saturating_add(self, other: Self) -> Self {
                 NonMax::<$primitive>::saturating_add(self, other)
             }

@@ -91,8 +91,34 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
             fn into_usize(self) -> usize  {
                 Self::into_usize_unchecked(self)
             }
-
-            // default impls for wrapping add and wrapping sub suffice
+            fn wrapping_add(self, other: Self) -> Self {
+                Self::from_usize(
+                    self.into_usize()
+                        .wrapping_add(other.into_usize())
+                        .min(<Self as #indexland::Idx>::MAX.into_usize()),
+                )
+            }
+            fn wrapping_sub(self, other: Self) -> Self {
+                Self::from_usize(
+                    self.into_usize()
+                        .wrapping_sub(other.into_usize())
+                        .min(<Self as #indexland::Idx>::MAX.into_usize()),
+                )
+            }
+            fn saturating_add(self, other: Self) -> Self {
+                Self::from_usize(
+                    self.into_usize()
+                        .saturating_add(other.into_usize())
+                        .min(<Self as #indexland::Idx>::MAX.into_usize()),
+                )
+            }
+            fn saturating_sub(self, other: Self) -> Self {
+                Self::from_usize(
+                    self.into_usize()
+                        .saturating_sub(other.into_usize())
+                        .min(<Self as #indexland::Idx>::MAX.into_usize()),
+                )
+            }
         }
     }
 }
@@ -223,6 +249,22 @@ fn derive_sub(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
+fn derive_rem(ctx: &EnumCtx) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Rem for #name {
+            type Output = Self;
+            fn rem(self, rhs: Self) -> Self::Output {
+                #indexland::Idx::from_usize(
+                    #indexland::Idx::into_usize(self) % #indexland::Idx::into_usize(rhs),
+                )
+            }
+        }
+    }
+}
+
 fn derive_add_assign(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.name;
     quote! {
@@ -242,6 +284,18 @@ fn derive_sub_assign(ctx: &EnumCtx) -> TokenStream {
         impl ::core::ops::SubAssign for #name {
             fn sub_assign(&mut self, rhs: Self) {
                 *self = *self - rhs;
+            }
+        }
+    }
+}
+
+fn derive_rem_assign(ctx: &EnumCtx) -> TokenStream {
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::RemAssign for #name {
+            fn rem_assign(&mut self, rhs: Self) {
+                *self = *self % rhs;
             }
         }
     }
@@ -355,6 +409,22 @@ fn derive_sub_usize(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
+fn derive_rem_usize(ctx: &EnumCtx) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Rem<usize> for #name {
+            type Output = Self;
+            fn rem(self, rhs: usize) -> Self::Output {
+                #indexland::Idx::from_usize(
+                    #indexland::Idx::into_usize(self) % rhs,
+                )
+            }
+        }
+    }
+}
+
 fn derive_add_assign_usize(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
@@ -375,7 +445,20 @@ fn derive_sub_assign_usize(ctx: &EnumCtx) -> TokenStream {
         #[automatically_derived]
         impl ::core::ops::SubAssign<usize> for #name {
             fn sub_assign(&mut self, rhs: usize) {
-                *self = *self -  <#name as #indexland::Idx>::from_usize(rhs);
+                *self = *self - <#name as #indexland::Idx>::from_usize(rhs);
+            }
+        }
+    }
+}
+
+fn derive_rem_assign_usize(ctx: &EnumCtx) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::RemAssign<usize> for #name {
+            fn rem_assign(&mut self, rhs: usize) {
+                *self = *self % <#name as #indexland::Idx>::from_usize(rhs);
             }
         }
     }
@@ -395,6 +478,8 @@ fn derivation_list(ctx: &EnumCtx) -> Derivations<EnumTraitDerivation> {
     derivs.add(true, "AddAssign", derive_add_assign);
     derivs.add(true, "Sub", derive_sub);
     derivs.add(true, "SubAssign", derive_sub_assign);
+    derivs.add(true, "Rem", derive_rem);
+    derivs.add(true, "RemAssign", derive_rem_assign);
     derivs.add(true, "Hash", derive_hash);
     derivs.add(true, "PartialOrd", derive_partial_ord);
     derivs.add(true, "Ord", derive_ord);
@@ -404,8 +489,10 @@ fn derivation_list(ctx: &EnumCtx) -> Derivations<EnumTraitDerivation> {
     derivs.add(true, "From<Self> for usize", derive_from_self_for_usize);
     derivs.add(usize_arith, "Add<usize>", derive_add_usize);
     derivs.add(usize_arith, "Sub<usize>", derive_sub_usize);
+    derivs.add(usize_arith, "Rem<usize>", derive_rem_usize);
     derivs.add(usize_arith, "AddAssign<usize>", derive_add_assign_usize);
     derivs.add(usize_arith, "SubAssign<usize>", derive_sub_assign_usize);
+    derivs.add(usize_arith, "RemAssign<usize>", derive_rem_assign_usize);
     derivs
 }
 
