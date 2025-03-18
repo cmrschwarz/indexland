@@ -12,7 +12,7 @@
 [msrv]: https://img.shields.io/crates/msrv/indexland?logo=rust
 [docs-rs]: https://img.shields.io/badge/docs.rs-indexland-66c2a5?logo=docs.rs
 
-Newtype Index Support for Rust Collection Types.
+Newtype Indices for Rust Collection Types.
 
 ## Features
 - Strongly typed collection indices for better type safety and readability.
@@ -126,11 +126,15 @@ use `type NodeId = usize`, but this negatively affects:
 2.  **Type Safety**: We deliberately **don't** implement
     `Index<usize> for IndexSlice` and `Add<usize> for Idx`,
     as they negatively impact type safety. Opt-in support is available
-    via [`#[indexland(usize_arith)]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandusize_arith)
-    if you want it.
+    via
+    [`#[indexland(compatible(usize))]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandcompatible)
+    and
+    [`#[indexland(usize_arith)]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandusize_arith)
+    respectively for cases where it makes sense.
 
 3.  **Cleaner Syntax**: Our `Idx` derive macro is much nicer to use than
-    `index_vec`'s [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html).
+    `index_vec`'s [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html),
+    while also offering more customization options.
     We offer a declarative alternative if you dislike proc-macros though.
 
 ## Performance

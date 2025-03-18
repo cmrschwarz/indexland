@@ -13,12 +13,14 @@ use proc_macro2::{Span, TokenStream};
 
 use syn::{Data, DeriveInput};
 
-/// Derives `IdxNewtype` and associated traits.
-/// See [`#[derive[Idx]]`](crate::Idx) the attributes explanation.
+/// Derives
+/// [`indexland::IdxNewtype`](https://docs.rs/indexland/latest/indexland/trait.IdxNewtype.html)
+/// and associated traits.
+/// See [`#[derive[Idx]]`](crate::Idx) for the attribute documentation.
 ///
 /// # Implemented Traits
-/// - [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
 /// - [`indexland::IdxNewtype`](https://docs.rs/indexland/latest/indexland/trait.IdxNewtype.html)
+/// - [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
 /// - [`Default`](core::default::Default)
 /// - [`Debug`](core::fmt::Debug) +
 ///   [`Display`](core::fmt::Display)
@@ -33,14 +35,18 @@ use syn::{Data, DeriveInput};
 ///   [`AddAssign`](core::ops::AddAssign)
 /// - [`Sub`](core::ops::Sub) +
 ///   [`SubAssign`](core::ops::SubAssign)
+/// - [`Rem<usize>`](core::ops::Rem) +
+///   [`RemAssign<usize>`](core::ops::RemAssign)
 /// - [`From<usize>`](core::convert::From) +
 ///   [`From<Self> for usize`](core::convert::From)
 ///
 /// # Opt-in Extra Traits ([`#[indexland(extra(..))]`](Idx#indexlandextra))
 /// - [`Add<usize>`](core::ops::Add),
 /// - [`Sub<usize>`](core::ops::Sub)
+/// - [`Rem<usize>`](core::ops::Rem)
 /// - [`AddAssign<usize>`](core::ops::AddAssign)
 /// - [`SubAssign<usize>`](core::ops::SubAssign)
+/// - [`RemAssign<usize>`](core::ops::RemAssign)
 /// - [`Display`](core::fmt::Display)
 ///
 /// # Example
@@ -70,12 +76,14 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     }
 }
 
-/// Derives `IdxEnum` and associated traits.
-/// See [`#[derive[Idx]]`](crate::Idx) for the attributes explanation.
+/// Derives
+/// [`indexland::IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html)
+/// and associated traits.
+/// See [`#[derive[Idx]]`](crate::Idx) for the attribute documentation.
 ///
 /// ## Implemented Traits
-/// - [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
 /// - [`indexland::IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html)
+/// - [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
 /// - [`Default`](core::default::Default) (uses first variant)
 /// - [`Debug`](core::fmt::Debug)
 ///   (no [`Display`](core::fmt::Display) by default, enable through [`#[indexland(extra(Display))]`](Idx#indexlandextra))
@@ -90,6 +98,8 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 ///   [`AddAssign`](core::ops::AddAssign)
 /// - [`Sub`](core::ops::Sub) +
 ///   [`SubAssign`](core::ops::SubAssign)
+/// - [`Rem<usize>`](core::ops::Rem) +
+///   [`RemAssign<usize>`](core::ops::RemAssign)
 /// - [`From<usize>`](core::convert::From) +
 ///   [`From<Self> for usize`](core::convert::From)
 ///
@@ -97,8 +107,10 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 /// # Opt-in Extra Traits ([`#[indexland(extra(..))]`](Idx#indexlandextra))
 /// - [`Add<usize>`](core::ops::Add),
 /// - [`Sub<usize>`](core::ops::Sub)
+/// - [`Rem<usize>`](core::ops::Rem)
 /// - [`AddAssign<usize>`](core::ops::AddAssign)
 /// - [`SubAssign<usize>`](core::ops::SubAssign)
+/// - [`RemAssign<usize>`](core::ops::RemAssign)
 /// - [`Display`](core::fmt::Display)
 ///
 /// # Example
@@ -121,8 +133,12 @@ pub fn derive_idx_enum(
         .into()
 }
 
+/// Derives
+/// [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
+/// and associated traits.
 /// For structs this is equivalent to [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
-/// for enums to [`#[derive(IdxEnum)]`](crate::IdxEnum).
+/// for enums to [`#[derive(IdxEnum)]`](crate::IdxEnum). See their
+/// respective documentation for the full list of traits that will be derived.
 ///
 /// # Basic Usage
 /// ```
