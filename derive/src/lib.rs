@@ -1,10 +1,11 @@
 #![allow(rustdoc::redundant_explicit_links)]
 #![doc = include_str!("../README.md")]
 
-mod context;
+mod attrs;
+mod derive_context;
 mod enum_idx;
 mod newtype_idx;
-mod shared;
+mod shared_derives;
 mod utils;
 
 use enum_idx::derive_idx_enum_inner;

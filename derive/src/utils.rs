@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use std::{collections::HashMap, fmt::Write};
+use std::fmt::Write;
 
 // to get "From<usize>" instead of "From < usize >"
 // this does not solve the general problem of pretty printing and will
@@ -76,27 +76,4 @@ pub fn token_stream_to_compact_string(path: &TokenStream) -> String {
     let mut res = String::new();
     compact_token_stream_stringify(&mut res, path.clone());
     res
-}
-
-pub struct Derivations<F> {
-    pub catalog: HashMap<&'static str, F>,
-    pub default_derivations: Vec<&'static str>,
-}
-
-impl<F> Default for Derivations<F> {
-    fn default() -> Self {
-        Self {
-            catalog: Default::default(),
-            default_derivations: Default::default(),
-        }
-    }
-}
-
-impl<F> Derivations<F> {
-    pub fn add(&mut self, default: bool, name: &'static str, f: F) {
-        self.catalog.insert(name, f);
-        if default {
-            self.default_derivations.push(name);
-        }
-    }
 }

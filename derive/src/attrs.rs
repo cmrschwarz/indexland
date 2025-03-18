@@ -30,6 +30,7 @@ pub struct ErrorList {
     pub errors: RefCell<Option<syn::Error>>,
 }
 pub struct Attrs {
+    pub error_list: ErrorList,
     pub indexland_path: syn::Path,
     pub blacklist: Vec<TokenStream>,
     pub whitelist: Vec<TokenStream>,
@@ -39,11 +40,6 @@ pub struct Attrs {
     pub whitelist_active: bool,
     pub bounds_checks_mode: BoundsChecksMode,
     pub enable_usize_arith: bool,
-}
-
-pub struct Context {
-    pub error_list: ErrorList,
-    pub attrs: Attrs,
 }
 
 impl ErrorList {
@@ -110,8 +106,8 @@ fn split_at_commas(tokens: TokenStream) -> Vec<TokenStream> {
     groups
 }
 
-impl Context {
-    pub fn from_input(ast: &DeriveInput) -> Context {
+impl Attrs {
+    pub fn from_input(ast: &DeriveInput) -> Attrs {
         let errs = ErrorList::default();
         let mut indexland_path = None;
         let mut blacklist = Vec::new();
@@ -234,18 +230,16 @@ impl Context {
             }
         }
 
-        Context {
+        Attrs {
             error_list: errs,
-            attrs: Attrs {
-                indexland_path,
-                whitelist,
-                blacklist,
-                extra_list,
-                compatible_list,
-                whitelist_active: first_whitelist.is_some(),
-                bounds_checks_mode,
-                enable_usize_arith,
-            },
+            indexland_path,
+            whitelist,
+            blacklist,
+            extra_list,
+            compatible_list,
+            whitelist_active: first_whitelist.is_some(),
+            bounds_checks_mode,
+            enable_usize_arith,
         }
     }
 }

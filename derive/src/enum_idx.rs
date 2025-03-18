@@ -1,32 +1,27 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, Generics};
+use syn::{Data, DeriveInput, Fields};
 
 use crate::{
-    context::{Attrs, BoundsChecksMode, Context, ErrorList},
-    shared::derive_compatible,
-    utils::{token_stream_to_compact_string, Derivations},
+    attrs::{Attrs, BoundsChecksMode},
+    derive_context::DeriveContext,
 };
 
-struct EnumCtx<'a> {
-    error_list: ErrorList,
-    attrs: Attrs,
-    name: Ident,
-    generics: &'a Generics,
+struct EnumCtxCustom<'a> {
     idents: Vec<&'a Ident>,
     ident_strings: Vec<String>,
 }
 
-type EnumTraitDerivation = fn(&EnumCtx) -> TokenStream;
+type EnumCtx<'a> = DeriveContext<EnumCtxCustom<'a>>;
 
 fn derive_idx(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
 
     let (impl_generics, ty_generics, where_clause) =
-        ctx.generics.split_for_impl();
+        ctx.base.generics.split_for_impl();
 
-    let idents = &ctx.idents;
+    let idents = &ctx.custom.idents;
     let count = idents.len();
     let var_zero = &idents[0];
     let var_one = &idents[1];
@@ -36,7 +31,7 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
     let indices_2 = 0..count;
 
     let panic_str = format!("index {{}} is out of bounds for {name}");
-    let from_usize = match ctx.attrs.bounds_checks_mode {
+    let from_usize = match ctx.base.attrs.bounds_checks_mode {
         BoundsChecksMode::Never => quote! {
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
@@ -125,11 +120,11 @@ fn derive_idx(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     let (impl_generics, ty_generics, where_clause) =
-        ctx.generics.split_for_impl();
-    let idents = &ctx.idents;
+        ctx.base.generics.split_for_impl();
+    let idents = &ctx.custom.idents;
     let count = idents.len();
     quote! {
         #[automatically_derived]
@@ -142,8 +137,8 @@ fn derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_default(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::default::Default for #name {
@@ -155,7 +150,7 @@ fn derive_default(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_clone(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::clone::Clone for #name {
@@ -167,7 +162,7 @@ fn derive_clone(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_copy(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::marker::Copy for #name {}
@@ -175,7 +170,7 @@ fn derive_copy(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_hash(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl core::hash::Hash for #name {
@@ -187,9 +182,9 @@ fn derive_hash(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_debug(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
-    let idents = &ctx.idents;
-    let ident_strings = &ctx.ident_strings;
+    let name = &ctx.base.name;
+    let idents = &ctx.custom.idents;
+    let ident_strings = &ctx.custom.ident_strings;
     quote! {
         #[automatically_derived]
         impl ::core::fmt::Debug for #name {
@@ -203,9 +198,9 @@ fn derive_debug(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_display(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
-    let idents = &ctx.idents;
-    let ident_strings = &ctx.ident_strings;
+    let name = &ctx.base.name;
+    let idents = &ctx.custom.idents;
+    let ident_strings = &ctx.custom.ident_strings;
     quote! {
         #[automatically_derived]
         impl ::core::fmt::Display for #name {
@@ -219,8 +214,8 @@ fn derive_display(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_add(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::Add for #name {
@@ -235,8 +230,8 @@ fn derive_add(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_sub(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::Sub for #name {
@@ -251,8 +246,8 @@ fn derive_sub(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_rem(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::Rem for #name {
@@ -267,7 +262,7 @@ fn derive_rem(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_add_assign(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::AddAssign for #name {
@@ -279,7 +274,7 @@ fn derive_add_assign(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_sub_assign(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::SubAssign for #name {
@@ -291,7 +286,7 @@ fn derive_sub_assign(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_rem_assign(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::RemAssign for #name {
@@ -303,8 +298,8 @@ fn derive_rem_assign(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_partial_ord(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::cmp::PartialOrd for #name {
@@ -317,8 +312,8 @@ fn derive_partial_ord(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_ord(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::cmp::Ord for #name {
@@ -331,7 +326,7 @@ fn derive_ord(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::cmp::PartialEq for #name {
@@ -343,7 +338,7 @@ fn derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_eq(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.name;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::cmp::Eq for #name {}
@@ -351,8 +346,8 @@ fn derive_eq(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_from_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::convert::From<usize> for #name {
@@ -365,8 +360,8 @@ fn derive_from_usize(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_from_self_for_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::convert::From<#name> for usize {
@@ -379,8 +374,8 @@ fn derive_from_self_for_usize(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_add_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::Add<usize> for #name {
@@ -395,8 +390,8 @@ fn derive_add_usize(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_sub_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::Sub<usize> for #name {
@@ -411,8 +406,8 @@ fn derive_sub_usize(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_rem_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::Rem<usize> for #name {
@@ -427,8 +422,8 @@ fn derive_rem_usize(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_add_assign_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::AddAssign<usize> for #name {
@@ -440,8 +435,8 @@ fn derive_add_assign_usize(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_sub_assign_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::SubAssign<usize> for #name {
@@ -453,8 +448,8 @@ fn derive_sub_assign_usize(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn derive_rem_assign_usize(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.attrs.indexland_path;
-    let name = &ctx.name;
+    let indexland = &ctx.base.attrs.indexland_path;
+    let name = &ctx.base.name;
     quote! {
         #[automatically_derived]
         impl ::core::ops::RemAssign<usize> for #name {
@@ -465,51 +460,50 @@ fn derive_rem_assign_usize(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derivation_list(ctx: &EnumCtx) -> Derivations<EnumTraitDerivation> {
-    let usize_arith = ctx.attrs.enable_usize_arith;
-    let mut derivs = Derivations::<EnumTraitDerivation>::default();
-    derivs.add(true, "Idx", derive_idx);
-    derivs.add(true, "IdxEnum", derive_idx_enum);
-    derivs.add(true, "Debug", derive_debug);
-    derivs.add(false, "Display", derive_display);
-    derivs.add(true, "Default", derive_default);
-    derivs.add(true, "Clone", derive_clone);
-    derivs.add(true, "Copy", derive_copy);
-    derivs.add(true, "Add", derive_add);
-    derivs.add(true, "AddAssign", derive_add_assign);
-    derivs.add(true, "Sub", derive_sub);
-    derivs.add(true, "SubAssign", derive_sub_assign);
-    derivs.add(true, "Rem", derive_rem);
-    derivs.add(true, "RemAssign", derive_rem_assign);
-    derivs.add(true, "Hash", derive_hash);
-    derivs.add(true, "PartialOrd", derive_partial_ord);
-    derivs.add(true, "Ord", derive_ord);
-    derivs.add(true, "PartialEq", derive_partial_eq);
-    derivs.add(true, "Eq", derive_eq);
-    derivs.add(true, "From<usize>", derive_from_usize);
-    derivs.add(true, "From<Self> for usize", derive_from_self_for_usize);
-    derivs.add(usize_arith, "Add<usize>", derive_add_usize);
-    derivs.add(usize_arith, "Sub<usize>", derive_sub_usize);
-    derivs.add(usize_arith, "Rem<usize>", derive_rem_usize);
-    derivs.add(usize_arith, "AddAssign<usize>", derive_add_assign_usize);
-    derivs.add(usize_arith, "SubAssign<usize>", derive_sub_assign_usize);
-    derivs.add(usize_arith, "RemAssign<usize>", derive_rem_assign_usize);
-    derivs
-}
-
-fn push_unknown_entry_error(ctx: &EnumCtx, entry: &TokenStream, descr: &str) {
-    let from_enum = format!("From<{}", ctx.name);
-    if descr.starts_with(&from_enum) {
-        ctx.error_list.error_spanned(
-            entry,
-            format!("Use `From<Self>` instead of `From<{}>`", ctx.name),
-        );
-    } else {
-        ctx.error_list.error_spanned(
-            entry,
-            format!("`{descr}` does not name a trait that can be derived"),
-        );
-    }
+fn fill_derivation_list(ctx: &mut EnumCtx) {
+    let usize_arith = ctx.base.attrs.enable_usize_arith;
+    ctx.add_deriv_custom(true, "Idx", derive_idx);
+    ctx.add_deriv_custom(true, "IdxEnum", derive_idx_enum);
+    ctx.add_deriv_custom(true, "Debug", derive_debug);
+    ctx.add_deriv_custom(false, "Display", derive_display);
+    ctx.add_deriv_custom(true, "Default", derive_default);
+    ctx.add_deriv_custom(true, "Clone", derive_clone);
+    ctx.add_deriv_custom(true, "Copy", derive_copy);
+    ctx.add_deriv_custom(true, "Add", derive_add);
+    ctx.add_deriv_custom(true, "AddAssign", derive_add_assign);
+    ctx.add_deriv_custom(true, "Sub", derive_sub);
+    ctx.add_deriv_custom(true, "SubAssign", derive_sub_assign);
+    ctx.add_deriv_custom(true, "Rem", derive_rem);
+    ctx.add_deriv_custom(true, "RemAssign", derive_rem_assign);
+    ctx.add_deriv_custom(true, "Hash", derive_hash);
+    ctx.add_deriv_custom(true, "PartialOrd", derive_partial_ord);
+    ctx.add_deriv_custom(true, "Ord", derive_ord);
+    ctx.add_deriv_custom(true, "PartialEq", derive_partial_eq);
+    ctx.add_deriv_custom(true, "Eq", derive_eq);
+    ctx.add_deriv_custom(true, "From<usize>", derive_from_usize);
+    ctx.add_deriv_custom(
+        true,
+        "From<Self> for usize",
+        derive_from_self_for_usize,
+    );
+    ctx.add_deriv_custom(usize_arith, "Add<usize>", derive_add_usize);
+    ctx.add_deriv_custom(usize_arith, "Sub<usize>", derive_sub_usize);
+    ctx.add_deriv_custom(usize_arith, "Rem<usize>", derive_rem_usize);
+    ctx.add_deriv_custom(
+        usize_arith,
+        "AddAssign<usize>",
+        derive_add_assign_usize,
+    );
+    ctx.add_deriv_custom(
+        usize_arith,
+        "SubAssign<usize>",
+        derive_sub_assign_usize,
+    );
+    ctx.add_deriv_custom(
+        usize_arith,
+        "RemAssign<usize>",
+        derive_rem_assign_usize,
+    );
 }
 
 pub fn derive_idx_enum_inner(
@@ -522,17 +516,17 @@ pub fn derive_idx_enum_inner(
         ));
     };
 
-    let ctx = Context::from_input(&ast);
+    let attrs = Attrs::from_input(&ast);
 
     let name = ast.ident;
-    let generics = &ast.generics;
+    let generics = ast.generics;
 
     let mut idents = Vec::new();
     let mut ident_strings = Vec::new();
 
     for variant in &enum_data.variants {
         if !matches!(variant.fields, Fields::Unit) {
-            ctx.error_list.push(syn::Error::new(
+            attrs.error_list.push(syn::Error::new(
                 Span::call_site(),
                 "This macro does not support enum variants with payload.",
             ));
@@ -549,67 +543,24 @@ pub fn derive_idx_enum_inner(
         ));
     }
 
-    ctx.error_list.check()?;
+    // we don't start generation if the type is already borked
+    attrs.error_list.check()?;
 
-    let enum_ctx = EnumCtx {
-        error_list: ctx.error_list,
-        attrs: ctx.attrs,
+    let mut ctx = EnumCtx::new(
+        attrs,
         name,
         generics,
-        idents,
-        ident_strings,
-    };
+        EnumCtxCustom {
+            idents,
+            ident_strings,
+        },
+    );
 
-    let mut derivs_list = derivation_list(&enum_ctx);
-    for entry in &enum_ctx.attrs.blacklist {
-        let descr = token_stream_to_compact_string(entry);
-        if derivs_list.catalog.remove(&*descr).is_none() {
-            push_unknown_entry_error(&enum_ctx, entry, &descr);
-        }
-    }
+    fill_derivation_list(&mut ctx);
 
-    let mut derivations = Vec::new();
-    if enum_ctx.attrs.whitelist_active {
-        for entry in &enum_ctx.attrs.whitelist {
-            let descr = token_stream_to_compact_string(entry);
-            match derivs_list.catalog.get(&*descr) {
-                Some(deriv) => {
-                    derivations.push(deriv(&enum_ctx));
-                }
-                None => push_unknown_entry_error(&enum_ctx, entry, &descr),
-            }
-        }
-    } else {
-        for deriv_descr in derivs_list.default_derivations {
-            if let Some(deriv) = derivs_list.catalog.get(deriv_descr) {
-                derivations.push(deriv(&enum_ctx));
-            }
-        }
-    }
+    let output = ctx.generate();
 
-    for entry in &enum_ctx.attrs.extra_list {
-        let descr = token_stream_to_compact_string(entry);
-        match derivs_list.catalog.get(&*descr) {
-            Some(deriv) => {
-                derivations.push(deriv(&enum_ctx));
-            }
-            None => push_unknown_entry_error(&enum_ctx, entry, &descr),
-        }
-    }
-
-    for compat in &enum_ctx.attrs.compatible_list {
-        derivations.push(derive_compatible(
-            &enum_ctx.attrs.indexland_path,
-            &enum_ctx.name,
-            compat,
-        ));
-    }
-
-    enum_ctx.error_list.check()?;
-
-    let output = quote! {
-        #(#derivations)*
-    };
+    ctx.base.attrs.error_list.check()?;
 
     Ok(output)
 }
