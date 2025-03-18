@@ -3,13 +3,10 @@
 use core::{
     fmt::Debug,
     hash::Hash,
-    ops::{Add, AddAssign, RangeBounds, Sub, SubAssign},
+    ops::{Add, AddAssign, Rem, RemAssign, Sub, SubAssign},
 };
 
-use crate::{
-    index_range::IndexRangeInclusive, index_slice_index::IndexSliceIndex,
-    IndexRange,
-};
+use crate::{index_range::IndexRangeInclusive, IndexRange};
 
 pub trait Idx:
     Default
@@ -19,8 +16,10 @@ pub trait Idx:
     + Hash
     + Add<Output = Self>
     + Sub<Output = Self>
+    + Rem<Output = Self>
     + AddAssign
     + SubAssign
+    + RemAssign
 {
     const ZERO: Self;
     const ONE: Self;
