@@ -29,7 +29,7 @@ use super::{idx::Idx, index_range::IndexRange};
 #[macro_export]
 macro_rules! index_hash_map {
     ($($anything: tt)*) => {
-        $crate::IndexHashMap::from(::indexmap::indexmap![$($anything)*])
+        $crate::IndexHashMap::from($crate::indexmap::indexmap![$($anything)*])
     };
 }
 

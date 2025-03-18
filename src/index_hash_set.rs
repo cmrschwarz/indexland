@@ -41,7 +41,7 @@ use std::hash::RandomState;
 #[macro_export]
 macro_rules! index_hash_set {
     ($($anything: tt)*) => {
-        $crate::IndexHashSet::from(::indexmap::indexset![$($anything)*])
+        $crate::IndexHashSet::from($crate::indexmap::indexset![$($anything)*])
     };
 }
 

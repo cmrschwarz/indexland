@@ -5,3 +5,6 @@ mod std_derive;
 mod no_std;
 
 mod no_derive_no_std;
+
+#[cfg(feature = "smallvec")]
+mod smallvec;
