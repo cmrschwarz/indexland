@@ -1,5 +1,8 @@
 use super::{idx::Idx, index_range::IndexRange};
-use crate::{index_enumerate::IndexEnumerate, IndexRangeBounds};
+use crate::{
+    generic_index::GenericIndex, index_enumerate::IndexEnumerate,
+    IndexRangeBounds,
+};
 use alloc::boxed::Box;
 use core::{
     cmp::Ordering,
@@ -207,40 +210,20 @@ impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
     }
 }
 
-impl<I, T> Index<I> for IndexSlice<I, T>
+impl<I, T, X> Index<X> for IndexSlice<I, T>
 where
-    I: Idx,
+    X: GenericIndex<I, T, IndexSlice<I, T>, IndexSlice<I, T>>,
 {
-    type Output = T;
-    fn index(&self, index: I) -> &Self::Output {
-        &self.data[index.into_usize()]
+    type Output = X::Output;
+    fn index(&self, index: X) -> &Self::Output {
+        index.index(
+            self,
+            self.len(),
+            |c, i| &c.data[i],
+            |c, r| IndexSlice::from_slice(&c.data[r]),
+        )
     }
 }
-
-macro_rules! range_impls {
-    ($($range: path),* $(,)?) => {$(
-        impl<I, T> Index<$range> for IndexSlice<I, T>
-            where I: Idx
-        {
-            type Output = IndexSlice<I, T>;
-            fn index(&self, index: $range) -> &Self::Output {
-                let range = IndexRangeBounds::<I>::canonicalize(index, self.len());
-                IndexSlice::from_slice(&self.data[range])
-            }
-        }
-    )*};
-}
-range_impls![
-    core::ops::Range<I>,
-    core::ops::RangeInclusive<I>,
-    core::ops::RangeFrom<I>,
-    core::ops::RangeTo<I>,
-    core::ops::RangeToInclusive<I>,
-    core::ops::RangeFull,
-    indexland::IndexRange<I>,
-    indexland::IndexRangeInclusive<I>,
-    indexland::IndexRangeFrom<I>,
-];
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
