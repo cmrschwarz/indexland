@@ -21,7 +21,6 @@ pub struct DeriveContext<C> {
     pub custom: C,
 }
 
-#[allow(unused)]
 pub enum DeriveCatalogEntry<C> {
     Base(fn(&DeriveContextBase) -> TokenStream),
     Custom(fn(&DeriveContext<C>) -> TokenStream),
@@ -54,7 +53,6 @@ impl<C> DeriveContext<C> {
             custom,
         }
     }
-    #[allow(unused)]
     pub fn add_deriv_shared(
         &mut self,
         default: bool,

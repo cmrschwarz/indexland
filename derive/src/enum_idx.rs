@@ -5,6 +5,10 @@ use syn::{Data, DeriveInput, Fields};
 use crate::{
     attrs::{Attrs, BoundsChecksMode},
     derive_context::DeriveContext,
+    shared_derives::{
+        derive_add_assign, derive_clone, derive_copy, derive_default,
+        derive_eq, derive_rem_assign, derive_sub_assign,
+    },
 };
 
 struct EnumCtxCustom<'a> {
@@ -136,39 +140,6 @@ fn derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derive_default(ctx: &EnumCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::default::Default for #name {
-            fn default() -> Self {
-                #indexland::Idx::ZERO
-            }
-        }
-    }
-}
-
-fn derive_clone(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::clone::Clone for #name {
-            fn clone(&self) -> Self {
-               *self
-            }
-        }
-    }
-}
-
-fn derive_copy(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::marker::Copy for #name {}
-    }
-}
-
 fn derive_hash(ctx: &EnumCtx) -> TokenStream {
     let name = &ctx.base.name;
     quote! {
@@ -261,42 +232,6 @@ fn derive_rem(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn derive_add_assign(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::AddAssign for #name {
-            fn add_assign(&mut self, rhs: Self) {
-                *self = *self + rhs;
-            }
-        }
-    }
-}
-
-fn derive_sub_assign(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::SubAssign for #name {
-            fn sub_assign(&mut self, rhs: Self) {
-                *self = *self - rhs;
-            }
-        }
-    }
-}
-
-fn derive_rem_assign(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::RemAssign for #name {
-            fn rem_assign(&mut self, rhs: Self) {
-                *self = *self % rhs;
-            }
-        }
-    }
-}
-
 fn derive_partial_ord(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
@@ -334,14 +269,6 @@ fn derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
                 core::mem::discriminant(self) == core::mem::discriminant(other)
             }
         }
-    }
-}
-
-fn derive_eq(ctx: &EnumCtx) -> TokenStream {
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::cmp::Eq for #name {}
     }
 }
 
@@ -466,20 +393,20 @@ fn fill_derivation_list(ctx: &mut EnumCtx) {
     ctx.add_deriv_custom(true, "IdxEnum", derive_idx_enum);
     ctx.add_deriv_custom(true, "Debug", derive_debug);
     ctx.add_deriv_custom(false, "Display", derive_display);
-    ctx.add_deriv_custom(true, "Default", derive_default);
-    ctx.add_deriv_custom(true, "Clone", derive_clone);
-    ctx.add_deriv_custom(true, "Copy", derive_copy);
+    ctx.add_deriv_shared(true, "Default", derive_default);
+    ctx.add_deriv_shared(true, "Clone", derive_clone);
+    ctx.add_deriv_shared(true, "Copy", derive_copy);
     ctx.add_deriv_custom(true, "Add", derive_add);
-    ctx.add_deriv_custom(true, "AddAssign", derive_add_assign);
+    ctx.add_deriv_shared(true, "AddAssign", derive_add_assign);
     ctx.add_deriv_custom(true, "Sub", derive_sub);
-    ctx.add_deriv_custom(true, "SubAssign", derive_sub_assign);
+    ctx.add_deriv_shared(true, "SubAssign", derive_sub_assign);
     ctx.add_deriv_custom(true, "Rem", derive_rem);
-    ctx.add_deriv_custom(true, "RemAssign", derive_rem_assign);
+    ctx.add_deriv_shared(true, "RemAssign", derive_rem_assign);
     ctx.add_deriv_custom(true, "Hash", derive_hash);
     ctx.add_deriv_custom(true, "PartialOrd", derive_partial_ord);
     ctx.add_deriv_custom(true, "Ord", derive_ord);
     ctx.add_deriv_custom(true, "PartialEq", derive_partial_eq);
-    ctx.add_deriv_custom(true, "Eq", derive_eq);
+    ctx.add_deriv_shared(true, "Eq", derive_eq);
     ctx.add_deriv_custom(true, "From<usize>", derive_from_usize);
     ctx.add_deriv_custom(
         true,

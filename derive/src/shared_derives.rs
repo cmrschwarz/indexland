@@ -1,6 +1,8 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
+use crate::derive_context::DeriveContextBase;
+
 pub fn derive_compatible(
     indexland: &syn::Path,
     name: &syn::Ident,
@@ -110,5 +112,82 @@ pub fn derive_compatible(
                 C::index_mut(container, self.into_usize())
             }
         }
+    }
+}
+
+pub fn derive_default(ctx: &DeriveContextBase) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::default::Default for #name {
+            fn default() -> Self {
+                #indexland::Idx::ZERO
+            }
+        }
+    }
+}
+
+pub fn derive_clone(ctx: &DeriveContextBase) -> TokenStream {
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::clone::Clone for #name {
+            fn clone(&self) -> Self {
+               *self
+            }
+        }
+    }
+}
+
+pub fn derive_copy(ctx: &DeriveContextBase) -> TokenStream {
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::marker::Copy for #name {}
+    }
+}
+
+pub fn derive_add_assign(ctx: &DeriveContextBase) -> TokenStream {
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::AddAssign for #name {
+            fn add_assign(&mut self, rhs: Self) {
+                *self = *self + rhs;
+            }
+        }
+    }
+}
+
+pub fn derive_sub_assign(ctx: &DeriveContextBase) -> TokenStream {
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::SubAssign for #name {
+            fn sub_assign(&mut self, rhs: Self) {
+                *self = *self - rhs;
+            }
+        }
+    }
+}
+
+pub fn derive_rem_assign(ctx: &DeriveContextBase) -> TokenStream {
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::RemAssign for #name {
+            fn rem_assign(&mut self, rhs: Self) {
+                *self = *self % rhs;
+            }
+        }
+    }
+}
+
+pub fn derive_eq(ctx: &DeriveContextBase) -> TokenStream {
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::cmp::Eq for #name {}
     }
 }
