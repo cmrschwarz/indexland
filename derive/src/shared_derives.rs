@@ -172,6 +172,30 @@ pub fn derive_sub_assign(ctx: &DeriveContextBase) -> TokenStream {
     }
 }
 
+pub fn derive_mul_assign(ctx: &DeriveContextBase) -> TokenStream {
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::MulAssign for #name {
+            fn mul_assign(&mut self, rhs: Self) {
+                *self = *self * rhs;
+            }
+        }
+    }
+}
+
+pub fn derive_div_assign(ctx: &DeriveContextBase) -> TokenStream {
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::DivAssign for #name {
+            fn div_assign(&mut self, rhs: Self) {
+                *self = *self / rhs;
+            }
+        }
+    }
+}
+
 pub fn derive_rem_assign(ctx: &DeriveContextBase) -> TokenStream {
     let name = &ctx.name;
     quote! {
@@ -223,6 +247,38 @@ pub fn derive_sub(ctx: &DeriveContextBase) -> TokenStream {
             fn sub(self, rhs: Self) -> Self::Output {
                 #self_as_idx::from_usize(
                     #self_as_idx::into_usize(self) - #self_as_idx::into_usize(rhs),
+                )
+            }
+        }
+    }
+}
+
+pub fn derive_mul(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Mul for #name {
+            type Output = Self;
+            fn mul(self, rhs: Self) -> Self::Output {
+                #self_as_idx::from_usize(
+                    #self_as_idx::into_usize(self) * #self_as_idx::into_usize(rhs),
+                )
+            }
+        }
+    }
+}
+
+pub fn derive_div(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Div for #name {
+            type Output = Self;
+            fn div(self, rhs: Self) -> Self::Output {
+                #self_as_idx::from_usize(
+                    #self_as_idx::into_usize(self) / #self_as_idx::into_usize(rhs),
                 )
             }
         }
@@ -334,6 +390,38 @@ pub fn derive_sub_usize(ctx: &DeriveContextBase) -> TokenStream {
     }
 }
 
+pub fn derive_mul_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Mul<usize> for #name {
+            type Output = Self;
+            fn mul(self, rhs: usize) -> Self::Output {
+                #indexland::Idx::from_usize(
+                    #indexland::Idx::into_usize(self) * rhs,
+                )
+            }
+        }
+    }
+}
+
+pub fn derive_div_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::Div<usize> for #name {
+            type Output = Self;
+            fn div(self, rhs: usize) -> Self::Output {
+                #indexland::Idx::from_usize(
+                    #indexland::Idx::into_usize(self) / rhs,
+                )
+            }
+        }
+    }
+}
+
 pub fn derive_rem_usize(ctx: &DeriveContextBase) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
@@ -371,6 +459,32 @@ pub fn derive_sub_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
         impl ::core::ops::SubAssign<usize> for #name {
             fn sub_assign(&mut self, rhs: usize) {
                 *self = *self - #self_as_idx::from_usize(rhs);
+            }
+        }
+    }
+}
+
+pub fn derive_mul_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::MulAssign<usize> for #name {
+            fn mul_assign(&mut self, rhs: usize) {
+                *self = *self * <#name as #indexland::Idx>::from_usize(rhs);
+            }
+        }
+    }
+}
+
+pub fn derive_div_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
+    let self_as_idx = &ctx.self_as_idx;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::DivAssign<usize> for #name {
+            fn div_assign(&mut self, rhs: usize) {
+                *self = *self / #self_as_idx::from_usize(rhs);
             }
         }
     }

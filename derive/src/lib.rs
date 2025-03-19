@@ -169,10 +169,13 @@ pub fn derive_idx_enum(
 /// - "always": Enable bounds checks regardless of build type.
 /// - "never": Disable all bounds checks. Always silently wrap around.
 ///
+/// #### `#[indexland(full_arith)]`
+/// Implement [`Mul`](core::ops::Mul), [`Div`](core::ops::Div), [`Rem`](core::ops::Rem),
+/// [`MulAssign`](core::ops::MulAssign), [`DivAssign`](core::ops::DivAssign), and [`RemAssign`](core::ops::RemAssign).
+///
 /// #### `#[indexland(usize_arith)]`
-/// Implement [`Add<usize>`](core::ops::Add),
-/// [`Sub<usize>`](core::ops::Sub), [`AddAssign<usize>`](core::ops::AddAssign),
-/// and [`SubAssign<usize>`](core::ops::SubAssign).
+/// Implement [`Add<usize>`](core::ops::Add), [`Sub<usize>`](core::ops::Sub),
+/// [`AddAssign<usize>`](core::ops::AddAssign), and [`SubAssign<usize>`](core::ops::SubAssign).
 ///
 /// #### `#[indexland(extra(..))]`
 /// Enable the derivation of optional traits, see

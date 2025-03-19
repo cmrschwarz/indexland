@@ -16,6 +16,7 @@ const COMPATIBLE: &str = "compatible";
 const BOUNDS_CHECKS: &str = "bounds_checks";
 
 const USIZE_ARITH: &str = "usize_arith";
+const FULL_ARITH: &str = "full_arith";
 
 #[derive(Default)]
 pub enum BoundsChecksMode {
@@ -40,6 +41,7 @@ pub struct Attrs {
     pub whitelist_active: bool,
     pub bounds_checks_mode: BoundsChecksMode,
     pub enable_usize_arith: bool,
+    pub enable_full_arith: bool,
 }
 
 impl ErrorList {
@@ -119,6 +121,7 @@ impl Attrs {
         let mut compatible_list = Vec::new();
         let mut bounds_checks_mode = BoundsChecksMode::default();
         let mut enable_usize_arith = false;
+        let mut enable_full_arith = false;
         for attr in &ast.attrs {
             if !attr.path().is_ident(INDEXLAND) {
                 continue;
@@ -152,7 +155,11 @@ impl Attrs {
                 } else if meta.path.is_ident(USIZE_ARITH) {
                     // #[indexland(usize_arith)]
                     enable_usize_arith = true;
-                } else if meta.path.is_ident(OMIT) {
+                }else if meta.path.is_ident(FULL_ARITH) {
+                    // #[indexland(full_arith)]
+                    enable_full_arith = true;
+                }
+                else if meta.path.is_ident(OMIT) {
                     // e.g. #[indexland(omit(Display))]
                     let omit;
                     parenthesized!(omit in meta.input);
@@ -240,6 +247,7 @@ impl Attrs {
             whitelist_active: first_whitelist.is_some(),
             bounds_checks_mode,
             enable_usize_arith,
+            enable_full_arith,
         }
     }
 }

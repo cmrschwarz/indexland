@@ -8,7 +8,10 @@ use crate::{
     shared_derives::{
         derive_add, derive_add_assign, derive_add_assign_usize,
         derive_add_usize, derive_clone, derive_copy, derive_default,
-        derive_eq, derive_from_self_for_usize, derive_from_usize, derive_ord,
+        derive_div, derive_div_assign, derive_div_assign_usize,
+        derive_div_usize, derive_eq, derive_from_self_for_usize,
+        derive_from_usize, derive_mul, derive_mul_assign,
+        derive_mul_assign_usize, derive_mul_usize, derive_ord,
         derive_partial_ord, derive_rem, derive_rem_assign,
         derive_rem_assign_usize, derive_rem_usize, derive_sub,
         derive_sub_assign, derive_sub_assign_usize, derive_sub_usize,
@@ -223,6 +226,7 @@ fn enum_derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
 
 fn fill_derivation_list(ctx: &mut EnumCtx) {
     let usize_arith = ctx.base.attrs.enable_usize_arith;
+    let full_arith = ctx.base.attrs.enable_full_arith;
     ctx.add_deriv_custom(true, "Idx", enum_derive_idx);
     ctx.add_deriv_custom(true, "IdxEnum", enum_derive_idx_enum);
     ctx.add_deriv_custom(true, "Debug", enum_derive_debug);
@@ -234,8 +238,12 @@ fn fill_derivation_list(ctx: &mut EnumCtx) {
     ctx.add_deriv_shared(true, "AddAssign", derive_add_assign);
     ctx.add_deriv_shared(true, "Sub", derive_sub);
     ctx.add_deriv_shared(true, "SubAssign", derive_sub_assign);
-    ctx.add_deriv_shared(true, "Rem", derive_rem);
-    ctx.add_deriv_shared(true, "RemAssign", derive_rem_assign);
+    ctx.add_deriv_shared(full_arith, "Mul", derive_mul);
+    ctx.add_deriv_shared(full_arith, "MulAssign", derive_mul_assign);
+    ctx.add_deriv_shared(full_arith, "Div", derive_div);
+    ctx.add_deriv_shared(full_arith, "DivAssign", derive_div_assign);
+    ctx.add_deriv_shared(full_arith, "Rem", derive_rem);
+    ctx.add_deriv_shared(full_arith, "RemAssign", derive_rem_assign);
     ctx.add_deriv_custom(true, "Hash", enum_derive_hash);
     ctx.add_deriv_shared(true, "PartialOrd", derive_partial_ord);
     ctx.add_deriv_shared(true, "Ord", derive_ord);
@@ -249,7 +257,21 @@ fn fill_derivation_list(ctx: &mut EnumCtx) {
     );
     ctx.add_deriv_shared(usize_arith, "Add<usize>", derive_add_usize);
     ctx.add_deriv_shared(usize_arith, "Sub<usize>", derive_sub_usize);
-    ctx.add_deriv_shared(usize_arith, "Rem<usize>", derive_rem_usize);
+    ctx.add_deriv_shared(
+        usize_arith && full_arith,
+        "Mul<usize>",
+        derive_mul_usize,
+    );
+    ctx.add_deriv_shared(
+        usize_arith && full_arith,
+        "Div<usize>",
+        derive_div_usize,
+    );
+    ctx.add_deriv_shared(
+        usize_arith && full_arith,
+        "Rem<usize>",
+        derive_rem_usize,
+    );
     ctx.add_deriv_shared(
         usize_arith,
         "AddAssign<usize>",
@@ -261,7 +283,17 @@ fn fill_derivation_list(ctx: &mut EnumCtx) {
         derive_sub_assign_usize,
     );
     ctx.add_deriv_shared(
-        usize_arith,
+        usize_arith && full_arith,
+        "MulAssign<usize>",
+        derive_mul_assign_usize,
+    );
+    ctx.add_deriv_shared(
+        usize_arith && full_arith,
+        "DivAssign<usize>",
+        derive_div_assign_usize,
+    );
+    ctx.add_deriv_shared(
+        usize_arith && full_arith,
         "RemAssign<usize>",
         derive_rem_assign_usize,
     );
