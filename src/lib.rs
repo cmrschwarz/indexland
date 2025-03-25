@@ -134,7 +134,7 @@ pub use indexmap;
 // used in macros, not public api
 #[doc(hidden)]
 pub mod __private {
-    use core::mem::MaybeUninit;
+    use core::mem::{ManuallyDrop, MaybeUninit};
 
     /// Essentially [`std::mem::MaybeUninit::transpose`] in stable Rust. Will
     /// be removed once [maybe_uninit_uninit_array_transpose](https://github.com/rust-lang/rust/issues/96097)
@@ -155,6 +155,27 @@ pub mod __private {
             i += 1;
         }
         unsafe { res.assume_init() }
+    }
+
+    pub const fn array_from_values_and_distinct_indices<
+        T,
+        const LEN: usize,
+    >(
+        indices: [usize; LEN],
+        values: ManuallyDrop<[Option<T>; LEN]>,
+    ) -> [T; LEN] {
+        let mut values = ManuallyDrop::into_inner(values);
+        let mut data: [MaybeUninit<T>; LEN] =
+            [const { MaybeUninit::uninit() }; LEN];
+        let mut i = 0;
+        while i < LEN {
+            data[indices[i]] = MaybeUninit::new(values[i].take().unwrap());
+            i += 1;
+        }
+        // SAFETY: we called `take` `LEN` times on an array with `LEN` elements
+        // so we must have reached all slots
+        core::mem::forget(values); // this is empty now
+        unsafe { transpose_assume_uninit(data) }
     }
     // reexport for vec!
     pub extern crate alloc;

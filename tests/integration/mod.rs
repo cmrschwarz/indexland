@@ -9,5 +9,5 @@ mod no_derive_no_std;
 #[cfg(feature = "smallvec")]
 mod smallvec;
 
-#[cfg(feature = "arrayvec")]
+#[cfg(all(feature = "arrayvec", feature = "derive"))]
 mod arrayvec;

@@ -78,26 +78,21 @@ macro_rules! index_array {
     ($($value:expr),+ $(,)?) => {
         $crate::IndexArray::new([$($value),*])
     };
+    // TODO: figure out better syntax that would also work for IndexArrayVec
+    //($idx: ty => $($value:expr),+ $(,)?) => {
+    //    const LEN: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
+    //    $crate::IndexArray::<$idx, _, LEN>::new([$($value),*])
+    //};
     ($($key:expr => $value:expr),* $(,)?) => {{
-        use core::mem::MaybeUninit;
         const LEN: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
-        let keys = [ $($key),* ];
+        let keys = [ $($key as usize),* ];
         let mut values = [ $(Some($value)),* ];
-        let mut data: [MaybeUninit<_>; LEN] = [
-            const { MaybeUninit::uninit() }; LEN
-        ];
-        let mut i = 0;
-        while i < LEN {
-            data[keys[i] as usize] = MaybeUninit::new(
-                values[i].take().unwrap()
-            );
-            i += 1;
-        }
-        // SAFETY: we called `take()` LEN times so all slots must be filled
-        let data = unsafe { $crate::__private::transpose_assume_uninit(data) };
+        let data = $crate::__private::array_from_values_and_distinct_indices(
+            keys,
+            core::mem::ManuallyDrop::new(values)
+        );
         $crate::IndexArray::new(data)
     }};
-
 }
 
 /// Create a [`EnumIndexArray`] containing the arguments.
@@ -213,6 +208,12 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     }
     pub fn into_array(self) -> [T; N] {
         self.data
+    }
+
+    pub const fn into_inner(self) -> [T; N] {
+        let res = unsafe { core::ptr::read(&raw const self.data) };
+        core::mem::forget(self);
+        res
     }
 }
 

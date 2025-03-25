@@ -158,37 +158,45 @@ pub fn derive_idx_enum(
 ///
 /// # Attributes
 ///
-/// #### `#[indexland(crate = ..)]`
+/// ### `#[indexland(crate = ..)]`
 /// Change the crate name used within the derive macro.
 /// The default value is `::indexland`.
 ///
-/// #### `#[indexland(bounds_checks = "..")]`
+/// ## `#[indexland(bounds_checks = "..")]`
 /// Modify the default bounds checking behavior. There's currently three modes:
 /// - "debug_only": The default. Enable bounds checks in debug mode, but not in
 ///   release builds.
 /// - "always": Enable bounds checks regardless of build type.
 /// - "never": Disable all bounds checks. Always silently wrap around.
 ///
-/// #### `#[indexland(full_arith)]`
-/// Implement [`Mul`](core::ops::Mul), [`Div`](core::ops::Div), [`Rem`](core::ops::Rem),
-/// [`MulAssign`](core::ops::MulAssign), [`DivAssign`](core::ops::DivAssign), and [`RemAssign`](core::ops::RemAssign).
+/// ## `#[indexland(full_arith)]`
+/// Implement [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign),
+/// [`Div`](core::ops::Div) + [`DivAssign`](core::ops::DivAssign),
+/// and [`Rem`](core::ops::Rem) + [`RemAssign`](core::ops::RemAssign).
 ///
-/// #### `#[indexland(usize_arith)]`
-/// Implement [`Add<usize>`](core::ops::Add), [`Sub<usize>`](core::ops::Sub),
-/// [`AddAssign<usize>`](core::ops::AddAssign), and [`SubAssign<usize>`](core::ops::SubAssign).
+/// If `usize_arith` is enabled, also implements the respective versions for `usize`.
 ///
-/// #### `#[indexland(extra(..))]`
+/// ## `#[indexland(usize_arith)]`
+/// Implement [`Add<usize>`](core::ops::Add) + [`AddAssign<usize>`](core::ops::AddAssign),
+/// and [`Sub<usize>`](core::ops::Sub) + [`SubAssign<usize>`](core::ops::SubAssign).
+///
+/// If `full_arith` is enabled, also implements
+/// [`Mul<usize>`](core::ops::Mul) + [`MulAssign<usize>`](core::ops::MulAssign),
+/// [`Div<usize>`](core::ops::Div) + [`DivAssign<usize>`](core::ops::DivAssign),
+/// and [`Rem<usize>`](core::ops::Rem) + [`RemAssign<usize>`](core::ops::RemAssign).
+///
+/// ## `#[indexland(extra(..))]`
 /// Enable the derivation of optional traits, see
 /// [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
 /// and [`#[derive(IdxEnum)]`](crate::IdxEnum) for options.
 ///
-/// #### `#[indexland(omit(..))]`
+/// ## `#[indexland(omit(..))]`
 /// Suppress the derivation of certain traits (blacklist).
 ///
-/// #### `#[indexland(only(..))]`
+/// ## `#[indexland(only(..))]`
 /// Suppress the derivation of all traits except the specified ones (whitelist).
 ///
-/// #### `#[indexland(compatible(..))]`
+/// ## `#[indexland(compatible(..))]`
 /// Allow other types to be used to index containers of this type.
 ///
 /// # Attributes Examples

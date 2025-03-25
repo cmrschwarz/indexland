@@ -145,6 +145,8 @@ fn usize_compatible() {
 
 #[test]
 fn multi_integer_compatible() {
+    #![allow(clippy::unnecessary_cast)]
+
     #[derive(Idx)]
     #[indexland(compatible(usize, u8))]
     struct FooId(u32);

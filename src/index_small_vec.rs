@@ -131,13 +131,13 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn clear(&mut self) {
         self.data.clear();
     }
-    pub fn as_array_vec(&self) -> &SmallVec<[T; CAP]> {
+    pub fn as_small_vec(&self) -> &SmallVec<[T; CAP]> {
         &self.data
     }
-    pub fn as_mut_array_vec(&mut self) -> &mut SmallVec<[T; CAP]> {
+    pub fn as_mut_small_vec(&mut self) -> &mut SmallVec<[T; CAP]> {
         &mut self.data
     }
-    pub fn into_array_vec(self) -> SmallVec<[T; CAP]> {
+    pub fn into_small_vec(self) -> SmallVec<[T; CAP]> {
         self.data
     }
     pub fn push_get_idx(&mut self, v: T) -> I
