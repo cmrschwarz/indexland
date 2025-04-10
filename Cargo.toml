@@ -133,8 +133,12 @@ rustdoc-args = [
 
 [[example]]
 name = "doubly_linked_list"
-required-features = ["nonmax"]
+required-features = ["derive", "std", "nonmax"]
 
 [[example]]
 name = "graph_a_star"
-required-features = ["nonmax"]
+required-features = ["derive", "std", "nonmax"]
+
+[[example]]
+name = "iteration"
+required-features = ["derive"]

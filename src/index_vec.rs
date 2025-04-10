@@ -25,9 +25,34 @@ use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 /// ```
 #[macro_export]
 macro_rules! index_vec {
-    ($($anything: tt)*) => {
-        $crate::IndexVec::from($crate::__private::alloc::vec![$($anything)*])
+    () => {
+        $crate::IndexVec::new()
     };
+    ($value:expr; $count: expr) => {
+        $crate::IndexVec::from([ $value; $count])
+    };
+    ($($value:expr),+ $(,)?) => {
+        $crate::IndexVec::from([$($value),*])
+    };
+    ($($key:expr => $value:expr),* $(,)?) => {{
+        use core::mem::MaybeUninit;
+        const LEN: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
+        let keys = [ $($key),* ];
+        let mut values = [ $(Some($value)),* ];
+        let mut data: [MaybeUninit<_>; LEN] = [
+            const { MaybeUninit::uninit() }; LEN
+        ];
+        let mut i = 0;
+        while i < LEN {
+            data[keys[i] as usize] = MaybeUninit::new(
+                values[i].take().unwrap()
+            );
+            i += 1;
+        }
+        // SAFETY: we called `take()` LEN times so all slots must be filled
+        let data = unsafe { $crate::__private::transpose_assume_uninit(data) };
+        $crate::IndexVec::from(data)
+    }};
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -228,6 +253,12 @@ impl<I, T> Deref for IndexVec<I, T> {
 impl<I, T> DerefMut for IndexVec<I, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         IndexSlice::from_mut_slice(&mut self.data)
+    }
+}
+
+impl<I, T, const N: usize> From<[T; N]> for IndexVec<I, T> {
+    fn from(value: [T; N]) -> Self {
+        IndexVec::from_iter(value)
     }
 }
 

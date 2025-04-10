@@ -25,8 +25,9 @@ impl BuildHasher for OneByteHasher {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn macro_works() {
-    let ihm: IndexHashMap<u32, &'static str, i32, OneByteHasher> = index_hash_map![
+    let ihm: IndexHashMap<u32, &'static str, i32> = index_hash_map![
         "foo" => 42,
         "bar" => 12,
     ];
@@ -36,18 +37,19 @@ fn macro_works() {
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn empty_map_works() {
-    let ihm: IndexHashMap<u32, &'static str, i32, OneByteHasher> =
-        index_hash_map![];
+    let ihm: IndexHashMap<u32, &'static str, i32> = index_hash_map![];
     assert_eq!(ihm.len(), 0);
 }
 
 #[test]
+#[cfg(feature = "std")]
 fn indexing_works() {
     #[derive(Idx)]
     struct FooId(u32);
 
-    let av: IndexHashMap<FooId, FooId, FooId, OneByteHasher> = indexland::index_hash_map![
+    let av: IndexHashMap<FooId, FooId, FooId> = indexland::index_hash_map![
         FooId(3) => FooId(42)
     ];
 

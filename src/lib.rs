@@ -129,7 +129,7 @@ pub use smallvec;
 
 #[cfg(feature = "indexmap")]
 #[cfg_attr(docsrs, doc(cfg(feature = "indexmap")))]
-pub extern crate indexmap;
+pub use indexmap;
 
 // used in macros, not public api
 #[doc(hidden)]

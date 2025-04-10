@@ -1,19 +1,24 @@
+//! NOTE: this is a practical example. If you're looking for more of an
+//! api listing check out construction.rs and iteration.rs instead.
+//!
+//!
+//! This implements a basic doubly linked list using a growing array as the
+//! underlying data structure.
+//!
+//! Nothing special, but it demonstrates the use of [`IndexVec`] to easily
+//! achieve a pattern that's typically considered
+//! challenging to do in stable rust due to the borrow checker.
+//!
+//! The implementation details are mostly irrelevant, this is just meant to
+//! show a few indexland features, each highlighted with `// NOTE:`.
+
 use indexland::{Idx, IndexSlice, IndexVec, NonMax};
 
-/// NOTE: Using [`NonMax<u32>`] ensures that [`Option<NodeId>`] is 4 bytes instead of
-/// 8, which is a big perf improvement for this usecase.
+// NOTE: Using [`NonMax<u32>`] ensures that [`Option<NodeId>`] is 4 bytes instead of
+// 8, which is a big perf improvement for this usecase.
 #[derive(Idx)]
 pub struct NodeId(NonMax<u32>);
 
-/// This is a very standard doubly linked list implemenation using a growing
-/// array as the underlying data structure.
-///
-/// Nothing special really, but it demonstrates the use of [`IndexVec`] and
-/// [`IndexSlice`] to easily achieve a pattern that's typically considered
-/// challenging to do in stable rust due to the borrow checker.
-///
-/// Please don't spend your time looking at the implementation details
-/// here, and instead focus on the indexland goodies annotated with `// NOTE` s.
 #[derive(Default, Clone, Debug)]
 pub struct LinkedList<T> {
     // NOTE: immediately tells the reader much more than just `Vec<Node<T>>`.
@@ -141,8 +146,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
-// phew! below is a simple demo usage of our LinkedList:
-
+// Simple Demo:
 fn main() {
     let mut list = LinkedList::new();
     list.push_back(1);

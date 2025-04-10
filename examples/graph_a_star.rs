@@ -1,28 +1,31 @@
+//! NOTE: this is a practical example. If you're looking for more of an
+//! api listing check out iteration.rs instead.
+//!
+//! This implements a basic A* graph example.
+//!
+//! Nothing special, but it demonstrates the use of [`IndexVec`] to
+//! easily and ergonomically work with graphs,
+//! which is typically considered challenging without libraries
+//! due the borrow checker preventing cyclic references.
+//!
+//! The implementation details are mostly irrelevant, this is just meant to
+//! show a few indexland features, each highlighted with `// NOTE`.
+
 use indexland::{index_vec, Idx, IndexSlice, IndexVec, NonMax};
 use std::{cmp::Ordering, collections::BinaryHeap};
 
 #[derive(Idx)]
 pub struct NodeId(u32);
 
-/// NOTE: Using [`NonMax<u32>`] ensures that [`Option<EdgeId>`] is
-/// 4 bytes instead of 8, which saves some space in the A* `came_from` table.
+// NOTE: Using [`NonMax<u32>`] ensures that [`Option<EdgeId>`] is
+// 4 bytes instead of 8, which saves some space in the A* `came_from` table.
 #[derive(Idx)]
 pub struct EdgeId(NonMax<u32>);
 
-/// A very basic A* graph example.
-/// If you think that this looks mostly like it would
-/// if we had not used indexland, that's the point!
-/// The goal of this whole crate is to be very easy to integrate,
-/// but silently improve type safety and readability.
-/// This code contains lots of indexing logic, and most of these accesses
-/// and function calls are type checked thanks to the indexland newtypes declared above.
-/// Please don't spend your time looking at the implementation details
-/// here, and instead focus on the indexland goodies annotated with `// NOTE` s.
 #[derive(Default, Clone, Debug)]
 pub struct Graph {
-    // NOTE: types like with multiple data arrays are a common pattern
-    // in practice, making it easy to accidentally mess up an index.
-    // Indexland tries to have your back.
+    // NOTE: specifiying the Id types here removes any uncertanty a
+    // reader might have if we had just used `Vec<Node>`.
     nodes: IndexVec<NodeId, Node>,
     edges: IndexVec<EdgeId, Edge>,
 }
@@ -46,7 +49,6 @@ pub struct Node {
 
 #[derive(Clone, Debug)]
 pub struct Edge {
-    #[allow(unused)] //not actually needed for this simple example
     from: NodeId,
     to: NodeId,
     cost: i32,
@@ -82,8 +84,8 @@ impl PartialOrd for NodeInfo {
 impl Graph {
     pub const fn new() -> Self {
         Self {
-            // NOTE: all indexland containers have zero alloc const new!
-            // (caveat on HashMap explained in the doc.)
+            // NOTE: all indexland containers have zero alloc const new.
+            // (Caveat for HashMap Hashers explained in the doc.)
             nodes: IndexVec::new(),
             edges: IndexVec::new(),
         }
@@ -95,7 +97,7 @@ impl Graph {
         x: i32,
         y: i32,
     ) -> NodeId {
-        // NOTE: `push_get_idx` is a useful convenience helper added by indexland.
+        // NOTE: `push_get_idx` is a convenience helper added by `indexland`.
         // There's quite a few more of these to help make working with typed
         // indices as pleasant as possible.
         self.nodes.push_get_idx(Node {
@@ -105,11 +107,10 @@ impl Graph {
         })
     }
 
-    // This is based on a directed graph, but for simplicity of the
-    // example we just add all edges both ways
+    // For simplicity we just add all edges bidirectionally.
     // NOTE: newtype indices make sure we can never accidentally pass
-    // other types like and `EdgeId` here and can often lead to other helful
-    // errors e.g. when when refactoring parameter order.
+    // the wrong type here which can lead to very helful error messages
+    // e.g. when when refactoring parameter order.
     pub fn add_bidi_edge(&mut self, from: NodeId, to: NodeId, cost: i32) {
         let edge_id_fwd = self.edges.push_get_idx(Edge { from, to, cost });
         self.nodes[from].edges.push(edge_id_fwd);
@@ -140,10 +141,9 @@ impl Graph {
         let mut came_from: IndexVec<NodeId, Option<EdgeId>> = index_vec![];
         let mut g_score: IndexVec<NodeId, i32> = index_vec![];
 
-        // NOTE: `indices` is another convenience helper that iterates over the
+        // NOTE: `indices` is another convenience helper for iterating over the
         // typed indices of a container.
-        // (Usage here is a bit contrived,
-        // we could have also used `0..self.nodes.len()` or even `&self.nodes`).
+        // (In this case `0..nodes.len()` would have worked aswell).
         for _ in self.nodes.indices() {
             came_from.push(None);
             // Initialize best found route score with "infinity"
@@ -205,8 +205,7 @@ impl Graph {
     }
 }
 
-// phew! below is a simple example problem
-
+// Simple Demo:
 fn main() -> Result<(), i8> {
     let mut graph = Graph::new();
 
