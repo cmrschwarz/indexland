@@ -27,6 +27,7 @@ pub mod index_range;
 
 pub mod index_enumerate;
 
+pub mod identity_hasher;
 pub mod index_slice;
 pub mod index_slice_index;
 pub mod raw_index_container;
@@ -113,6 +114,8 @@ pub use index_small_vec::IndexSmallVec;
 #[cfg(feature = "indexmap")]
 #[doc(inline)]
 pub use {index_hash_map::IndexHashMap, index_hash_set::IndexHashSet};
+
+pub use identity_hasher::IdentityHasher;
 
 // type aliases
 #[doc(inline)]

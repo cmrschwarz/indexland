@@ -1,21 +1,23 @@
-use indexland::{index_hash_map, IndexHashMap};
+use indexland::{
+    identity_hasher::IdentityHasher, index_hash_map, IndexHashMap,
+};
 
-use crate::integration::{idx_manual::IdxManual, OneByteHasher};
+use crate::integration::idx_manual::IdxManual;
 
 #[test]
 fn macro_works() {
-    let ihm: IndexHashMap<u32, _, _, OneByteHasher> = index_hash_map![
-        "foo" => 42,
-        "bar" => 12,
+    let ihm: IndexHashMap<u32, _, _, IdentityHasher> = index_hash_map![
+        -1 => 42,
+        -2 => 12,
     ];
     assert_eq!(ihm.len(), 2);
-    assert_eq!(ihm["foo"], 42);
+    assert_eq!(ihm[&-1], 42);
     assert_eq!(ihm.values().sum::<i32>(), 54);
 }
 
 #[test]
 fn empty_map_works() {
-    let ihm: IndexHashMap<u32, &'static str, i32, OneByteHasher> =
+    let ihm: IndexHashMap<u32, &'static str, i32, IdentityHasher> =
         index_hash_map![];
     assert_eq!(ihm.len(), 0);
 }
@@ -39,7 +41,7 @@ fn deduction_works_for_std() {
 
 #[test]
 fn indexing_works() {
-    let av: IndexHashMap<IdxManual, IdxManual, IdxManual, OneByteHasher> = indexland::index_hash_map![
+    let av: IndexHashMap<IdxManual, IdxManual, IdxManual, IdentityHasher> = indexland::index_hash_map![
         IdxManual(3) => IdxManual(42)
     ];
 
