@@ -1,4 +1,4 @@
-use indexland::{index_array, index_array::EnumIndexArray, IdxEnum};
+use indexland::{index_array, index_array::EnumIndexArray, Idx, IdxEnum};
 
 #[test]
 fn enum_idx_array_macro() {
@@ -57,4 +57,17 @@ fn nested_enum_idx_array() {
     ];
 
     assert_eq!(foo[Foo::B][Bar::Y], 4);
+}
+
+#[test]
+pub fn wrapping_add_on_enum() {
+    metamatch::quote! {
+        #[derive(Idx)]
+        enum E256 {
+            [<for x in 0..256>]
+                [< ident("_" + str(x))>],
+            [</for>]
+        }
+    }
+    assert_eq!(E256::_200.wrapping_add(E256::_100), E256::_44);
 }

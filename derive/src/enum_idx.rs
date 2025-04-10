@@ -119,33 +119,33 @@ fn enum_derive_idx(ctx: &EnumCtx) -> TokenStream {
             }
 
             fn wrapping_add(self, other: Self) -> Self {
-                let max = #self_as_idx::MAX.into_usize();
+                const COUNT: usize = #count;
                 let offset_on_wrap =
-                    (::core::primitive::usize::MAX % max).saturating_add(1);
+                    (::core::primitive::usize::MAX % COUNT).saturating_add(1);
                 let (sum, of) = #self_as_idx::into_usize(self)
                     .overflowing_add( #self_as_idx::into_usize(other));
                 if of {
                     return #self_as_idx::from_usize(sum + offset_on_wrap);
                 }
-                if sum < max {
+                if sum < COUNT {
                     return #self_as_idx::from_usize(sum);
                 }
-                return #self_as_idx::from_usize(sum % max);
+                return #self_as_idx::from_usize(sum % COUNT);
             }
 
             fn wrapping_sub(self, other: Self) -> Self {
-                let max = #self_as_idx::MAX.into_usize();
+                const COUNT: usize = #count;
                 let offset_on_wrap =
-                    (::core::primitive::usize::MAX % max).saturating_add(1);
+                    (::core::primitive::usize::MAX % COUNT).saturating_add(1);
                 let (diff, of) = #self_as_idx::into_usize(self)
                     .overflowing_sub(#self_as_idx::into_usize(other));
                 if of {
                     return #self_as_idx::from_usize(diff - offset_on_wrap);
                 }
-                if diff < max {
+                if diff < COUNT {
                     return #self_as_idx::from_usize(diff);
                 }
-                #self_as_idx::from_usize(diff % max)
+                #self_as_idx::from_usize(diff % COUNT)
             }
         }
     }

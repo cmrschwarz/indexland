@@ -71,6 +71,7 @@ default-features = false
 
 [dev-dependencies]
 derive_more = { version = "2.0.1", features = ["full"] }
+metamatch = "0.3"
 
 [features]
 default = ["std", "derive"]
