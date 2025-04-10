@@ -83,9 +83,9 @@ macro_rules! index_array {
     //    const LEN: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
     //    $crate::IndexArray::<$idx, _, LEN>::new([$($value),*])
     //};
-    ($($key:expr => $value:expr),* $(,)?) => {{
-        const LEN: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
-        let keys = [ $($key as usize),* ];
+    ($($index:expr => $value:expr),* $(,)?) => {{
+        const LEN: usize = <[()]>::len(&[$({ stringify!($index); }),*]);
+        let keys = [ $($index as usize),* ];
         let mut values = [ $(Some($value)),* ];
         let data = $crate::__private::array_from_values_and_distinct_indices(
             keys,
@@ -206,10 +206,9 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     {
         IndexEnumerate::new(I::ZERO, self.data)
     }
-    pub fn into_array(self) -> [T; N] {
-        self.data
+    pub const fn into_array(self) -> [T; N] {
+        self.into_inner()
     }
-
     pub const fn into_inner(self) -> [T; N] {
         let res = unsafe { core::ptr::read(&raw const self.data) };
         core::mem::forget(self);

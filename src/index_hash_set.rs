@@ -2,7 +2,7 @@ use super::{idx::Idx, index_range::IndexRange};
 use crate::{
     index_enumerate::IndexEnumerate,
     raw_index_container::{GenericIndex, RawIndexContainer},
-    IndexRangeBounds,
+    IndexArray, IndexRangeBounds,
 };
 use alloc::boxed::Box;
 use core::{
@@ -25,10 +25,7 @@ use std::hash::RandomState;
 
 /// Create an [`IndexHashSet`] containing the arguments.
 ///
-/// The syntax is identical to [`indexset!`](::indexmap::indexset!).
-///
-/// The index type cannot be inferred from the macro so you
-/// might have to add type annotations.
+/// You might have to add type annotations.
 ///
 /// # Example
 /// ```
@@ -37,12 +34,33 @@ use std::hash::RandomState;
 ///     "a",
 ///     "b",
 /// };
+///
+/// // Type annotation unfortunately still required so Rust can infer
+/// // the Default Hasher.
+/// let explicit_indices: IndexHashSet<_, _> = index_hash_set! {
+///     0 => "a",
+///     1 => "b",
+/// };
 /// ```
 #[macro_export]
 macro_rules! index_hash_set {
-    ($($anything: tt)*) => {
-        $crate::IndexHashSet::from($crate::indexmap::indexset![$($anything)*])
-    };
+    ($($value: expr),* $(,)?) => {{
+        const CAP: usize = <[()]>::len(&[$({ stringify!($value); }),*]);
+        let mut set = $crate::IndexHashSet::with_capacity(CAP);
+        $(
+            set.insert($value);
+        )*
+        set
+    }};
+    ($($index:expr => $value:expr),* $(,)?) => {{
+        let indices = [ $($index),* ];
+        let mut values = [ $(Some($value)),* ];
+        let data = $crate::__private::index_array_from_values_and_distinct_indices(
+            indices,
+            ::core::mem::ManuallyDrop::new(values)
+        );
+        $crate::IndexHashSet::from_index_array(data)
+    }};
 }
 
 #[cfg(feature = "std")]
@@ -263,36 +281,35 @@ where
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl<I, T> IndexHashSet<I, T> {
-    /// This is not `const` because the default [`RandomState`] used for the
-    /// hasher might need to get random bits from the OS.
-    /// You can use [`IndexHashSet::with_hasher`] as a const constructor.
-    pub fn new() -> Self {
-        Self {
-            data: IndexSet::new(),
-            _phantom: PhantomData,
-        }
-    }
-    pub fn with_capacity(cap: usize) -> Self {
-        Self {
-            data: IndexSet::with_capacity(cap),
-            _phantom: PhantomData,
-        }
-    }
-}
-
 impl<I, T, S> IndexHashSet<I, T, S> {
-    pub fn with_capacity_and_hasher(cap: usize, hasher: S) -> Self {
+    pub fn new() -> Self
+    where
+        S: Default,
+    {
         Self {
-            data: IndexSet::with_capacity_and_hasher(cap, hasher),
+            data: IndexSet::default(),
+            _phantom: PhantomData,
+        }
+    }
+
+    pub fn with_capacity(cap: usize) -> Self
+    where
+        S: Default,
+    {
+        Self {
+            data: IndexSet::with_capacity_and_hasher(cap, S::default()),
             _phantom: PhantomData,
         }
     }
     pub const fn with_hasher(hash_builder: S) -> Self {
         Self {
             data: IndexSet::with_hasher(hash_builder),
+            _phantom: PhantomData,
+        }
+    }
+    pub fn with_capacity_and_hasher(cap: usize, hasher: S) -> Self {
+        Self {
+            data: IndexSet::with_capacity_and_hasher(cap, hasher),
             _phantom: PhantomData,
         }
     }
@@ -900,6 +917,15 @@ impl<I, T, S> IndexHashSet<I, T, S> {
     {
         IndexRange::new(I::ZERO..self.len_idx())
     }
+
+    /// This often has better type inference than using [`From::from`].
+    pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self
+    where
+        S: BuildHasher + Default,
+        T: Eq + Hash,
+    {
+        Self::from(arr.into_inner())
+    }
 }
 
 impl<I, T, S> Deref for IndexHashSet<I, T, S> {
@@ -1000,13 +1026,24 @@ where
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl<I, T: Hash + Eq, const N: usize> From<[T; N]>
-    for IndexHashSet<I, T, RandomState>
+impl<I, T, S, const N: usize> From<[T; N]> for IndexHashSet<I, T, S>
+where
+    T: Hash + Eq,
+    S: BuildHasher + Default,
 {
-    fn from(arr: [T; N]) -> IndexHashSet<I, T, RandomState> {
-        IndexHashSet::from(IndexSet::from(arr))
+    fn from(arr: [T; N]) -> IndexHashSet<I, T, S> {
+        IndexHashSet::from(IndexSet::from_iter(arr))
+    }
+}
+
+impl<I, T, S, const N: usize> From<IndexArray<I, T, N>>
+    for IndexHashSet<I, T, S>
+where
+    T: Hash + Eq,
+    S: BuildHasher + Default,
+{
+    fn from(arr: IndexArray<I, T, N>) -> IndexHashSet<I, T, S> {
+        IndexHashSet::from(IndexSet::from_iter(arr))
     }
 }
 

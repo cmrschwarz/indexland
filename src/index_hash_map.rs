@@ -15,7 +15,7 @@ use super::{idx::Idx, index_range::IndexRange};
 ///
 /// The syntax is identical to [`indexmap!`](::indexmap::indexmap!).
 ///
-/// The index type cannot be inferred from the macro so you
+/// The index (and hasher) type cannot be inferred from the macro so you
 /// might have to add type annotations.
 ///
 /// # Example
@@ -28,16 +28,14 @@ use super::{idx::Idx, index_range::IndexRange};
 /// ```
 #[macro_export]
 macro_rules! index_hash_map {
-    ($($key:expr => $value:expr),* $(,)?) => {
-        {
-            const CAP: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
-            let mut map = $crate::IndexHashMap::with_capacity(CAP);
-            $(
-                map.insert($key, $value);
-            )*
-            map
-        }
-    };
+    ($($key:expr => $value:expr),* $(,)?) => {{
+        const CAP: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
+        let mut map = $crate::IndexHashMap::with_capacity(CAP);
+        $(
+            map.insert($key, $value);
+        )*
+        map
+    }};
 }
 
 #[cfg(feature = "std")]
@@ -149,30 +147,36 @@ impl<I, K, V, S: Default> Default for IndexHashMap<I, K, V, S> {
     }
 }
 
-impl<I, K: Debug, V: Debug, S> Debug for IndexHashMap<I, K, V, S> {
+impl<I, K, V, S> Debug for IndexHashMap<I, K, V, S>
+where
+    K: Debug,
+    V: Debug,
+{
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.data, f)
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl<I, K, V> IndexHashMap<I, K, V> {
-    pub fn new() -> Self {
+impl<I, K, V, S> IndexHashMap<I, K, V, S> {
+    pub fn new() -> Self
+    where
+        S: Default,
+    {
         Self {
             data: IndexMap::default(),
             _phantom: PhantomData,
         }
     }
-    pub fn with_capacity(cap: usize) -> Self {
+
+    pub fn with_capacity(cap: usize) -> Self
+    where
+        S: Default,
+    {
         Self {
-            data: IndexMap::with_capacity(cap),
+            data: IndexMap::with_capacity_and_hasher(cap, S::default()),
             _phantom: PhantomData,
         }
     }
-}
-
-impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn with_capacity_and_hasher(cap: usize, hasher: S) -> Self {
         Self {
             data: IndexMap::with_capacity_and_hasher(cap, hasher),
@@ -369,6 +373,20 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
         S: BuildHasher,
     {
         self.data.insert(key, value)
+    }
+
+    pub fn get_index(&self, i: I) -> Option<(&K, &V)>
+    where
+        I: Idx,
+    {
+        self.data.get_index(i.into_usize())
+    }
+
+    pub fn get_index_mut(&mut self, i: I) -> Option<(&K, &mut V)>
+    where
+        I: Idx,
+    {
+        self.data.get_index_mut(i.into_usize())
     }
 
     pub fn swap_remove<Q: ?Sized + Hash + Equivalent<K>>(

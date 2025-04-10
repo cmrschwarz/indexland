@@ -136,6 +136,8 @@ pub use indexmap;
 pub mod __private {
     use core::mem::{ManuallyDrop, MaybeUninit};
 
+    use crate::{Idx, IndexArray};
+
     /// Essentially [`std::mem::MaybeUninit::transpose`] in stable Rust. Will
     /// be removed once [maybe_uninit_uninit_array_transpose](https://github.com/rust-lang/rust/issues/96097)
     /// is stabilized.
@@ -157,26 +159,45 @@ pub mod __private {
         unsafe { res.assume_init() }
     }
 
-    pub const fn array_from_values_and_distinct_indices<
-        T,
-        const LEN: usize,
-    >(
-        indices: [usize; LEN],
-        values: ManuallyDrop<[Option<T>; LEN]>,
-    ) -> [T; LEN] {
+    pub const fn array_from_values_and_distinct_indices<T, const N: usize>(
+        indices: [usize; N],
+        values: ManuallyDrop<[Option<T>; N]>,
+    ) -> [T; N] {
         let mut values = ManuallyDrop::into_inner(values);
-        let mut data: [MaybeUninit<T>; LEN] =
-            [const { MaybeUninit::uninit() }; LEN];
+        let mut data: [MaybeUninit<T>; N] =
+            [const { MaybeUninit::uninit() }; N];
         let mut i = 0;
-        while i < LEN {
+        while i < N {
             data[indices[i]] = MaybeUninit::new(values[i].take().unwrap());
             i += 1;
         }
-        // SAFETY: we called `take` `LEN` times on an array with `LEN` elements
+        // SAFETY: we called `take` `N` times on an array with `N` elements
         // so we must have reached all slots
         core::mem::forget(values); // this is empty now
         unsafe { transpose_assume_uninit(data) }
     }
-    // reexport for vec!
-    pub extern crate alloc;
+
+    // NOTE: this is unfortunately not const because `Idx::into_usize` is
+    // a trait method :(.
+    pub fn index_array_from_values_and_distinct_indices<I, T, const N: usize>(
+        indices: [I; N],
+        values: ManuallyDrop<[Option<T>; N]>,
+    ) -> IndexArray<I, T, N>
+    where
+        I: Idx,
+    {
+        let mut values = ManuallyDrop::into_inner(values);
+        let mut data: [MaybeUninit<T>; N] =
+            [const { MaybeUninit::uninit() }; N];
+        let mut i = 0;
+        while i < N {
+            data[indices[i].into_usize()] =
+                MaybeUninit::new(values[i].take().unwrap());
+            i += 1;
+        }
+        // SAFETY: we called `take` `N` times on an array with `N` elements
+        // so we must have reached all slots
+        core::mem::forget(values); // this is empty now
+        IndexArray::from(unsafe { transpose_assume_uninit(data) })
+    }
 }

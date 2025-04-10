@@ -6,7 +6,9 @@ use core::{
 
 use alloc::{collections::VecDeque, vec::Vec};
 
-use crate::{index_enumerate::IndexEnumerate, IndexRangeBounds, IndexVec};
+use crate::{
+    index_enumerate::IndexEnumerate, IndexArray, IndexRangeBounds, IndexVec,
+};
 
 use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 
@@ -25,9 +27,24 @@ use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 /// ```
 #[macro_export]
 macro_rules! index_vec_deque {
-    ($($anything: tt)*) => {
-        $crate::IndexVecDeque::from($crate::__private::alloc::vec![$($anything)*])
+    () => {
+        $crate::IndexVecDeque::from([])
     };
+    ($value:expr; $count: expr) => {
+        $crate::IndexVecDeque::from([ $value; $count])
+    };
+    ($($value:expr),+ $(,)?) => {
+        $crate::IndexVecDeque::from([$($value),*])
+    };
+    ($($index:expr => $value:expr),* $(,)?) => {{
+        let indices = [ $($index as usize),* ];
+        let mut values = [ $(Some($value)),* ];
+        let data = $crate::__private::array_from_values_and_distinct_indices(
+            indices,
+            ::core::mem::ManuallyDrop::new(values)
+        );
+        $crate::IndexVecDeque::from(data)
+    }};
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -58,6 +75,16 @@ impl<I, T> From<VecDeque<T>> for IndexVecDeque<I, T> {
             data: value,
             _phantom: PhantomData,
         }
+    }
+}
+impl<I, T, const N: usize> From<[T; N]> for IndexVecDeque<I, T> {
+    fn from(value: [T; N]) -> Self {
+        Self::from_iter(value)
+    }
+}
+impl<I, T, const N: usize> From<IndexArray<I, T, N>> for IndexVecDeque<I, T> {
+    fn from(value: IndexArray<I, T, N>) -> Self {
+        Self::from_iter(value)
     }
 }
 

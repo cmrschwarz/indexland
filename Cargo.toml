@@ -70,7 +70,7 @@ default-features = false
 
 
 [dev-dependencies]
-derive_more = { version = "2.0.1", features = ["full"] }
+trybuild = "1.0.104"
 metamatch = "0.3"
 
 [features]
