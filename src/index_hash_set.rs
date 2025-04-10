@@ -52,7 +52,7 @@ macro_rules! index_hash_set {
     }};
     ($($index:expr => $value:expr),* $(,)?) => {{
         let indices = [ $($index),* ];
-        let mut values = [ $(Some($value)),* ];
+        let mut values = [ $($value),* ];
         let data = $crate::__private::index_array_from_values_and_distinct_indices(
             indices,
             ::core::mem::ManuallyDrop::new(values)

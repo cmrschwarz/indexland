@@ -160,42 +160,173 @@ pub mod __private {
         unsafe { res.assume_init() }
     }
 
+    const fn usize_to_ascii(mut n: usize, buf: &mut [u8]) -> usize {
+        let digits = if n == 0 { 1 } else { n.ilog10() as usize + 1 };
+        let mut i = digits;
+        #[allow(clippy::cast_possible_truncation)]
+        while i > 0 {
+            i -= 1;
+            buf[i] = b'0' + (n % 10) as u8;
+            n /= 10;
+        }
+        digits
+    }
+
+    #[track_caller]
+    const fn panic_index_initialized_twice(index: usize) {
+        unsafe {
+            const MSG_PART_1: &str = "index `";
+            const MSG_PART_2: &str = "` was initialized twice";
+            const MSG_BUF_LEN: usize = 100;
+            const _: () = assert!(
+                MSG_PART_1.len() + (usize::MAX.ilog10() as usize) + MSG_PART_2.len() < MSG_BUF_LEN
+            );
+
+            let mut msg_buf = [0u8; MSG_BUF_LEN];
+
+            core::ptr::copy_nonoverlapping(
+                MSG_PART_1.as_ptr(),
+                msg_buf.as_mut_ptr(),
+                MSG_PART_1.len(),
+            );
+
+            let digits = usize_to_ascii(
+                index,
+                core::slice::from_raw_parts_mut(
+                    msg_buf.as_mut_ptr().add(MSG_PART_1.len()),
+                    MSG_BUF_LEN - MSG_PART_1.len(),
+                ),
+            );
+
+            core::ptr::copy_nonoverlapping(
+                MSG_PART_2.as_ptr(),
+                msg_buf.as_mut_ptr().add(MSG_PART_1.len() + digits),
+                MSG_PART_2.len(),
+            );
+
+            panic!(
+                "{}",
+                core::str::from_utf8_unchecked(core::slice::from_raw_parts(
+                    msg_buf.as_ptr(),
+                    MSG_PART_1.len() + digits + MSG_PART_2.len()
+                ))
+            );
+        }
+    }
+
+    #[track_caller]
     pub const fn array_from_values_and_distinct_indices<T, const N: usize>(
         indices: [usize; N],
-        values: ManuallyDrop<[Option<T>; N]>,
+        values: ManuallyDrop<[T; N]>,
     ) -> [T; N] {
-        let mut values = ManuallyDrop::into_inner(values);
+        let values = ManuallyDrop::into_inner(values);
         let mut data: [MaybeUninit<T>; N] = [const { MaybeUninit::uninit() }; N];
+        let mut initialized = [false; N];
         let mut i = 0;
         while i < N {
-            data[indices[i]] = MaybeUninit::new(values[i].take().unwrap());
+            let target_index = indices[i];
+            if initialized[target_index] {
+                panic_index_initialized_twice(target_index);
+            }
+            initialized[target_index] = true;
+            // SAFETY: the pointer comes from an array
+            data[target_index] = MaybeUninit::new(unsafe { core::ptr::read(&values[i]) });
             i += 1;
         }
-        // SAFETY: we called `take` `N` times on an array with `N` elements
-        // so we must have reached all slots
+        // SAFETY: we just successfully initialized `N` distinct slots in an
+        // array of `N` elements so we must have initialized all slots
         core::mem::forget(values); // this is empty now
         unsafe { transpose_assume_uninit(data) }
     }
 
     // NOTE: this is unfortunately not const because `Idx::into_usize` is
     // a trait method :(.
+    #[track_caller]
     pub fn index_array_from_values_and_distinct_indices<I, T, const N: usize>(
         indices: [I; N],
-        values: ManuallyDrop<[Option<T>; N]>,
+        values: ManuallyDrop<[T; N]>,
     ) -> IndexArray<I, T, N>
     where
         I: Idx,
     {
-        let mut values = ManuallyDrop::into_inner(values);
+        let values = ManuallyDrop::into_inner(values);
         let mut data: [MaybeUninit<T>; N] = [const { MaybeUninit::uninit() }; N];
+        let mut initialized = [false; N];
         let mut i = 0;
         while i < N {
-            data[indices[i].into_usize()] = MaybeUninit::new(values[i].take().unwrap());
+            let target_index = indices[i].into_usize();
+
+            assert!(
+                !initialized[target_index],
+                "index `{target_index}` was initialized twice"
+            );
+
+            initialized[target_index] = true;
+
+            // SAFETY: the pointer comes from an array
+            data[indices[i].into_usize()] =
+                MaybeUninit::new(unsafe { core::ptr::read(&values[i]) });
             i += 1;
         }
-        // SAFETY: we called `take` `N` times on an array with `N` elements
-        // so we must have reached all slots
+        // SAFETY: we just successfully initialized `N` distinct slots in an
+        // array of `N` elements so we must have initialized all slots
         core::mem::forget(values); // this is empty now
         IndexArray::from(unsafe { transpose_assume_uninit(data) })
+    }
+
+    #[cfg(test)]
+    mod test {
+        use super::panic_index_initialized_twice;
+
+        #[test]
+        #[should_panic(expected = "index `0` was initialized twice")]
+        fn index_initialized_twice_0() {
+            panic_index_initialized_twice(0);
+        }
+
+        #[test]
+        #[should_panic(expected = "index `1` was initialized twice")]
+        fn index_initialized_twice_1() {
+            panic_index_initialized_twice(1);
+        }
+
+        #[test]
+        #[should_panic(expected = "index `9` was initialized twice")]
+        fn index_initialized_twice_9() {
+            panic_index_initialized_twice(9);
+        }
+
+        #[test]
+        #[should_panic(expected = "index `10` was initialized twice")]
+        fn index_initialized_twice_10() {
+            panic_index_initialized_twice(10);
+        }
+
+        #[test]
+        #[should_panic(expected = "index `11` was initialized twice")]
+        fn index_initialized_twice_11() {
+            panic_index_initialized_twice(11);
+        }
+
+        #[cfg(target_pointer_width = "64")]
+        #[test]
+        #[should_panic(expected = "index `18446744073709551615` was initialized twice")]
+        fn index_initialized_twice_max() {
+            panic_index_initialized_twice(18_446_744_073_709_551_615);
+        }
+
+        #[cfg(target_pointer_width = "32")]
+        #[test]
+        #[should_panic(expected = "index `4294967295` was initialized twice")]
+        fn index_initialized_twice_max() {
+            panic_index_initialized_twice(4_294_967_295);
+        }
+
+        #[cfg(target_pointer_width = "16")]
+        #[test]
+        #[should_panic(expected = "index `65535` was initialized twice")]
+        fn index_initialized_twice_max() {
+            panic_index_initialized_twice(65_535);
+        }
     }
 }

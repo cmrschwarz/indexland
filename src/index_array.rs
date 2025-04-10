@@ -83,7 +83,7 @@ macro_rules! index_array {
     ($($index:expr => $value:expr),* $(,)?) => {{
         const LEN: usize = <[()]>::len(&[$({ stringify!($index); }),*]);
         let keys = [ $($index as usize),* ];
-        let mut values = [ $(Some($value)),* ];
+        let mut values = [ $($value),* ];
         let data = $crate::__private::array_from_values_and_distinct_indices(
             keys,
             core::mem::ManuallyDrop::new(values)

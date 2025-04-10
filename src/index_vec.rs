@@ -38,7 +38,7 @@ macro_rules! index_vec {
         use core::mem::MaybeUninit;
         const LEN: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
         let keys = [ $($key),* ];
-        let mut values = [ $(Some($value)),* ];
+        let mut values = [ $($value),* ];
         let mut data: [MaybeUninit<_>; LEN] = [
             const { MaybeUninit::uninit() }; LEN
         ];

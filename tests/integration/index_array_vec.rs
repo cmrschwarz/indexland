@@ -40,5 +40,3 @@ fn indexing_works() {
 
     assert_eq!(av[IdxManual(2)], 2);
 }
-
-// TODO: allow sizes other than the array cap, see #5

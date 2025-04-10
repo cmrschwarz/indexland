@@ -27,7 +27,7 @@ macro_rules! index_array_vec {
     };
     ($($index:expr => $value:expr),* $(,)?) => {{
         let indices = [ $($index as usize),* ];
-        let mut values = [ $(Some($value)),* ];
+        let mut values = [ $($value),* ];
         let data = $crate::__private::array_from_values_and_distinct_indices(
             indices,
             ::core::mem::ManuallyDrop::new(values)

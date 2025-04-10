@@ -1,4 +1,4 @@
-use indexland::{index_array, EnumIndexArray};
+use indexland::{enum_index_array, index_array, EnumIndexArray};
 
 use crate::integration::idx_manual::{EnumIdxManual2, EnumIdxManual3};
 
@@ -39,4 +39,13 @@ fn nested_enum_idx_array() {
     ];
 
     assert_eq!(foo[EnumIdxManual2::B][EnumIdxManual3::A], 4);
+}
+
+#[test]
+#[should_panic(expected = "index `1` was initialized twice")]
+fn enum_index_array_macro_works() {
+    let _: EnumIndexArray<EnumIdxManual2, i32> = enum_index_array![
+        EnumIdxManual2::B => 1,
+        EnumIdxManual2::B => 2,
+    ];
 }
