@@ -36,8 +36,7 @@ fn shorter_array_works() {
 
 #[test]
 fn indexing_works() {
-    let av: IndexArrayVec<IdxManual, _, 5> =
-        indexland::index_array_vec![0, 1, 2, 3, 4];
+    let av: IndexArrayVec<IdxManual, _, 5> = indexland::index_array_vec![0, 1, 2, 3, 4];
 
     assert_eq!(av[IdxManual(2)], 2);
 }

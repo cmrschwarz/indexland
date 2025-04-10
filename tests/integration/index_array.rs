@@ -25,10 +25,7 @@ fn enum_idx_array_macro_non_copy() {
 #[test]
 fn nested_enum_idx_array() {
     // make sure type inference works for nested index_array! macros
-    let foo: EnumIndexArray<
-        EnumIdxManual2,
-        EnumIndexArray<EnumIdxManual3, i32>,
-    > = index_array![
+    let foo: EnumIndexArray<EnumIdxManual2, EnumIndexArray<EnumIdxManual3, i32>> = index_array![
         EnumIdxManual2::A => index_array![
             EnumIdxManual3::A => 1,
             EnumIdxManual3::B => 2,

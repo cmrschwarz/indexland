@@ -146,10 +146,7 @@ impl<I, T> IndexVec<I, T> {
     where
         I: Idx,
     {
-        IndexEnumerate::new(
-            I::ZERO,
-            &self.data[range.canonicalize(self.len())],
-        )
+        IndexEnumerate::new(I::ZERO, &self.data[range.canonicalize(self.len())])
     }
     pub fn iter_enumerated_range_mut(
         &mut self,
@@ -161,9 +158,7 @@ impl<I, T> IndexVec<I, T> {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
-    pub fn iter_enumerated_mut(
-        &mut self,
-    ) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<T>>
     where
         I: Idx,
     {
@@ -175,9 +170,7 @@ impl<I, T> IndexVec<I, T> {
     {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
-    pub fn into_iter_enumerated(
-        self,
-    ) -> IndexEnumerate<I, alloc::vec::IntoIter<T>>
+    pub fn into_iter_enumerated(self) -> IndexEnumerate<I, alloc::vec::IntoIter<T>>
     where
         I: Idx,
     {
@@ -389,17 +382,13 @@ impl<I: Idx, T> Index<Range<I>> for IndexVec<I, T> {
     type Output = IndexSlice<I, T>;
 
     fn index(&self, index: Range<I>) -> &Self::Output {
-        IndexSlice::from_slice(
-            &self.data[index.start.into_usize()..index.end.into_usize()],
-        )
+        IndexSlice::from_slice(&self.data[index.start.into_usize()..index.end.into_usize()])
     }
 }
 
 impl<I: Idx, T> IndexMut<Range<I>> for IndexVec<I, T> {
     fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
-        IndexSlice::from_mut_slice(
-            &mut self.data[index.start.into_usize()..index.end.into_usize()],
-        )
+        IndexSlice::from_mut_slice(&mut self.data[index.start.into_usize()..index.end.into_usize()])
     }
 }
 

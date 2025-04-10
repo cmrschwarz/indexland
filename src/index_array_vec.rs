@@ -7,9 +7,7 @@ use core::{
 
 use arrayvec::{ArrayVec, CapacityError};
 
-use crate::{
-    index_enumerate::IndexEnumerate, IndexArray, IndexRange, IndexRangeBounds,
-};
+use crate::{index_enumerate::IndexEnumerate, IndexArray, IndexRange, IndexRangeBounds};
 
 use super::{idx::Idx, index_slice::IndexSlice};
 
@@ -94,18 +92,12 @@ impl<I, T, const CAP: usize> DerefMut for IndexArrayVec<I, T, CAP> {
     }
 }
 
-impl<I, T, const CAP: usize> From<ArrayVec<T, CAP>>
-    for IndexArrayVec<I, T, CAP>
-{
+impl<I, T, const CAP: usize> From<ArrayVec<T, CAP>> for IndexArrayVec<I, T, CAP> {
     fn from(v: ArrayVec<T, CAP>) -> Self {
         let mut res = IndexArrayVec::new();
         let v = ManuallyDrop::new(v);
         unsafe {
-            core::ptr::copy_nonoverlapping(
-                v.as_ptr(),
-                res.as_mut_ptr(),
-                v.len(),
-            );
+            core::ptr::copy_nonoverlapping(v.as_ptr(), res.as_mut_ptr(), v.len());
             res.set_len(v.len());
         }
         res
@@ -117,17 +109,13 @@ impl<I, T, const CAP: usize> From<[T; CAP]> for IndexArrayVec<I, T, CAP> {
         IndexArrayVec::from(ArrayVec::from(value))
     }
 }
-impl<I, T, const CAP: usize> From<IndexArray<I, T, CAP>>
-    for IndexArrayVec<I, T, CAP>
-{
+impl<I, T, const CAP: usize> From<IndexArray<I, T, CAP>> for IndexArrayVec<I, T, CAP> {
     fn from(value: IndexArray<I, T, CAP>) -> Self {
         IndexArrayVec::from(<[T; CAP]>::from(value))
     }
 }
 
-impl<I, T, const CAP: usize> From<IndexArrayVec<I, T, CAP>>
-    for ArrayVec<T, CAP>
-{
+impl<I, T, const CAP: usize> From<IndexArrayVec<I, T, CAP>> for ArrayVec<T, CAP> {
     fn from(value: IndexArrayVec<I, T, CAP>) -> Self {
         value.into_array_vec()
     }
@@ -157,11 +145,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
         let av = ManuallyDrop::new(av);
         let mut res = IndexArrayVec::new();
         unsafe {
-            core::ptr::copy_nonoverlapping(
-                av.as_ptr(),
-                res.as_mut_ptr(),
-                av.len(),
-            );
+            core::ptr::copy_nonoverlapping(av.as_ptr(), res.as_mut_ptr(), av.len());
             res.set_len(av.len());
         }
         res
@@ -173,11 +157,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
         let this = ManuallyDrop::new(self);
         let mut av = ArrayVec::new();
         unsafe {
-            core::ptr::copy_nonoverlapping(
-                this.as_ptr(),
-                av.as_mut_ptr(),
-                this.len(),
-            );
+            core::ptr::copy_nonoverlapping(this.as_ptr(), av.as_mut_ptr(), this.len());
             av.set_len(this.len());
         }
         av
@@ -208,15 +188,10 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
             _phantom: PhantomData,
         }
     }
-    pub const fn from_index_array<const N: usize>(
-        arr: IndexArray<I, T, N>,
-    ) -> Self {
+    pub const fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
         Self::from_array(arr.into_inner())
     }
-    pub fn try_extend_from_slice(
-        &mut self,
-        slice: &[T],
-    ) -> Result<(), arrayvec::CapacityError>
+    pub fn try_extend_from_slice(&mut self, slice: &[T]) -> Result<(), arrayvec::CapacityError>
     where
         T: Clone,
     {
@@ -267,11 +242,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
         let last = self.len as usize - 1;
         unsafe {
             let res = self.data[idx].assume_init_read();
-            core::ptr::copy(
-                &raw const self.data[last],
-                &raw mut self.data[idx],
-                1,
-            );
+            core::ptr::copy(&raw const self.data[last], &raw mut self.data[idx], 1);
             self.len -= 1;
             res
         }
@@ -279,9 +250,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn clear(&mut self) {
         unsafe {
             self.len = 0;
-            core::ptr::drop_in_place(core::ptr::from_mut::<[T]>(
-                self.as_mut_slice(),
-            ));
+            core::ptr::drop_in_place(core::ptr::from_mut::<[T]>(self.as_mut_slice()));
         }
     }
     pub fn truncate_len(&mut self, len: usize) {
@@ -320,9 +289,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     {
         IndexEnumerate::new(I::ZERO, self.as_slice())
     }
-    pub fn iter_enumerated_mut(
-        &mut self,
-    ) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<T>>
     where
         I: Idx,
     {
@@ -407,9 +374,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     }
 
     pub const fn as_mut_slice(&mut self) -> &mut [T] {
-        unsafe {
-            core::slice::from_raw_parts_mut(self.as_mut_ptr(), self.len())
-        }
+        unsafe { core::slice::from_raw_parts_mut(self.as_mut_ptr(), self.len()) }
     }
 
     pub fn try_push(&mut self, element: T) -> Result<(), CapacityError<T>> {
@@ -453,9 +418,7 @@ impl<I, T, const CAP: usize> IntoIterator for IndexArrayVec<I, T, CAP> {
     }
 }
 
-impl<'a, I, T, const CAP: usize> IntoIterator
-    for &'a IndexArrayVec<I, T, CAP>
-{
+impl<'a, I, T, const CAP: usize> IntoIterator for &'a IndexArrayVec<I, T, CAP> {
     type Item = &'a T;
 
     type IntoIter = core::slice::Iter<'a, T>;
@@ -465,9 +428,7 @@ impl<'a, I, T, const CAP: usize> IntoIterator
     }
 }
 
-impl<'a, I, T, const CAP: usize> IntoIterator
-    for &'a mut IndexArrayVec<I, T, CAP>
-{
+impl<'a, I, T, const CAP: usize> IntoIterator for &'a mut IndexArrayVec<I, T, CAP> {
     type Item = &'a mut T;
 
     type IntoIter = core::slice::IterMut<'a, T>;
@@ -483,8 +444,8 @@ impl<I, T, const CAP: usize> FromIterator<T> for IndexArrayVec<I, T, CAP> {
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize, const N: usize>
-    PartialEq<IndexArrayVec<I, T, CAP>> for [T; N]
+impl<I, T: PartialEq, const CAP: usize, const N: usize> PartialEq<IndexArrayVec<I, T, CAP>>
+    for [T; N]
 {
     fn eq(&self, other: &IndexArrayVec<I, T, CAP>) -> bool {
         self.as_slice() == other.as_slice()
@@ -499,33 +460,25 @@ impl<I, T: PartialEq, const CAP: usize, const N: usize> PartialEq<[T; N]>
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSlice<I, T>>
-    for IndexArrayVec<I, T, CAP>
-{
+impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSlice<I, T>> for IndexArrayVec<I, T, CAP> {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexArrayVec<I, T, CAP>>
-    for IndexSlice<I, T>
-{
+impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexArrayVec<I, T, CAP>> for IndexSlice<I, T> {
     fn eq(&self, other: &IndexArrayVec<I, T, CAP>) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexArrayVec<I, T, CAP>>
-    for [T]
-{
+impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexArrayVec<I, T, CAP>> for [T] {
     fn eq(&self, other: &IndexArrayVec<I, T, CAP>) -> bool {
         self == other.as_slice()
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize> PartialEq<[T]>
-    for IndexArrayVec<I, T, CAP>
-{
+impl<I, T: PartialEq, const CAP: usize> PartialEq<[T]> for IndexArrayVec<I, T, CAP> {
     fn eq(&self, other: &[T]) -> bool {
         self.as_slice() == other
     }
@@ -561,9 +514,7 @@ impl<T, const N: usize> IntoIter<T, N> {
     }
     fn as_raw_mut_slice(&mut self) -> *mut [T] {
         core::ptr::slice_from_raw_parts_mut(
-            unsafe {
-                self.data.as_mut_ptr().cast::<T>().add(self.alive.start)
-            },
+            unsafe { self.data.as_mut_ptr().cast::<T>().add(self.alive.start) },
             self.alive.end - self.alive.start,
         )
     }
@@ -601,24 +552,17 @@ where
             PhantomData<(&'de (), fn(I) -> T, [T; CAP])>,
         );
 
-        impl<'de, I, T, const CAP: usize> Visitor<'de>
-            for IndexArrayVecVisitor<'de, I, T, CAP>
+        impl<'de, I, T, const CAP: usize> Visitor<'de> for IndexArrayVecVisitor<'de, I, T, CAP>
         where
             T: Deserialize<'de>,
         {
             type Value = IndexArrayVec<I, T, CAP>;
 
-            fn expecting(
-                &self,
-                formatter: &mut core::fmt::Formatter,
-            ) -> core::fmt::Result {
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                 write!(formatter, "an array with no more than {CAP} items")
             }
 
-            fn visit_seq<SA>(
-                self,
-                mut seq: SA,
-            ) -> Result<Self::Value, SA::Error>
+            fn visit_seq<SA>(self, mut seq: SA) -> Result<Self::Value, SA::Error>
             where
                 SA: SeqAccess<'de>,
             {
@@ -634,7 +578,6 @@ where
             }
         }
 
-        deserializer
-            .deserialize_seq(IndexArrayVecVisitor::<I, T, CAP>(PhantomData))
+        deserializer.deserialize_seq(IndexArrayVecVisitor::<I, T, CAP>(PhantomData))
     }
 }

@@ -33,10 +33,7 @@ impl Hasher for IdentityHasher {
     fn write_u64(&mut self, n: u64) {
         #[cfg(debug_assertions)]
         {
-            debug_assert!(
-                !self.accessed,
-                "IdentityHasher: write was called twice"
-            );
+            debug_assert!(!self.accessed, "IdentityHasher: write was called twice");
             self.accessed = true;
         }
         self.hash = n;
@@ -134,9 +131,7 @@ mod tests {
 
     #[cfg(debug_assertions)]
     #[test]
-    #[should_panic(
-        expected = "IdentityHasher: writing non integer types is not supported"
-    )]
+    #[should_panic(expected = "IdentityHasher: writing non integer types is not supported")]
     fn string_hash_attempt() {
         let mut h = IdentityHasher::default();
         h.write("asdf".as_bytes());

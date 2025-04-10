@@ -11,22 +11,13 @@ use crate::{
 pub unsafe trait IndexSliceIndex<I, T> {
     type Output: ?Sized;
     fn get(self, slice: &IndexSlice<I, T>) -> Option<&Self::Output>;
-    fn get_mut(
-        self,
-        slice: &mut IndexSlice<I, T>,
-    ) -> Option<&mut Self::Output>;
+    fn get_mut(self, slice: &mut IndexSlice<I, T>) -> Option<&mut Self::Output>;
     /// # Safety
     /// `slice` must be a valid pointer for the expected range
-    unsafe fn get_unchecked(
-        self,
-        slice: *const IndexSlice<I, T>,
-    ) -> *const Self::Output;
+    unsafe fn get_unchecked(self, slice: *const IndexSlice<I, T>) -> *const Self::Output;
     /// # Safety
     /// `slice` must be a valid pointer for the expected range
-    unsafe fn get_unchecked_mut(
-        self,
-        slice: *mut IndexSlice<I, T>,
-    ) -> *mut Self::Output;
+    unsafe fn get_unchecked_mut(self, slice: *mut IndexSlice<I, T>) -> *mut Self::Output;
     fn index(self, slice: &IndexSlice<I, T>) -> &Self::Output;
     fn index_mut(self, slice: &mut IndexSlice<I, T>) -> &mut Self::Output;
 }
@@ -38,24 +29,15 @@ unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for I {
         slice.data.get(self.into_usize())
     }
     #[inline]
-    fn get_mut(
-        self,
-        slice: &mut IndexSlice<I, T>,
-    ) -> Option<&mut Self::Output> {
+    fn get_mut(self, slice: &mut IndexSlice<I, T>) -> Option<&mut Self::Output> {
         slice.data.get_mut(self.into_usize())
     }
     #[inline]
-    unsafe fn get_unchecked(
-        self,
-        slice: *const IndexSlice<I, T>,
-    ) -> *const Self::Output {
+    unsafe fn get_unchecked(self, slice: *const IndexSlice<I, T>) -> *const Self::Output {
         unsafe { slice.cast::<T>().add(self.into_usize()) }
     }
     #[inline]
-    unsafe fn get_unchecked_mut(
-        self,
-        slice: *mut IndexSlice<I, T>,
-    ) -> *mut Self::Output {
+    unsafe fn get_unchecked_mut(self, slice: *mut IndexSlice<I, T>) -> *mut Self::Output {
         unsafe { slice.cast::<T>().add(self.into_usize()) }
     }
     #[inline]
@@ -68,9 +50,7 @@ unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for I {
     }
 }
 
-unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<I, T>
-    for core::ops::Range<C>
-{
+unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<I, T> for core::ops::Range<C> {
     type Output = IndexSlice<I, T>;
 
     #[inline]
@@ -81,47 +61,28 @@ unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<I, T>
     }
 
     #[inline]
-    fn get_mut(
-        self,
-        slice: &mut IndexSlice<I, T>,
-    ) -> Option<&mut IndexSlice<I, T>> {
+    fn get_mut(self, slice: &mut IndexSlice<I, T>) -> Option<&mut IndexSlice<I, T>> {
         Some(IndexSlice::from_mut_slice(
             slice.as_mut_slice().get_mut(self.usize_range())?,
         ))
     }
 
     #[inline]
-    unsafe fn get_unchecked(
-        self,
-        slice: *const IndexSlice<I, T>,
-    ) -> *const IndexSlice<I, T> {
+    unsafe fn get_unchecked(self, slice: *const IndexSlice<I, T>) -> *const IndexSlice<I, T> {
         let slice = slice as *const [T];
         let start = self.start.into_usize();
         let end = self.start.into_usize();
 
-        unsafe {
-            core::ptr::slice_from_raw_parts(
-                slice.cast::<T>().add(start),
-                end - start,
-            ) as _
-        }
+        unsafe { core::ptr::slice_from_raw_parts(slice.cast::<T>().add(start), end - start) as _ }
     }
 
     #[inline]
-    unsafe fn get_unchecked_mut(
-        self,
-        slice: *mut IndexSlice<I, T>,
-    ) -> *mut IndexSlice<I, T> {
+    unsafe fn get_unchecked_mut(self, slice: *mut IndexSlice<I, T>) -> *mut IndexSlice<I, T> {
         let slice = slice as *mut [T];
         let start = self.start.into_usize();
         let end = self.start.into_usize();
 
-        unsafe {
-            core::ptr::slice_from_raw_parts(
-                slice.cast::<T>().add(start),
-                end - start,
-            ) as _
-        }
+        unsafe { core::ptr::slice_from_raw_parts(slice.cast::<T>().add(start), end - start) as _ }
     }
 
     #[inline]
@@ -131,9 +92,7 @@ unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<I, T>
 
     #[inline]
     fn index_mut(self, slice: &mut IndexSlice<I, T>) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_mut_slice(
-            &mut slice.as_mut_slice()[self.usize_range()],
-        )
+        IndexSlice::from_mut_slice(&mut slice.as_mut_slice()[self.usize_range()])
     }
 }
 
@@ -222,24 +181,15 @@ unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for RangeFull {
         Some(slice)
     }
     #[inline]
-    fn get_mut(
-        self,
-        slice: &mut IndexSlice<I, T>,
-    ) -> Option<&mut IndexSlice<I, T>> {
+    fn get_mut(self, slice: &mut IndexSlice<I, T>) -> Option<&mut IndexSlice<I, T>> {
         Some(slice)
     }
     #[inline]
-    unsafe fn get_unchecked(
-        self,
-        slice: *const IndexSlice<I, T>,
-    ) -> *const IndexSlice<I, T> {
+    unsafe fn get_unchecked(self, slice: *const IndexSlice<I, T>) -> *const IndexSlice<I, T> {
         slice
     }
     #[inline]
-    unsafe fn get_unchecked_mut(
-        self,
-        slice: *mut IndexSlice<I, T>,
-    ) -> *mut IndexSlice<I, T> {
+    unsafe fn get_unchecked_mut(self, slice: *mut IndexSlice<I, T>) -> *mut IndexSlice<I, T> {
         slice
     }
     #[inline]
@@ -259,24 +209,15 @@ unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for IndexRange<I> {
         Range::from(self).get(slice)
     }
     #[inline]
-    fn get_mut(
-        self,
-        slice: &mut IndexSlice<I, T>,
-    ) -> Option<&mut IndexSlice<I, T>> {
+    fn get_mut(self, slice: &mut IndexSlice<I, T>) -> Option<&mut IndexSlice<I, T>> {
         Range::from(self).get_mut(slice)
     }
     #[inline]
-    unsafe fn get_unchecked(
-        self,
-        slice: *const IndexSlice<I, T>,
-    ) -> *const IndexSlice<I, T> {
+    unsafe fn get_unchecked(self, slice: *const IndexSlice<I, T>) -> *const IndexSlice<I, T> {
         unsafe { Range::from(self).get_unchecked(slice) }
     }
     #[inline]
-    unsafe fn get_unchecked_mut(
-        self,
-        slice: *mut IndexSlice<I, T>,
-    ) -> *mut IndexSlice<I, T> {
+    unsafe fn get_unchecked_mut(self, slice: *mut IndexSlice<I, T>) -> *mut IndexSlice<I, T> {
         unsafe { Range::from(self).get_unchecked_mut(slice) }
     }
     #[inline]

@@ -5,9 +5,7 @@ use core::{
     ops::{Add, Sub},
 };
 
-pub trait Idx:
-    'static + Copy + Ord + Hash + Add<Output = Self> + Sub<Output = Self>
-{
+pub trait Idx: 'static + Copy + Ord + Hash + Add<Output = Self> + Sub<Output = Self> {
     const ZERO: Self;
     const ONE: Self;
     const MAX: Self;

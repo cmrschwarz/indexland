@@ -4,8 +4,7 @@ use std::collections::HashMap;
 use syn::{Generics, Ident};
 
 use crate::{
-    attrs::Attrs, shared_derives::derive_compatible,
-    utils::token_stream_to_compact_string,
+    attrs::Attrs, shared_derives::derive_compatible, utils::token_stream_to_compact_string,
 };
 
 pub struct DeriveContextBase {
@@ -37,12 +36,7 @@ impl<C> DeriveCatalogEntry<C> {
 }
 
 impl<C> DeriveContext<C> {
-    pub fn new(
-        attrs: Attrs,
-        name: Ident,
-        generics: Generics,
-        custom: C,
-    ) -> Self {
+    pub fn new(attrs: Attrs, name: Ident, generics: Generics, custom: C) -> Self {
         let indexland = &attrs.indexland_path;
         let self_as_idx = quote! { <Self as #indexland::Idx> };
         Self {
@@ -57,12 +51,7 @@ impl<C> DeriveContext<C> {
             custom,
         }
     }
-    pub fn add_deriv(
-        &mut self,
-        default: bool,
-        name: &'static str,
-        f: DeriveCatalogEntry<C>,
-    ) {
+    pub fn add_deriv(&mut self, default: bool, name: &'static str, f: DeriveCatalogEntry<C>) {
         self.derivs_catalog.insert(name, f);
         if default {
             self.derivs_default.push(name);
@@ -90,10 +79,7 @@ impl<C> DeriveContext<C> {
         if descr.starts_with(&from_enum) {
             self.base.attrs.error_list.error_spanned(
                 entry,
-                format!(
-                    "Use `From<Self>` instead of `From<{}>`",
-                    self.base.name
-                ),
+                format!("Use `From<Self>` instead of `From<{}>`", self.base.name),
             );
         } else {
             self.base.attrs.error_list.error_spanned(

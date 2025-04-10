@@ -3,8 +3,8 @@ use std::{cell::RefCell, fmt::Display};
 use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::ToTokens;
 use syn::{
-    parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput,
-    Ident, LitStr, PathSegment, Token,
+    parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput, Ident, LitStr,
+    PathSegment, Token,
 };
 
 const INDEXLAND: &str = "indexland";
@@ -138,15 +138,9 @@ impl Attrs {
                     let literal: LitStr = meta.value()?.parse()?;
                     let value = literal.value();
                     match &*value {
-                        "debug_only" => {
-                            bounds_checks_mode = BoundsChecksMode::DebugOnly
-                        }
-                        "always" => {
-                            bounds_checks_mode = BoundsChecksMode::Always
-                        }
-                        "never" => {
-                            bounds_checks_mode = BoundsChecksMode::Never
-                        }
+                        "debug_only" => bounds_checks_mode = BoundsChecksMode::DebugOnly,
+                        "always" => bounds_checks_mode = BoundsChecksMode::Always,
+                        "never" => bounds_checks_mode = BoundsChecksMode::Never,
                         _ => errs.push(meta.error(format!(
                             r#"unknown bounds checks mode "{value}", expected {}"#,
                             r#""debug_only", "always", or "never""#
@@ -155,16 +149,14 @@ impl Attrs {
                 } else if meta.path.is_ident(USIZE_ARITH) {
                     // #[indexland(usize_arith)]
                     enable_usize_arith = true;
-                }else if meta.path.is_ident(FULL_ARITH) {
+                } else if meta.path.is_ident(FULL_ARITH) {
                     // #[indexland(full_arith)]
                     enable_full_arith = true;
-                }
-                else if meta.path.is_ident(OMIT) {
+                } else if meta.path.is_ident(OMIT) {
                     // e.g. #[indexland(omit(Display))]
                     let omit;
                     parenthesized!(omit in meta.input);
-                    let variants =
-                        split_at_commas(omit.cursor().token_stream());
+                    let variants = split_at_commas(omit.cursor().token_stream());
 
                     // the cursor above is a copy
                     while omit.parse::<TokenTree>().is_ok() {}
@@ -177,8 +169,7 @@ impl Attrs {
                     // e.g. #[indexland(only(Idx))]
                     let only;
                     parenthesized!(only in meta.input);
-                    let elements =
-                        split_at_commas(only.cursor().token_stream());
+                    let elements = split_at_commas(only.cursor().token_stream());
 
                     // the cursor above is a copy
                     while only.parse::<TokenTree>().is_ok() {}
@@ -191,8 +182,7 @@ impl Attrs {
                     // e.g. #[indexland(extra(Display))]
                     let extra;
                     parenthesized!(extra in meta.input);
-                    let elements =
-                        split_at_commas(extra.cursor().token_stream());
+                    let elements = split_at_commas(extra.cursor().token_stream());
 
                     // the cursor above is a copy
                     while extra.parse::<TokenTree>().is_ok() {}
@@ -201,15 +191,14 @@ impl Attrs {
                         first_extra_list = Some(meta.path.span());
                     }
                     extra_list.extend(elements);
-                }
-                else if meta.path.is_ident(COMPATIBLE) {
+                } else if meta.path.is_ident(COMPATIBLE) {
                     // e.g. #[indexland(compatible(usize))]
                     let compatible;
                     parenthesized!(compatible in meta.input);
-                    let elements = Punctuated::<syn::Path, Token![,]>::parse_terminated(&compatible)?;
+                    let elements =
+                        Punctuated::<syn::Path, Token![,]>::parse_terminated(&compatible)?;
                     compatible_list.extend(elements);
-                }
-                else {
+                } else {
                     errs.push(meta.error(format!(
                         "unknown {INDEXLAND} attribute {}",
                         meta.path.to_token_stream()
@@ -223,8 +212,7 @@ impl Attrs {
         }
 
         let indexland_path = indexland_path.unwrap_or_else(|| {
-            let ps: PathSegment =
-                Ident::new(INDEXLAND, Span::call_site()).into();
+            let ps: PathSegment = Ident::new(INDEXLAND, Span::call_site()).into();
             syn::Path {
                 leading_colon: Some(Default::default()),
                 segments: Punctuated::from_iter([ps]),

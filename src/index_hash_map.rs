@@ -99,16 +99,12 @@ impl<'a, I, K, V> From<&'a IndexHashMapSlice<I, K, V>> for &'a Slice<K, V> {
         IndexHashMapSlice::into_index_map_slice(data)
     }
 }
-impl<'a, I, K, V> From<&'a mut Slice<K, V>>
-    for &'a mut IndexHashMapSlice<I, K, V>
-{
+impl<'a, I, K, V> From<&'a mut Slice<K, V>> for &'a mut IndexHashMapSlice<I, K, V> {
     fn from(data: &'a mut Slice<K, V>) -> Self {
         IndexHashMapSlice::from_index_map_slice_mut(data)
     }
 }
-impl<'a, I, K, V> From<&'a mut IndexHashMapSlice<I, K, V>>
-    for &'a mut Slice<K, V>
-{
+impl<'a, I, K, V> From<&'a mut IndexHashMapSlice<I, K, V>> for &'a mut Slice<K, V> {
     fn from(data: &'a mut IndexHashMapSlice<I, K, V>) -> Self {
         IndexHashMapSlice::into_index_map_slice_mut(data)
     }
@@ -130,9 +126,7 @@ impl<I, K, V, S> From<IndexHashMap<I, K, V, S>> for IndexMap<K, V, S> {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl<I, K: Hash + Eq, V, const N: usize> From<[(K, V); N]>
-    for IndexHashMap<I, K, V, RandomState>
-{
+impl<I, K: Hash + Eq, V, const N: usize> From<[(K, V); N]> for IndexHashMap<I, K, V, RandomState> {
     fn from(arr: [(K, V); N]) -> IndexHashMap<I, K, V, RandomState> {
         IndexHashMap::from(IndexMap::from(arr))
     }
@@ -219,26 +213,19 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn iter_mut(&mut self) -> indexmap::map::IterMut<K, V> {
         self.data.iter_mut()
     }
-    pub fn iter_enumerated(
-        &self,
-    ) -> IndexEnumerate<I, indexmap::map::Iter<K, V>>
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, indexmap::map::Iter<K, V>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
-    pub fn iter_enumerated_mut(
-        &mut self,
-    ) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, &mut self.data)
     }
-    pub fn iter_enumerated_range<R>(
-        &self,
-        range: R,
-    ) -> IndexEnumerate<I, indexmap::map::Iter<K, V>>
+    pub fn iter_enumerated_range<R>(&self, range: R) -> IndexEnumerate<I, indexmap::map::Iter<K, V>>
     where
         I: Idx,
         R: IndexRangeBounds<I>,
@@ -257,9 +244,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
-    pub fn into_iter_enumerated(
-        self,
-    ) -> IndexEnumerate<I, indexmap::map::IntoIter<K, V>>
+    pub fn into_iter_enumerated(self) -> IndexEnumerate<I, indexmap::map::IntoIter<K, V>>
     where
         I: Idx,
     {
@@ -268,9 +253,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn keys(&self) -> indexmap::map::Keys<K, V> {
         self.data.keys()
     }
-    pub fn keys_enumerated(
-        &self,
-    ) -> IndexEnumerate<I, indexmap::map::Keys<K, V>>
+    pub fn keys_enumerated(&self) -> IndexEnumerate<I, indexmap::map::Keys<K, V>>
     where
         I: Idx,
     {
@@ -279,9 +262,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn into_keys(self) -> indexmap::map::IntoKeys<K, V> {
         self.data.into_keys()
     }
-    pub fn into_keys_enumerated(
-        self,
-    ) -> IndexEnumerate<I, indexmap::map::IntoKeys<K, V>>
+    pub fn into_keys_enumerated(self) -> IndexEnumerate<I, indexmap::map::IntoKeys<K, V>>
     where
         I: Idx,
     {
@@ -290,9 +271,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn values(&self) -> indexmap::map::Values<K, V> {
         self.data.values()
     }
-    pub fn values_enumerated(
-        &self,
-    ) -> IndexEnumerate<I, indexmap::map::Values<K, V>>
+    pub fn values_enumerated(&self) -> IndexEnumerate<I, indexmap::map::Values<K, V>>
     where
         I: Idx,
     {
@@ -301,9 +280,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn values_mut(&mut self) -> indexmap::map::ValuesMut<K, V> {
         self.data.values_mut()
     }
-    pub fn values_mut_enumerated(
-        &mut self,
-    ) -> IndexEnumerate<I, indexmap::map::ValuesMut<K, V>>
+    pub fn values_mut_enumerated(&mut self) -> IndexEnumerate<I, indexmap::map::ValuesMut<K, V>>
     where
         I: Idx,
     {
@@ -312,9 +289,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn into_values(self) -> indexmap::map::IntoValues<K, V> {
         self.data.into_values()
     }
-    pub fn into_values_emumerated(
-        self,
-    ) -> IndexEnumerate<I, indexmap::map::IntoValues<K, V>>
+    pub fn into_values_emumerated(self) -> IndexEnumerate<I, indexmap::map::IntoValues<K, V>>
     where
         I: Idx,
     {
@@ -332,17 +307,11 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
-    pub fn drain<R: IndexRangeBounds<I>>(
-        &mut self,
-        range: R,
-    ) -> indexmap::map::Drain<K, V> {
+    pub fn drain<R: IndexRangeBounds<I>>(&mut self, range: R) -> indexmap::map::Drain<K, V> {
         self.data
             .drain(range.canonicalize(self.len()).usize_range())
     }
-    pub fn drain_len<R: RangeBounds<usize>>(
-        &mut self,
-        range: R,
-    ) -> indexmap::map::Drain<K, V> {
+    pub fn drain_len<R: RangeBounds<usize>>(&mut self, range: R) -> indexmap::map::Drain<K, V> {
         self.data.drain(range)
     }
     pub fn split_off(&mut self, at: I) -> Self
@@ -389,10 +358,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
         self.data.get_index_mut(i.into_usize())
     }
 
-    pub fn swap_remove<Q: ?Sized + Hash + Equivalent<K>>(
-        &mut self,
-        key: &Q,
-    ) -> Option<V>
+    pub fn swap_remove<Q: ?Sized + Hash + Equivalent<K>>(&mut self, key: &Q) -> Option<V>
     where
         S: BuildHasher,
     {
@@ -489,10 +455,7 @@ impl<I, K, V, S> Serialize for IndexHashMap<I, K, V, S>
 where
     IndexMap<K, V, S>: Serialize,
 {
-    fn serialize<SR: Serializer>(
-        &self,
-        serializer: SR,
-    ) -> Result<SR::Ok, SR::Error> {
+    fn serialize<SR: Serializer>(&self, serializer: SR) -> Result<SR::Ok, SR::Error> {
         self.data.serialize(serializer)
     }
 }

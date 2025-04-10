@@ -6,10 +6,10 @@ use crate::{
     attrs::{Attrs, BoundsChecksMode},
     derive_context::DeriveContext,
     shared_derives::{
-        derive_add_assign, derive_add_assign_usize, derive_clone, derive_copy,
-        derive_default, derive_div_assign, derive_div_assign_usize, derive_eq,
-        derive_mul_assign, derive_mul_assign_usize, derive_rem_assign,
-        derive_rem_assign_usize, derive_sub_assign, derive_sub_assign_usize,
+        derive_add_assign, derive_add_assign_usize, derive_clone, derive_copy, derive_default,
+        derive_div_assign, derive_div_assign_usize, derive_eq, derive_mul_assign,
+        derive_mul_assign_usize, derive_rem_assign, derive_rem_assign_usize, derive_sub_assign,
+        derive_sub_assign_usize,
     },
 };
 
@@ -24,8 +24,7 @@ fn newtype_derive_idx(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
 
-    let (impl_generics, ty_generics, where_clause) =
-        ctx.base.generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = ctx.base.generics.split_for_impl();
 
     let base_as_idx = &ctx.custom.base_as_idx;
 
@@ -110,8 +109,7 @@ fn newtype_derive_idx(ctx: &NewtypeCtx) -> TokenStream {
 fn newtype_derive_idx_newtype(ctx: &NewtypeCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
-    let (impl_generics, ty_generics, where_clause) =
-        ctx.base.generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = ctx.base.generics.split_for_impl();
     let base_type = &ctx.custom.base_type;
     quote! {
         #[automatically_derived]
@@ -426,16 +424,8 @@ fn fill_derivation_list(ctx: &mut NewtypeCtx) {
         "Rem<usize>",
         newtype_derive_rem_usize,
     );
-    ctx.add_deriv_shared(
-        usize_arith,
-        "AddAssign<usize>",
-        derive_add_assign_usize,
-    );
-    ctx.add_deriv_shared(
-        usize_arith,
-        "SubAssign<usize>",
-        derive_sub_assign_usize,
-    );
+    ctx.add_deriv_shared(usize_arith, "AddAssign<usize>", derive_add_assign_usize);
+    ctx.add_deriv_shared(usize_arith, "SubAssign<usize>", derive_sub_assign_usize);
     ctx.add_deriv_shared(
         usize_arith && full_arith,
         "MulAssign<usize>",
@@ -453,9 +443,7 @@ fn fill_derivation_list(ctx: &mut NewtypeCtx) {
     );
 }
 
-pub fn derive_idx_newtype_inner(
-    ast: DeriveInput,
-) -> Result<TokenStream, syn::Error> {
+pub fn derive_idx_newtype_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     let Data::Struct(struct_data) = &ast.data else {
         return Err(syn::Error::new(
             Span::call_site(),

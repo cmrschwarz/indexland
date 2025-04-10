@@ -20,9 +20,7 @@ pub fn compact_token_stream_stringify(res: &mut String, ts: TokenStream) {
             proc_macro2::TokenTree::Ident(ident) => {
                 if matches!(
                     prev,
-                    Prev::Comma
-                        | Prev::IdentOrLiteral
-                        | Prev::ClosingAngleBracket
+                    Prev::Comma | Prev::IdentOrLiteral | Prev::ClosingAngleBracket
                 ) {
                     res.push(' ');
                 }

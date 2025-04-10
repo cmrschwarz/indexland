@@ -1,7 +1,5 @@
 use super::Idx;
-use crate::{
-    index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex,
-};
+use crate::{index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex};
 
 use core::{
     fmt::Debug,
@@ -91,10 +89,7 @@ impl<I, T> IndexSlice<I, T> {
     ///
     /// If you actualy wanted to enumerate a slice starting from zero,
     /// simply pass [`Idx::ZERO`] as the initial offset.
-    pub fn iter_enumerated(
-        &self,
-        initial_offset: I,
-    ) -> IndexEnumerate<I, core::slice::Iter<T>> {
+    pub fn iter_enumerated(&self, initial_offset: I) -> IndexEnumerate<I, core::slice::Iter<T>> {
         IndexEnumerate::new(initial_offset, &self.data)
     }
 
@@ -160,10 +155,7 @@ impl<I, T> IndexSlice<I, T> {
     pub fn iter_mut(&mut self) -> core::slice::IterMut<T> {
         self.data.iter_mut()
     }
-    pub fn split_at_mut(
-        &mut self,
-        idx: I,
-    ) -> (&mut IndexSlice<I, T>, &mut IndexSlice<I, T>)
+    pub fn split_at_mut(&mut self, idx: I) -> (&mut IndexSlice<I, T>, &mut IndexSlice<I, T>)
     where
         I: Idx,
     {
@@ -387,8 +379,7 @@ mod test {
 
         let mut arr: IndexArray<usize, i32, 5> = index_array![1, 2, 3, 4, 5];
 
-        let [arr_slice_1, arr_slice_2] =
-            arr.get_disjoint_mut([0..=1, 3..=4]).unwrap();
+        let [arr_slice_1, arr_slice_2] = arr.get_disjoint_mut([0..=1, 3..=4]).unwrap();
 
         assert_eq!(arr_slice_1.iter().copied().sum::<i32>(), 3);
         assert_eq!(arr_slice_2.iter().copied().sum::<i32>(), 9);

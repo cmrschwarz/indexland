@@ -1,6 +1,4 @@
-use indexland::{
-    identity_hasher::IdentityHasher, index_hash_map, IndexHashMap,
-};
+use indexland::{identity_hasher::IdentityHasher, index_hash_map, IndexHashMap};
 
 use crate::integration::idx_manual::IdxManual;
 
@@ -17,8 +15,7 @@ fn macro_works() {
 
 #[test]
 fn empty_map_works() {
-    let ihm: IndexHashMap<u32, &'static str, i32, IdentityHasher> =
-        index_hash_map![];
+    let ihm: IndexHashMap<u32, &'static str, i32, IdentityHasher> = index_hash_map![];
     assert_eq!(ihm.len(), 0);
 }
 

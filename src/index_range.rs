@@ -69,8 +69,7 @@
 //! ```
 use crate::{idx::IdxCompatible, Idx};
 use core::ops::{
-    Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo,
-    RangeToInclusive,
+    Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
 pub trait IndexRangeBounds<I, C = I>: RangeBounds<C> {
@@ -231,9 +230,7 @@ impl<I> RangeBounds<I> for IndexRangeInclusive<I> {
         Bound::Included(&self.end)
     }
 }
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C>
-    for IndexRangeInclusive<C>
-{
+impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for IndexRangeInclusive<C> {
     type BaseRange = IndexRangeInclusive<C>;
     type IndexRange = IndexRangeInclusive<C>;
     type UsizeRange = IndexRangeInclusive<usize>;
@@ -324,10 +321,7 @@ impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeInclusive<C> {
         IndexRangeInclusive::from(self)
     }
     fn usize_range(self) -> Self::UsizeRange {
-        let mut range = RangeInclusive::new(
-            self.start().into_usize(),
-            self.end().into_usize(),
-        );
+        let mut range = RangeInclusive::new(self.start().into_usize(), self.end().into_usize());
         if matches!(self.end_bound(), Bound::Excluded(_)) {
             if range.start() != range.end() {
                 return RangeInclusive::new(*range.start(), *range.end() - 1);

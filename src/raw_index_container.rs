@@ -1,8 +1,7 @@
 use core::ops::{Range, RangeFull};
 
 use crate::{
-    idx::IdxCompatible, Idx, IndexRange, IndexRangeBounds, IndexRangeFrom,
-    IndexRangeInclusive,
+    idx::IdxCompatible, Idx, IndexRange, IndexRangeBounds, IndexRangeFrom, IndexRangeInclusive,
 };
 
 /// ## Safety
@@ -29,10 +28,7 @@ pub unsafe trait RawIndexContainer {
 
     /// ## Safety
     /// `this` must be a valid container pointer
-    unsafe fn get_unchecked(
-        this: *const Self,
-        idx: usize,
-    ) -> *const Self::Element;
+    unsafe fn get_unchecked(this: *const Self, idx: usize) -> *const Self::Element;
 
     fn index(&self, idx: usize) -> &Self::Element;
 
@@ -40,10 +36,7 @@ pub unsafe trait RawIndexContainer {
 
     /// ## Safety
     /// `this` must be a valid container pointer
-    unsafe fn get_range_unchecked(
-        this: *const Self,
-        r: Range<usize>,
-    ) -> *const Self::Slice;
+    unsafe fn get_range_unchecked(this: *const Self, r: Range<usize>) -> *const Self::Slice;
 
     fn index_range(&self, r: Range<usize>) -> &Self::Slice;
 }
@@ -56,10 +49,7 @@ pub trait RawIndexContainerMut: RawIndexContainer {
 
     /// ## Safety
     /// `this` must be a valid container pointer
-    unsafe fn get_unchecked_mut(
-        this: *mut Self,
-        idx: usize,
-    ) -> *mut Self::Element;
+    unsafe fn get_unchecked_mut(this: *mut Self, idx: usize) -> *mut Self::Element;
 
     fn index_mut(&mut self, idx: usize) -> &mut Self::Element;
 
@@ -67,10 +57,7 @@ pub trait RawIndexContainerMut: RawIndexContainer {
 
     /// ## Safety
     /// `this` must be a valid container pointer
-    unsafe fn get_range_unchecked_mut(
-        this: *mut Self,
-        r: Range<usize>,
-    ) -> *mut Self::Slice;
+    unsafe fn get_range_unchecked_mut(this: *mut Self, r: Range<usize>) -> *mut Self::Slice;
 
     fn index_range_mut(&mut self, r: Range<usize>) -> &mut Self::Slice;
 }
@@ -78,9 +65,7 @@ pub trait RawIndexContainerMut: RawIndexContainer {
 /// ## Safety
 /// `get_unchecked` and `get_unchecked_mut` are trusted to return valid pointers
 /// into the container if they received valid input
-pub unsafe trait GenericIndex<I, E: ?Sized, S: ?Sized, C: ?Sized>:
-    Sized
-{
+pub unsafe trait GenericIndex<I, E: ?Sized, S: ?Sized, C: ?Sized>: Sized {
     type Output: ?Sized;
     fn get(self, container: &C) -> Option<&Self::Output>
     where
@@ -88,10 +73,7 @@ pub unsafe trait GenericIndex<I, E: ?Sized, S: ?Sized, C: ?Sized>:
 
     /// ## Safety
     /// the container pointer must be valid
-    unsafe fn get_unchecked<FS, FR>(
-        self,
-        container: *const C,
-    ) -> *const Self::Output
+    unsafe fn get_unchecked<FS, FR>(self, container: *const C) -> *const Self::Output
     where
         C: RawIndexContainer<Element = E, Slice = S>;
 
@@ -114,9 +96,7 @@ pub unsafe trait GenericIndex<I, E: ?Sized, S: ?Sized, C: ?Sized>:
         C: RawIndexContainerMut<Element = E, Slice = S>;
 }
 
-unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C>
-    for I
-{
+unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C> for I {
     type Output = E;
 
     fn get(self, container: &C) -> Option<&Self::Output>
@@ -126,10 +106,7 @@ unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C>
         C::get(container, self.into_usize())
     }
 
-    unsafe fn get_unchecked<FS, FR>(
-        self,
-        container: *const C,
-    ) -> *const Self::Output
+    unsafe fn get_unchecked<FS, FR>(self, container: *const C) -> *const Self::Output
     where
         C: RawIndexContainer<Element = E, Slice = S>,
     {
@@ -165,9 +142,7 @@ unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C>
     }
 }
 
-unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C>
-    for Range<I>
-{
+unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C> for Range<I> {
     type Output = S;
 
     fn get(self, container: &C) -> Option<&Self::Output>
@@ -177,10 +152,7 @@ unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C>
         C::get_range(container, self.usize_range())
     }
 
-    unsafe fn get_unchecked<FS, FR>(
-        self,
-        container: *const C,
-    ) -> *const Self::Output
+    unsafe fn get_unchecked<FS, FR>(self, container: *const C) -> *const Self::Output
     where
         C: RawIndexContainer<Element = E, Slice = S>,
     {
@@ -216,9 +188,7 @@ unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C>
     }
 }
 
-unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C>
-    for RangeFull
-{
+unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C> for RangeFull {
     type Output = S;
 
     fn get(self, container: &C) -> Option<&Self::Output>
@@ -228,10 +198,7 @@ unsafe impl<I: Idx, E: ?Sized, S: ?Sized, C: ?Sized> GenericIndex<I, E, S, C>
         C::get_range(container, 0..container.len())
     }
 
-    unsafe fn get_unchecked<FS, FR>(
-        self,
-        container: *const C,
-    ) -> *const Self::Output
+    unsafe fn get_unchecked<FS, FR>(self, container: *const C) -> *const Self::Output
     where
         C: RawIndexContainer<Element = E, Slice = S>,
     {

@@ -48,9 +48,7 @@ impl<I, T, const CAP: usize> DerefMut for IndexSmallVec<I, T, CAP> {
     }
 }
 
-impl<I, T, const CAP: usize> From<SmallVec<[T; CAP]>>
-    for IndexSmallVec<I, T, CAP>
-{
+impl<I, T, const CAP: usize> From<SmallVec<[T; CAP]>> for IndexSmallVec<I, T, CAP> {
     fn from(v: SmallVec<[T; CAP]>) -> Self {
         IndexSmallVec {
             data: v,
@@ -59,9 +57,7 @@ impl<I, T, const CAP: usize> From<SmallVec<[T; CAP]>>
     }
 }
 
-impl<I, T, const CAP: usize> From<IndexSmallVec<I, T, CAP>>
-    for SmallVec<[T; CAP]>
-{
+impl<I, T, const CAP: usize> From<IndexSmallVec<I, T, CAP>> for SmallVec<[T; CAP]> {
     fn from(value: IndexSmallVec<I, T, CAP>) -> Self {
         value.data
     }
@@ -163,9 +159,7 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
-    pub fn iter_enumerated_mut(
-        &mut self,
-    ) -> IndexEnumerate<I, std::slice::IterMut<T>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, std::slice::IterMut<T>>
     where
         I: Idx,
     {
@@ -178,10 +172,7 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     where
         I: Idx,
     {
-        IndexEnumerate::new(
-            I::ZERO,
-            &self.data[range.canonicalize(self.len())],
-        )
+        IndexEnumerate::new(I::ZERO, &self.data[range.canonicalize(self.len())])
     }
     pub fn iter_enumerated_range_mut(
         &mut self,
@@ -193,9 +184,7 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
-    pub fn into_iter_enumerated(
-        self,
-    ) -> IndexEnumerate<I, smallvec::IntoIter<[T; CAP]>>
+    pub fn into_iter_enumerated(self) -> IndexEnumerate<I, smallvec::IntoIter<[T; CAP]>>
     where
         I: Idx,
     {
@@ -234,9 +223,7 @@ impl<I, T, const CAP: usize> IntoIterator for IndexSmallVec<I, T, CAP> {
     }
 }
 
-impl<'a, I, T, const CAP: usize> IntoIterator
-    for &'a IndexSmallVec<I, T, CAP>
-{
+impl<'a, I, T, const CAP: usize> IntoIterator for &'a IndexSmallVec<I, T, CAP> {
     type Item = &'a T;
 
     type IntoIter = std::slice::Iter<'a, T>;
@@ -246,9 +233,7 @@ impl<'a, I, T, const CAP: usize> IntoIterator
     }
 }
 
-impl<'a, I, T, const CAP: usize> IntoIterator
-    for &'a mut IndexSmallVec<I, T, CAP>
-{
+impl<'a, I, T, const CAP: usize> IntoIterator for &'a mut IndexSmallVec<I, T, CAP> {
     type Item = &'a mut T;
 
     type IntoIter = std::slice::IterMut<'a, T>;
@@ -264,8 +249,8 @@ impl<I, T, const CAP: usize> FromIterator<T> for IndexSmallVec<I, T, CAP> {
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize, const N: usize>
-    PartialEq<IndexSmallVec<I, T, CAP>> for [T; N]
+impl<I, T: PartialEq, const CAP: usize, const N: usize> PartialEq<IndexSmallVec<I, T, CAP>>
+    for [T; N]
 {
     fn eq(&self, other: &IndexSmallVec<I, T, CAP>) -> bool {
         self.as_slice() == other.as_slice()
@@ -280,33 +265,25 @@ impl<I, T: PartialEq, const CAP: usize, const N: usize> PartialEq<[T; N]>
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSlice<I, T>>
-    for IndexSmallVec<I, T, CAP>
-{
+impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSlice<I, T>> for IndexSmallVec<I, T, CAP> {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSmallVec<I, T, CAP>>
-    for IndexSlice<I, T>
-{
+impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSmallVec<I, T, CAP>> for IndexSlice<I, T> {
     fn eq(&self, other: &IndexSmallVec<I, T, CAP>) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSmallVec<I, T, CAP>>
-    for [T]
-{
+impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSmallVec<I, T, CAP>> for [T] {
     fn eq(&self, other: &IndexSmallVec<I, T, CAP>) -> bool {
         self == other.as_slice()
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize> PartialEq<[T]>
-    for IndexSmallVec<I, T, CAP>
-{
+impl<I, T: PartialEq, const CAP: usize> PartialEq<[T]> for IndexSmallVec<I, T, CAP> {
     fn eq(&self, other: &[T]) -> bool {
         self.as_slice() == other
     }

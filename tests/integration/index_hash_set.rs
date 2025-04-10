@@ -1,7 +1,5 @@
 use crate::integration::idx_manual::{EnumIdxManual2, IdxManual};
-use indexland::{
-    identity_hasher::IdentityHasher, index_hash_set, IndexHashSet,
-};
+use indexland::{identity_hasher::IdentityHasher, index_hash_set, IndexHashSet};
 
 #[test]
 fn macro_works() {
@@ -24,8 +22,7 @@ fn macro_works_with_explicit_indices() {
 
 #[test]
 fn empty_map_works() {
-    let ihs: IndexHashSet<u32, &'static str, IdentityHasher> =
-        index_hash_set![];
+    let ihs: IndexHashSet<u32, &'static str, IdentityHasher> = index_hash_set![];
     assert_eq!(ihs.len(), 0);
 }
 

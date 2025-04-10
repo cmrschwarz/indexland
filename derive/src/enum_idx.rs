@@ -6,15 +6,12 @@ use crate::{
     attrs::{Attrs, BoundsChecksMode},
     derive_context::DeriveContext,
     shared_derives::{
-        derive_add, derive_add_assign, derive_add_assign_usize,
-        derive_add_usize, derive_clone, derive_copy, derive_default,
-        derive_div, derive_div_assign, derive_div_assign_usize,
-        derive_div_usize, derive_eq, derive_from_self_for_usize,
-        derive_from_usize, derive_mul, derive_mul_assign,
-        derive_mul_assign_usize, derive_mul_usize, derive_ord,
-        derive_partial_ord, derive_rem, derive_rem_assign,
-        derive_rem_assign_usize, derive_rem_usize, derive_sub,
-        derive_sub_assign, derive_sub_assign_usize, derive_sub_usize,
+        derive_add, derive_add_assign, derive_add_assign_usize, derive_add_usize, derive_clone,
+        derive_copy, derive_default, derive_div, derive_div_assign, derive_div_assign_usize,
+        derive_div_usize, derive_eq, derive_from_self_for_usize, derive_from_usize, derive_mul,
+        derive_mul_assign, derive_mul_assign_usize, derive_mul_usize, derive_ord,
+        derive_partial_ord, derive_rem, derive_rem_assign, derive_rem_assign_usize,
+        derive_rem_usize, derive_sub, derive_sub_assign, derive_sub_assign_usize, derive_sub_usize,
     },
 };
 
@@ -30,8 +27,7 @@ fn enum_derive_idx(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
 
-    let (impl_generics, ty_generics, where_clause) =
-        ctx.base.generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = ctx.base.generics.split_for_impl();
 
     let idents = &ctx.custom.idents;
     let count = idents.len();
@@ -154,8 +150,7 @@ fn enum_derive_idx(ctx: &EnumCtx) -> TokenStream {
 fn enum_derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
     let indexland = &ctx.base.attrs.indexland_path;
     let name = &ctx.base.name;
-    let (impl_generics, ty_generics, where_clause) =
-        ctx.base.generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = ctx.base.generics.split_for_impl();
     let idents = &ctx.custom.idents;
     let count = idents.len();
     quote! {
@@ -250,38 +245,14 @@ fn fill_derivation_list(ctx: &mut EnumCtx) {
     ctx.add_deriv_custom(true, "PartialEq", enum_derive_partial_eq);
     ctx.add_deriv_shared(true, "Eq", derive_eq);
     ctx.add_deriv_shared(true, "From<usize>", derive_from_usize);
-    ctx.add_deriv_shared(
-        true,
-        "From<Self> for usize",
-        derive_from_self_for_usize,
-    );
+    ctx.add_deriv_shared(true, "From<Self> for usize", derive_from_self_for_usize);
     ctx.add_deriv_shared(usize_arith, "Add<usize>", derive_add_usize);
     ctx.add_deriv_shared(usize_arith, "Sub<usize>", derive_sub_usize);
-    ctx.add_deriv_shared(
-        usize_arith && full_arith,
-        "Mul<usize>",
-        derive_mul_usize,
-    );
-    ctx.add_deriv_shared(
-        usize_arith && full_arith,
-        "Div<usize>",
-        derive_div_usize,
-    );
-    ctx.add_deriv_shared(
-        usize_arith && full_arith,
-        "Rem<usize>",
-        derive_rem_usize,
-    );
-    ctx.add_deriv_shared(
-        usize_arith,
-        "AddAssign<usize>",
-        derive_add_assign_usize,
-    );
-    ctx.add_deriv_shared(
-        usize_arith,
-        "SubAssign<usize>",
-        derive_sub_assign_usize,
-    );
+    ctx.add_deriv_shared(usize_arith && full_arith, "Mul<usize>", derive_mul_usize);
+    ctx.add_deriv_shared(usize_arith && full_arith, "Div<usize>", derive_div_usize);
+    ctx.add_deriv_shared(usize_arith && full_arith, "Rem<usize>", derive_rem_usize);
+    ctx.add_deriv_shared(usize_arith, "AddAssign<usize>", derive_add_assign_usize);
+    ctx.add_deriv_shared(usize_arith, "SubAssign<usize>", derive_sub_assign_usize);
     ctx.add_deriv_shared(
         usize_arith && full_arith,
         "MulAssign<usize>",
@@ -299,9 +270,7 @@ fn fill_derivation_list(ctx: &mut EnumCtx) {
     );
 }
 
-pub fn derive_idx_enum_inner(
-    ast: DeriveInput,
-) -> Result<TokenStream, syn::Error> {
+pub fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
     let Data::Enum(enum_data) = &ast.data else {
         return Err(syn::Error::new(
             Span::call_site(),

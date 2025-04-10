@@ -26,10 +26,7 @@
 use core::{
     fmt::{Debug, Display},
     hash::Hash,
-    ops::{
-        Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub,
-        SubAssign,
-    },
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign},
 };
 
 use core::convert::TryFrom;
@@ -78,9 +75,7 @@ pub trait NonMaxPrimitive:
     type NonMaxInner: NonMaxInner<Self>;
 }
 
-pub trait NonMaxInner<P>:
-    Sized + Copy + PartialEq + Eq + PartialOrd + Ord + Hash
-{
+pub trait NonMaxInner<P>: Sized + Copy + PartialEq + Eq + PartialOrd + Ord + Hash {
     const ZERO: Self;
     const ONE: Self;
     const MIN: Self;
@@ -720,8 +715,6 @@ mod test {
                 }
             }
         }
-        assert_conv_works![
-            u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
-        ];
+        assert_conv_works![u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
     }
 }

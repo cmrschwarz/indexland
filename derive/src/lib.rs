@@ -58,9 +58,7 @@ use syn::{Data, DeriveInput};
 /// struct FooId(u32);
 /// ```
 #[proc_macro_derive(IdxNewtype, attributes(indexland))]
-pub fn derive_idx_newtype(
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn derive_idx_newtype(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_idx_newtype_inner(syn::parse_macro_input!(input as DeriveInput))
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
@@ -126,9 +124,7 @@ fn derive_idx_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
 /// };
 /// ```
 #[proc_macro_derive(IdxEnum, attributes(indexland))]
-pub fn derive_idx_enum(
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_idx_enum_inner(syn::parse_macro_input!(input as DeriveInput))
         .unwrap_or_else(|e| e.to_compile_error())
         .into()

@@ -1,8 +1,8 @@
 use std::ops::Add;
 
 use indexland::{
-    enum_index_array, index_array, EnumIndexArray, Idx, IdxEnum, IdxNewtype,
-    IndexArray, IndexArrayVec,
+    enum_index_array, index_array, EnumIndexArray, Idx, IdxEnum, IdxNewtype, IndexArray,
+    IndexArrayVec,
 };
 
 #[test]
@@ -87,8 +87,7 @@ fn derive_newtype_omit() {
         }
     }
 
-    let arr: IndexArray<FooId, FooId, 3> =
-        index_array![FooId::ONE, FooId::ONE, FooId::ONE];
+    let arr: IndexArray<FooId, FooId, 3> = index_array![FooId::ONE, FooId::ONE, FooId::ONE];
     assert_eq!(arr.into_iter().fold(FooId::ZERO, Add::add), FooId::new(3));
 }
 

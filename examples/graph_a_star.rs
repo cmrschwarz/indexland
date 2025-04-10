@@ -91,12 +91,7 @@ impl Graph {
         }
     }
 
-    pub fn add_node(
-        &mut self,
-        name: impl Into<String>,
-        x: i32,
-        y: i32,
-    ) -> NodeId {
+    pub fn add_node(&mut self, name: impl Into<String>, x: i32, y: i32) -> NodeId {
         // NOTE: `push_get_idx` is a convenience helper added by `indexland`.
         // There's quite a few more of these to help make working with typed
         // indices as pleasant as possible.
@@ -127,15 +122,10 @@ impl Graph {
         let from = self.nodes[from].pos;
         let to = self.nodes[to].pos;
         // cost underestimation by rounding down
-        (((to.x - from.x).pow(2) + (to.y - from.y).pow(2)) as f32).sqrt()
-            as i32
+        (((to.x - from.x).pow(2) + (to.y - from.y).pow(2)) as f32).sqrt() as i32
     }
 
-    pub fn find_path(
-        &self,
-        start: NodeId,
-        goal: NodeId,
-    ) -> Option<Vec<(NodeId, EdgeId)>> {
+    pub fn find_path(&self, start: NodeId, goal: NodeId) -> Option<Vec<(NodeId, EdgeId)>> {
         let mut open_set = BinaryHeap::new();
         // NOTE: again, `IndexVec`s make this code much more self explanatory
         let mut came_from: IndexVec<NodeId, Option<EdgeId>> = index_vec![];
@@ -173,8 +163,7 @@ impl Graph {
                     open_set.push(NodeInfo {
                         node: neighbor,
                         cost: tentative_g_score,
-                        distance_to_goal_estimate: self
-                            .heuristic(neighbor, goal),
+                        distance_to_goal_estimate: self.heuristic(neighbor, goal),
                     });
                 }
             }

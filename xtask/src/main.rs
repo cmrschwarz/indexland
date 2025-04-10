@@ -103,10 +103,7 @@ fn run_cargo_nightly<'a>(args: impl IntoIterator<Item = &'a str>) {
     );
 }
 
-fn run_cargo_with_features<'a>(
-    setup: impl IntoIterator<Item = &'a str>,
-    features: &str,
-) {
+fn run_cargo_with_features<'a>(setup: impl IntoIterator<Item = &'a str>, features: &str) {
     let mut args = setup.into_iter().collect::<Vec<_>>();
 
     args.push("--no-default-features");

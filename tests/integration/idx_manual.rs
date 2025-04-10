@@ -1,8 +1,6 @@
 use indexland::{Idx, IdxEnum, IndexArray};
 
-#[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash,
-)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IdxManual(pub usize);
 impl Idx for IdxManual {
     const ZERO: Self = IdxManual(0);
@@ -70,9 +68,7 @@ impl core::ops::RemAssign for IdxManual {
     }
 }
 
-#[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash,
-)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum EnumIdxManual2 {
     #[default]
     A,
@@ -159,9 +155,7 @@ impl core::ops::RemAssign for EnumIdxManual2 {
     }
 }
 
-#[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash,
-)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum EnumIdxManual3 {
     #[default]
     A,

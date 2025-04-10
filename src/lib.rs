@@ -73,9 +73,7 @@ pub use crate::{
 
 // structs
 #[doc(inline)]
-pub use crate::index_range::{
-    IndexRange, IndexRangeFrom, IndexRangeInclusive,
-};
+pub use crate::index_range::{IndexRange, IndexRangeFrom, IndexRangeInclusive};
 
 #[doc(inline)]
 pub use index_slice::IndexSlice;
@@ -167,8 +165,7 @@ pub mod __private {
         values: ManuallyDrop<[Option<T>; N]>,
     ) -> [T; N] {
         let mut values = ManuallyDrop::into_inner(values);
-        let mut data: [MaybeUninit<T>; N] =
-            [const { MaybeUninit::uninit() }; N];
+        let mut data: [MaybeUninit<T>; N] = [const { MaybeUninit::uninit() }; N];
         let mut i = 0;
         while i < N {
             data[indices[i]] = MaybeUninit::new(values[i].take().unwrap());
@@ -190,12 +187,10 @@ pub mod __private {
         I: Idx,
     {
         let mut values = ManuallyDrop::into_inner(values);
-        let mut data: [MaybeUninit<T>; N] =
-            [const { MaybeUninit::uninit() }; N];
+        let mut data: [MaybeUninit<T>; N] = [const { MaybeUninit::uninit() }; N];
         let mut i = 0;
         while i < N {
-            data[indices[i].into_usize()] =
-                MaybeUninit::new(values[i].take().unwrap());
+            data[indices[i].into_usize()] = MaybeUninit::new(values[i].take().unwrap());
             i += 1;
         }
         // SAFETY: we called `take` `N` times on an array with `N` elements
