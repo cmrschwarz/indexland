@@ -71,7 +71,7 @@ default-features = false
 
 [dev-dependencies]
 trybuild = "1.0.104"
-metamatch = "0.3"
+indexland = { workspace = true, features = ["derive"] }
 
 [features]
 default = ["std", "derive"]

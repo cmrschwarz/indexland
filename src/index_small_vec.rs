@@ -5,7 +5,7 @@ use std::{
 };
 
 use super::{idx::Idx, index_slice::IndexSlice};
-use crate::{index_enumerate::IndexEnumerate, IndexRange, IndexRangeBounds};
+use crate::{index_enumerate::IndexEnumerate, IndexArray, IndexRange, IndexRangeBounds};
 
 use smallvec::SmallVec;
 
@@ -204,6 +204,11 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     }
     pub fn as_mut_index_slice(&mut self) -> &IndexSlice<I, T> {
         IndexSlice::from_mut_slice(&mut self.data)
+    }
+
+    /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
+    pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
+        Self::from_iter(arr.into_inner())
     }
 }
 

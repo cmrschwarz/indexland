@@ -1,4 +1,4 @@
-use crate::{index_enumerate::IndexEnumerate, IndexRangeBounds};
+use crate::{index_enumerate::IndexEnumerate, IndexArray, IndexRangeBounds};
 
 use core::{
     borrow::{Borrow, BorrowMut},
@@ -34,24 +34,14 @@ macro_rules! index_vec {
     ($($value:expr),+ $(,)?) => {
         $crate::IndexVec::from([$($value),*])
     };
-    ($($key:expr => $value:expr),* $(,)?) => {{
-        use core::mem::MaybeUninit;
-        const LEN: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
-        let keys = [ $($key),* ];
+    ($($index:expr => $value:expr),* $(,)?) => {{
+        let indices = [ $($index),* ];
         let mut values = [ $($value),* ];
-        let mut data: [MaybeUninit<_>; LEN] = [
-            const { MaybeUninit::uninit() }; LEN
-        ];
-        let mut i = 0;
-        while i < LEN {
-            data[keys[i] as usize] = MaybeUninit::new(
-                values[i].take().unwrap()
-            );
-            i += 1;
-        }
-        // SAFETY: we called `take()` LEN times so all slots must be filled
-        let data = unsafe { $crate::__private::transpose_assume_uninit(data) };
-        $crate::IndexVec::from(data)
+        let data = $crate::__private::index_array_from_values_and_distinct_indices(
+            indices,
+            ::core::mem::ManuallyDrop::new(values)
+        );
+        $crate::IndexVec::from_index_array(data)
     }};
 }
 
@@ -191,6 +181,11 @@ impl<I, T> IndexVec<I, T> {
     pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
         IndexSlice::from_mut_slice(&mut self.data)
     }
+
+    /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
+    pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
+        Self::from_iter(arr.into_inner())
+    }
 }
 
 impl<I, T> AsMut<IndexSlice<I, T>> for IndexVec<I, T> {
@@ -251,6 +246,11 @@ impl<I, T> DerefMut for IndexVec<I, T> {
 
 impl<I, T, const N: usize> From<[T; N]> for IndexVec<I, T> {
     fn from(value: [T; N]) -> Self {
+        IndexVec::from_iter(value)
+    }
+}
+impl<I, T, const N: usize> From<IndexArray<I, T, N>> for IndexVec<I, T> {
+    fn from(value: IndexArray<I, T, N>) -> Self {
         IndexVec::from_iter(value)
     }
 }

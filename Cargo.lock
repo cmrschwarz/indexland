@@ -136,9 +136,9 @@ name = "indexland"
 version = "0.2.1"
 dependencies = [
  "arrayvec",
+ "indexland",
  "indexland_derive",
  "indexmap",
- "metamatch",
  "serde",
  "smallvec",
  "trybuild",
@@ -149,6 +149,7 @@ name = "indexland_derive"
 version = "0.2.1"
 dependencies = [
  "indexland",
+ "metamatch",
  "proc-macro2",
  "quote",
  "syn",

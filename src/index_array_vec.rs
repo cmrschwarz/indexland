@@ -167,6 +167,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
         self.data
     }
 
+    /// unlike `From<[T; N]>::from`, this is a `const fn`
     pub const fn from_array<const N: usize>(arr: [T; N]) -> Self {
         pub struct AssertArrayBounds<const N: usize, const CAP: usize>;
         impl<const N: usize, const CAP: usize> AssertArrayBounds<N, CAP> {
@@ -188,9 +189,12 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
             _phantom: PhantomData,
         }
     }
+
+    /// unlike `From<IndexArray<I, T, N>::from`, this is a `const fn`
     pub const fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
         Self::from_array(arr.into_inner())
     }
+
     pub fn try_extend_from_slice(&mut self, slice: &[T]) -> Result<(), arrayvec::CapacityError>
     where
         T: Clone,

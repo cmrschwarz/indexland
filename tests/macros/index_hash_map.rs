@@ -1,6 +1,4 @@
-use indexland::{identity_hasher::IdentityHasher, index_hash_map, IndexHashMap};
-
-use crate::integration::idx_manual::IdxManual;
+use indexland::{identity_hasher::IdentityHasher, index_hash_map, Idx, IndexHashMap};
 
 #[test]
 fn macro_works() {
@@ -22,25 +20,28 @@ fn empty_map_works() {
 #[test]
 #[cfg(feature = "std")]
 fn hasher_deduction_works_for_std() {
-    let ihm: IndexHashMap<IdxManual, &str, i32> = index_hash_map![];
+    let ihm: IndexHashMap<u32, &str, i32> = index_hash_map![];
     assert!(ihm.is_empty());
 }
 
 #[test]
 #[cfg(feature = "std")]
 fn deduction_works_for_std() {
-    let ihm: IndexHashMap<IdxManual, _, _> = index_hash_map![
+    let ihm: IndexHashMap<u32, _, _> = index_hash_map![
         "foo" => 42,
     ];
-    assert_eq!(*ihm.get_index(IdxManual(0)).unwrap().1, 42);
+    assert_eq!(*ihm.get_index(0).unwrap().1, 42);
     assert_eq!(ihm.len(), 1);
 }
 
 #[test]
 fn indexing_works() {
-    let av: IndexHashMap<IdxManual, IdxManual, IdxManual, IdentityHasher> = indexland::index_hash_map![
-        IdxManual(3) => IdxManual(42)
+    #[derive(Idx)]
+    struct Foo(usize);
+
+    let av: IndexHashMap<Foo, Foo, Foo, IdentityHasher> = indexland::index_hash_map![
+        Foo(3) => Foo(42)
     ];
 
-    assert_eq!(av[&IdxManual(3)], IdxManual(42));
+    assert_eq!(av[&Foo(3)], Foo(42));
 }

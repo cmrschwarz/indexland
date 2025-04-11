@@ -1,6 +1,6 @@
-// the submodule is used to combine all integration tests into a single binary
+#![warn(clippy::pedantic)]
 
-mod integration;
+mod macros;
 
 #[test]
 fn ui() {

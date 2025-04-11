@@ -42,6 +42,7 @@ use std::hash::RandomState;
 /// ```
 #[macro_export]
 macro_rules! index_hash_set {
+    () => { $crate::IndexHashSet::new()};
     ($($value: expr),* $(,)?) => {{
         const CAP: usize = <[()]>::len(&[$({ stringify!($value); }),*]);
         let mut set = $crate::IndexHashSet::with_capacity(CAP);
@@ -52,7 +53,7 @@ macro_rules! index_hash_set {
     }};
     ($($index:expr => $value:expr),* $(,)?) => {{
         let indices = [ $($index),* ];
-        let mut values = [ $($value),* ];
+        let values = [ $($value),* ];
         let data = $crate::__private::index_array_from_values_and_distinct_indices(
             indices,
             ::core::mem::ManuallyDrop::new(values)
@@ -880,7 +881,7 @@ impl<I, T, S> IndexHashSet<I, T, S> {
         IndexRange::new(I::ZERO..self.len_idx())
     }
 
-    /// This often has better type inference than using [`From::from`].
+    /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self
     where
         S: BuildHasher + Default,

@@ -1,11 +1,9 @@
-pub mod idx_manual;
+//! We use integration tests for our macros to test calls coming from another crate.
+//! That way only public definitions are accessible in the same way that it would be for a user.
 
 pub mod index_array;
 
-mod declarative_macro;
-
-#[cfg(feature = "derive")]
-mod derive_macro;
+mod idx_newtype;
 
 #[cfg(feature = "alloc")]
 pub mod index_vec;

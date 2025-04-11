@@ -347,3 +347,184 @@ macro_rules! idx_newtype {
         }
     )*};
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{enum_index_array, index_array, EnumIndexArray, IndexArray};
+
+    use super::{Idx, IdxEnum};
+
+    #[test]
+    fn idx_manual() {
+        #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        pub struct IdxManual(usize);
+        impl Idx for IdxManual {
+            const ZERO: Self = IdxManual(0);
+            const ONE: Self = IdxManual(1);
+            const MAX: Self = IdxManual(usize::MAX);
+            fn from_usize(v: usize) -> Self {
+                IdxManual(v)
+            }
+            fn from_usize_unchecked(v: usize) -> Self {
+                IdxManual(v)
+            }
+            fn into_usize(self) -> usize {
+                self.0
+            }
+            fn into_usize_unchecked(self) -> usize {
+                self.0
+            }
+            fn wrapping_add(self, other: Self) -> Self {
+                IdxManual(self.0.wrapping_add(other.0))
+            }
+            fn wrapping_sub(self, other: Self) -> Self {
+                IdxManual(self.0.wrapping_sub(other.0))
+            }
+            fn saturating_add(self, other: Self) -> Self {
+                IdxManual(self.0.saturating_add(other.0))
+            }
+            fn saturating_sub(self, other: Self) -> Self {
+                IdxManual(self.0.saturating_sub(other.0))
+            }
+        }
+        impl core::ops::Add for IdxManual {
+            type Output = Self;
+
+            fn add(self, rhs: Self) -> Self::Output {
+                Idx::from_usize(self.into_usize() + rhs.into_usize())
+            }
+        }
+        impl core::ops::Sub for IdxManual {
+            type Output = Self;
+
+            fn sub(self, rhs: Self) -> Self::Output {
+                Idx::from_usize(self.into_usize() - rhs.into_usize())
+            }
+        }
+        impl core::ops::Rem for IdxManual {
+            type Output = Self;
+
+            fn rem(self, rhs: Self) -> Self::Output {
+                Idx::from_usize(self.into_usize() % rhs.into_usize())
+            }
+        }
+        impl core::ops::AddAssign for IdxManual {
+            fn add_assign(&mut self, rhs: Self) {
+                *self = *self + rhs;
+            }
+        }
+        impl core::ops::SubAssign for IdxManual {
+            fn sub_assign(&mut self, rhs: Self) {
+                *self = *self - rhs;
+            }
+        }
+        impl core::ops::RemAssign for IdxManual {
+            fn rem_assign(&mut self, rhs: Self) {
+                *self = *self % rhs;
+            }
+        }
+
+        let x: IndexArray<IdxManual, i32, 3> = index_array![1, 2, 3];
+        assert_eq!(x[IdxManual(1)], 2);
+    }
+
+    #[test]
+    fn enum_idx_manual() {
+        #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        pub enum EnumIdxManual {
+            #[default]
+            A,
+            B,
+            C,
+        }
+        impl IdxEnum for EnumIdxManual {
+            const COUNT: usize = 3;
+            const VARIANTS: &'static [Self] = &[Self::A, Self::B, Self::B];
+            type EnumIndexArray<T> = IndexArray<Self, T, { Self::COUNT }>;
+        }
+        impl Idx for EnumIdxManual {
+            const ZERO: Self = Self::A;
+            const ONE: Self = Self::B;
+            const MAX: Self = Self::C;
+            fn from_usize(v: usize) -> Self {
+                match v {
+                    0 => Self::A,
+                    1 => Self::B,
+                    2 => Self::C,
+                    _ => panic!(),
+                }
+            }
+            fn from_usize_unchecked(v: usize) -> Self {
+                match v {
+                    1 => Self::B,
+                    2 => Self::C,
+                    _ => Self::A,
+                }
+            }
+            fn into_usize(self) -> usize {
+                self as usize
+            }
+            fn into_usize_unchecked(self) -> usize {
+                self as usize
+            }
+            fn wrapping_add(self, _other: Self) -> Self {
+                unimplemented!()
+            }
+            fn wrapping_sub(self, _other: Self) -> Self {
+                unimplemented!()
+            }
+            fn saturating_add(self, _other: Self) -> Self {
+                unimplemented!()
+            }
+            fn saturating_sub(self, _other: Self) -> Self {
+                unimplemented!()
+            }
+        }
+        impl core::ops::Add for EnumIdxManual {
+            type Output = Self;
+
+            fn add(self, rhs: Self) -> Self::Output {
+                Idx::from_usize(self.into_usize() + rhs.into_usize())
+            }
+        }
+        impl core::ops::Sub for EnumIdxManual {
+            type Output = Self;
+
+            fn sub(self, rhs: Self) -> Self::Output {
+                Idx::from_usize(self.into_usize() - rhs.into_usize())
+            }
+        }
+        impl core::ops::Rem for EnumIdxManual {
+            type Output = Self;
+
+            fn rem(self, rhs: Self) -> Self::Output {
+                Idx::from_usize(self.into_usize() % rhs.into_usize())
+            }
+        }
+        impl core::ops::AddAssign for EnumIdxManual {
+            fn add_assign(&mut self, rhs: Self) {
+                *self = *self + rhs;
+            }
+        }
+        impl core::ops::SubAssign for EnumIdxManual {
+            fn sub_assign(&mut self, rhs: Self) {
+                *self = *self - rhs;
+            }
+        }
+        impl core::ops::RemAssign for EnumIdxManual {
+            fn rem_assign(&mut self, rhs: Self) {
+                *self = *self % rhs;
+            }
+        }
+
+        let x: IndexArray<EnumIdxManual, i32, 3> = index_array![1, 2, 3];
+        assert_eq!(x[EnumIdxManual::C], 3);
+
+        let x: EnumIndexArray<EnumIdxManual, i32> = enum_index_array![1, 2, 3];
+        assert_eq!(x[EnumIdxManual::C], 3);
+
+        let x: EnumIndexArray<EnumIdxManual, i32> =
+            enum_index_array![EnumIdxManual::A => 1,EnumIdxManual::B =>  2, EnumIdxManual::C => 3];
+        assert_eq!(x[EnumIdxManual::A], 1);
+    }
+}

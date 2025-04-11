@@ -28,6 +28,9 @@ use super::{idx::Idx, index_range::IndexRange};
 /// ```
 #[macro_export]
 macro_rules! index_hash_map {
+    () => {
+        $crate::IndexHashMap::new()
+    };
     ($($key:expr => $value:expr),* $(,)?) => {{
         const CAP: usize = <[()]>::len(&[$({ stringify!($key); }),*]);
         let mut map = $crate::IndexHashMap::with_capacity(CAP);

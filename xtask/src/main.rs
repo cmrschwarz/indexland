@@ -33,33 +33,29 @@ static FEATURE_SETS: &[FeatureSet] = &[
         features: &[],
     },
     FeatureSet {
-        name: "no std, no alloc, derive",
-        features: &["derive"],
+        name: "no std, no alloc, nonmax",
+        features: &["nonmax"],
     },
     FeatureSet {
-        name: "no std, no alloc, nonmax, derive",
-        features: &["nonmax", "derive"],
+        name: "no std, no alloc, arrayvec",
+        features: &["arrayvec"],
     },
     FeatureSet {
-        name: "no std, no alloc, arrayvec, derive",
-        features: &["arrayvec", "derive"],
-    },
-    FeatureSet {
-        name: "no std, alloc, derive",
-        features: &["alloc", "derive"],
+        name: "no std, alloc",
+        features: &["alloc"],
     },
     // smallvec requires std so it's not in here
     FeatureSet {
-        name: "no std, alloc, indexmap, arrayvec, derive",
-        features: &["alloc", "indexmap", "arrayvec", "derive"],
+        name: "no std, alloc, indexmap, arrayvec",
+        features: &["alloc", "indexmap", "arrayvec"],
     },
     FeatureSet {
         name: "std",
         features: &["std"],
     },
     FeatureSet {
-        name: "std, nonmax, derive",
-        features: &["std", "nonmax", "derive"],
+        name: "std, nonmax",
+        features: &["std", "nonmax"],
     },
     FeatureSet {
         name: "std, indexmap, arrayvec, smallvec",

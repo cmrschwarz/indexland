@@ -270,6 +270,11 @@ impl<I, T> IndexVecDeque<I, T> {
     pub fn iter_mut(&mut self) -> alloc::collections::vec_deque::IterMut<T> {
         self.data.iter_mut()
     }
+
+    /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
+    pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
+        Self::from_iter(arr.into_inner())
+    }
 }
 
 impl<I, T> Extend<T> for IndexVecDeque<I, T> {

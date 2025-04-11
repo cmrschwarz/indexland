@@ -1,6 +1,6 @@
-use indexland::{index_array_vec, IndexArrayVec};
+use indexland::{Idx, IndexArrayVec};
 
-use crate::integration::idx_manual::IdxManual;
+use indexland::index_array_vec;
 
 #[test]
 fn macro_works() {
@@ -36,7 +36,10 @@ fn shorter_array_works() {
 
 #[test]
 fn indexing_works() {
-    let av: IndexArrayVec<IdxManual, _, 5> = indexland::index_array_vec![0, 1, 2, 3, 4];
+    #[derive(Idx)]
+    struct Foo(u32);
 
-    assert_eq!(av[IdxManual(2)], 2);
+    let av: IndexArrayVec<Foo, _, 5> = indexland::index_array_vec![0, 1, 2, 3, 4];
+
+    assert_eq!(av[Foo(2)], 2);
 }

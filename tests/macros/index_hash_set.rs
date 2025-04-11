@@ -1,6 +1,4 @@
-use crate::integration::idx_manual::{EnumIdxManual2, IdxManual};
-use indexland::{identity_hasher::IdentityHasher, index_hash_set, IndexHashSet};
-
+use indexland::{identity_hasher::IdentityHasher, index_hash_set, Idx, IndexHashSet};
 #[test]
 fn macro_works() {
     let ihs: IndexHashSet<u32, _, IdentityHasher> = index_hash_set![42, 17];
@@ -11,13 +9,19 @@ fn macro_works() {
 
 #[test]
 fn macro_works_with_explicit_indices() {
+    #[derive(Idx)]
+    enum Foo {
+        A,
+        B,
+    }
+
     let ihs: IndexHashSet<_, _, IdentityHasher> = index_hash_set![
-        1 => EnumIdxManual2::B,
-        0 => EnumIdxManual2::A
+        1 => Foo::B,
+        0 => Foo::A
     ];
     assert_eq!(ihs.len(), 2);
-    assert_eq!(ihs.get_index_of(&EnumIdxManual2::B), Some(1));
-    assert_eq!(ihs.as_slice(), &[EnumIdxManual2::A, EnumIdxManual2::B]);
+    assert_eq!(ihs.get_index_of(&Foo::B), Some(1));
+    assert_eq!(ihs.as_slice(), &[Foo::A, Foo::B]);
 }
 
 #[test]
@@ -29,32 +33,43 @@ fn empty_map_works() {
 #[test]
 #[cfg(feature = "std")]
 fn hasher_deduction_works_for_std() {
-    let ihs: IndexHashSet<IdxManual, &str> = index_hash_set![];
+    #[derive(Idx)]
+    struct Foo(usize);
+
+    let ihs: IndexHashSet<Foo, &str> = index_hash_set![];
     assert!(ihs.is_empty());
 }
 
 #[test]
 #[cfg(feature = "std")]
 fn deduction_works_for_std() {
-    let ihs: IndexHashSet<IdxManual, _> = index_hash_set![42,];
-    assert_eq!(*ihs.get_index(IdxManual(0)).unwrap(), 42);
+    #[derive(Idx)]
+    struct Foo(usize);
+
+    let ihs: IndexHashSet<Foo, _> = index_hash_set![42,];
+    assert_eq!(*ihs.get_index(Foo(0)).unwrap(), 42);
     assert_eq!(ihs.len(), 1);
 }
 
 #[test]
 #[cfg(feature = "std")]
 fn deduction_works_for_std_with_indices() {
+    #[derive(Idx)]
+    struct Foo(usize);
+
     let ihs: IndexHashSet<_, _> = index_hash_set![
-        IdxManual(0) => 42
+        Foo(0) => 42
     ];
-    assert_eq!(ihs[IdxManual(0)], 42);
+    assert_eq!(ihs[Foo(0)], 42);
     assert_eq!(ihs.len(), 1);
 }
 
 #[test]
 fn indexing_works() {
-    let av: IndexHashSet<IdxManual, IdxManual, IdentityHasher> =
-        indexland::index_hash_set![IdxManual(42)];
+    #[derive(Idx)]
+    struct Foo(usize);
 
-    assert_eq!(av[IdxManual(0)], IdxManual(42));
+    let av: IndexHashSet<Foo, Foo, IdentityHasher> = indexland::index_hash_set![Foo(42)];
+
+    assert_eq!(av[Foo(0)], Foo(42));
 }
