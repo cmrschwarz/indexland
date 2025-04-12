@@ -1,4 +1,4 @@
-use core::ops::{Index, IndexMut, Range, RangeFull};
+use core::ops::{Index, IndexMut, RangeFull};
 
 use crate::{
     idx::IdxCompatible,
@@ -101,19 +101,19 @@ unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<I, T> for core::ops:
 // messing up their index space. This is probably more confusing and
 // inconsistent than useful though. Probably.
 macro_rules! index_slice_partial_range_impl {
-    ($($range: path),*) => {$(
+    ($($range: path),* $(,)?) => {$(
         unsafe impl<I: Idx, T, C: IdxCompatible<I>>
             IndexSliceIndex<I, T>
         for $range {
             type Output = IndexSlice<I, T>;
-            #[inline]
+            #[inline(always)]
             fn get(self, slice: &IndexSlice<I, T>) -> Option<&IndexSlice<I, T>> {
                 let range = IndexRangeBounds::<I, C>::canonicalize(self, slice.len());
                 Some(IndexSlice::from_slice(
                     slice.as_slice().get(range)?,
                 ))
             }
-            #[inline]
+            #[inline(always)]
             fn get_mut(
                 self,
                 slice: &mut IndexSlice<I, T>,
@@ -123,7 +123,7 @@ macro_rules! index_slice_partial_range_impl {
                     slice.as_mut_slice().get_mut(range)?,
                 ))
             }
-            #[inline]
+            #[inline(always)]
             unsafe fn get_unchecked(
                 self,
                 slice: *const IndexSlice<I, T>,
@@ -137,7 +137,7 @@ macro_rules! index_slice_partial_range_impl {
                     ) as _
                 }
             }
-            #[inline]
+            #[inline(always)]
             unsafe fn get_unchecked_mut(
                 self,
                 slice: *mut IndexSlice<I, T>,
@@ -156,7 +156,7 @@ macro_rules! index_slice_partial_range_impl {
                 let range = IndexRangeBounds::<I, C>::canonicalize(self, slice.len());
                 IndexSlice::from_slice(&slice.as_slice()[range])
             }
-            #[inline]
+            #[inline(always)]
             fn index_mut(self, slice: &mut IndexSlice<I, T>) -> &mut IndexSlice<I, T> {
                 let range = IndexRangeBounds::<I, C>::canonicalize(self, slice.len());
                 IndexSlice::from_mut_slice(&mut slice.as_mut_slice()[range])
@@ -170,8 +170,9 @@ index_slice_partial_range_impl![
     core::ops::RangeFrom<C>,
     core::ops::RangeTo<C>,
     core::ops::RangeToInclusive<C>,
+    IndexRange<C>,
+    IndexRangeFrom<C>,
     IndexRangeInclusive<C>,
-    IndexRangeFrom<C>
 ];
 
 unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for RangeFull {
@@ -199,33 +200,5 @@ unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for RangeFull {
     #[inline]
     fn index_mut(self, slice: &mut IndexSlice<I, T>) -> &mut IndexSlice<I, T> {
         slice
-    }
-}
-
-unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for IndexRange<I> {
-    type Output = IndexSlice<I, T>;
-    #[inline]
-    fn get(self, slice: &IndexSlice<I, T>) -> Option<&IndexSlice<I, T>> {
-        Range::from(self).get(slice)
-    }
-    #[inline]
-    fn get_mut(self, slice: &mut IndexSlice<I, T>) -> Option<&mut IndexSlice<I, T>> {
-        Range::from(self).get_mut(slice)
-    }
-    #[inline]
-    unsafe fn get_unchecked(self, slice: *const IndexSlice<I, T>) -> *const IndexSlice<I, T> {
-        unsafe { Range::from(self).get_unchecked(slice) }
-    }
-    #[inline]
-    unsafe fn get_unchecked_mut(self, slice: *mut IndexSlice<I, T>) -> *mut IndexSlice<I, T> {
-        unsafe { Range::from(self).get_unchecked_mut(slice) }
-    }
-    #[inline]
-    fn index(self, slice: &IndexSlice<I, T>) -> &IndexSlice<I, T> {
-        Range::from(self).index(slice)
-    }
-    #[inline]
-    fn index_mut(self, slice: &mut IndexSlice<I, T>) -> &mut IndexSlice<I, T> {
-        Range::from(self).index_mut(slice)
     }
 }

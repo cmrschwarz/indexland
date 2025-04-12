@@ -73,6 +73,7 @@ pub trait IdxCompatible<I>: Idx {
 }
 
 impl<I: Idx> IdxCompatible<I> for I {
+    #[inline(always)]
     fn idx_cast(self) -> I {
         self
     }
