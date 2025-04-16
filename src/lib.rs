@@ -3,9 +3,12 @@
     doc = include_str!("../README.md")
 )]
 #![warn(clippy::pedantic)]
+#![warn(unused_results)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
+#![allow(clippy::inline_always)]
 #![allow(clippy::must_use_candidate)]
+#![allow(clippy::type_complexity)]
 #![allow(clippy::return_self_not_must_use)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 // nostd

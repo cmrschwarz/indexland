@@ -1,17 +1,17 @@
 use crate::Idx;
 
 pub struct IndexEnumerate<I, BaseIter> {
-    pos: I,
+    next_idx: I,
     base_iter: BaseIter,
 }
 
 impl<I, BaseIter: Iterator> IndexEnumerate<I, BaseIter> {
     pub fn new<IntoBaseIter: IntoIterator<IntoIter = BaseIter>>(
-        pos: I,
+        next_idx: I,
         base_iter: IntoBaseIter,
     ) -> Self {
         Self {
-            pos,
+            next_idx,
             base_iter: base_iter.into_iter(),
         }
     }
@@ -25,8 +25,8 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         let value = self.base_iter.next()?;
-        let idx = self.pos;
-        self.pos = I::from_usize(self.pos.into_usize() + 1);
+        let idx = self.next_idx;
+        self.next_idx = I::from_usize(self.next_idx.into_usize() + 1);
         Some((idx, value))
     }
 
@@ -44,8 +44,8 @@ where
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
         match self.base_iter.nth(n) {
             Some(v) => {
-                let pos = self.pos;
-                self.pos = self.pos + I::from_usize(n + 1);
+                let pos = self.next_idx;
+                self.next_idx = self.next_idx + I::from_usize(n + 1);
                 Some((pos + I::from_usize(n), v))
             }
             None => None,

@@ -1,9 +1,10 @@
 use super::Idx;
-use crate::{index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex};
+use crate::{index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex, IndexArray};
 
 use core::{
     fmt::Debug,
     marker::PhantomData,
+    num::NonZero,
     ops::{Index, IndexMut, Range, RangeInclusive},
 };
 
@@ -40,13 +41,123 @@ pub unsafe trait GetDisjointMutIndex<I>: Clone {
     fn is_overlapping(&self, other: &Self) -> bool;
 }
 
-impl<I, T> IndexSlice<I, T> {
+#[derive(Debug)]
+#[must_use = "iterators are lazy and do nothing unless consumed"]
+pub struct Windows<'a, I, T> {
+    v: &'a [T],
+    size: NonZero<usize>,
+    _phantom: PhantomData<&'a IndexSlice<I, T>>,
+}
+
+impl<I, T> Clone for Windows<'_, I, T> {
+    fn clone(&self) -> Self {
+        Self {
+            v: self.v,
+            size: self.size,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<'a, I, T: 'a> Windows<'a, I, T> {
     #[inline]
-    pub fn from_slice(s: &[T]) -> &Self {
+    pub fn new(slice: &'a IndexSlice<I, T>, size: NonZero<usize>) -> Self {
+        Self {
+            v: slice.as_slice(),
+            size,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<'a, I, T> Iterator for Windows<'a, I, T> {
+    type Item = &'a IndexSlice<I, T>;
+
+    #[inline]
+    fn next(&mut self) -> Option<&'a IndexSlice<I, T>> {
+        if self.size.get() > self.v.len() {
+            None
+        } else {
+            let ret = Some(IndexSlice::from_slice(&self.v[..self.size.get()]));
+            self.v = &self.v[1..];
+            ret
+        }
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        if self.size.get() > self.v.len() {
+            (0, Some(0))
+        } else {
+            let size = self.v.len() - self.size.get() + 1;
+            (size, Some(size))
+        }
+    }
+
+    #[inline]
+    fn count(self) -> usize {
+        self.len()
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        let (end, overflow) = self.size.get().overflowing_add(n);
+        if end > self.v.len() || overflow {
+            self.v = &[];
+            None
+        } else {
+            let nth = &self.v[n..end];
+            self.v = &self.v[n + 1..];
+            Some(IndexSlice::from_slice(nth))
+        }
+    }
+
+    #[inline]
+    fn last(self) -> Option<Self::Item> {
+        if self.size.get() > self.v.len() {
+            None
+        } else {
+            let start = self.v.len() - self.size.get();
+            Some(IndexSlice::from_slice(&self.v[start..]))
+        }
+    }
+}
+
+impl<'a, I, T> DoubleEndedIterator for Windows<'a, I, T> {
+    #[inline]
+    fn next_back(&mut self) -> Option<&'a IndexSlice<I, T>> {
+        if self.size.get() > self.v.len() {
+            None
+        } else {
+            let ret = Some(IndexSlice::from_slice(
+                &self.v[self.v.len() - self.size.get()..],
+            ));
+            self.v = &self.v[..self.v.len() - 1];
+            ret
+        }
+    }
+
+    #[inline]
+    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+        let (end, overflow) = self.v.len().overflowing_sub(n);
+        if end < self.size.get() || overflow {
+            self.v = &[];
+            None
+        } else {
+            let ret = IndexSlice::from_slice(&self.v[end - self.size.get()..end]);
+            self.v = &self.v[..end - 1];
+            Some(ret)
+        }
+    }
+}
+
+impl<I, T> IndexSlice<I, T> {
+    #[inline(always)]
+    pub const fn from_slice(s: &[T]) -> &Self {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
-    #[inline]
-    pub fn from_mut_slice(s: &mut [T]) -> &mut Self {
+    #[inline(always)]
+    pub const fn from_mut_slice(s: &mut [T]) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[cfg(feature = "alloc")]
@@ -56,6 +167,221 @@ impl<I, T> IndexSlice<I, T> {
     #[cfg(feature = "alloc")]
     pub fn into_boxed_slice(self: Box<Self>) -> Box<[T]> {
         unsafe { Box::from_raw(Box::into_raw(self) as *mut [T]) }
+    }
+    #[inline(always)]
+    pub const fn as_slice(&self) -> &[T] {
+        &self.data
+    }
+    #[inline(always)]
+    pub const fn as_mut_slice(&mut self) -> &mut [T] {
+        &mut self.data
+    }
+
+    #[inline]
+    pub const fn len(&self) -> usize {
+        self.data.len()
+    }
+    #[inline]
+    pub const fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+    pub fn len_idx(&self) -> I
+    where
+        I: Idx,
+    {
+        I::from_usize(self.data.len())
+    }
+    pub fn last_idx(&self) -> Option<I>
+    where
+        I: Idx,
+    {
+        self.len().checked_sub(1).map(I::from_usize)
+    }
+    pub const fn first(&self) -> Option<&T> {
+        self.data.first()
+    }
+    pub const fn first_mut(&mut self) -> Option<&mut T> {
+        self.data.first_mut()
+    }
+    pub const fn split_first(&self) -> Option<(&T, &IndexSlice<I, T>)> {
+        match self.data.split_first() {
+            Some((first, rest)) => Some((first, IndexSlice::from_slice(rest))),
+            None => None,
+        }
+    }
+    pub const fn split_first_mut(&mut self) -> Option<(&T, &mut IndexSlice<I, T>)> {
+        match self.data.split_first_mut() {
+            Some((first, rest)) => Some((first, IndexSlice::from_mut_slice(rest))),
+            None => None,
+        }
+    }
+    pub const fn split_last(&self) -> Option<(&T, &IndexSlice<I, T>)> {
+        match self.data.split_last() {
+            Some((first, rest)) => Some((first, IndexSlice::from_slice(rest))),
+            None => None,
+        }
+    }
+    pub const fn split_last_mut(&mut self) -> Option<(&T, &mut IndexSlice<I, T>)> {
+        match self.data.split_last_mut() {
+            Some((first, rest)) => Some((first, IndexSlice::from_mut_slice(rest))),
+            None => None,
+        }
+    }
+    pub const fn last(&self) -> Option<&T> {
+        self.data.last()
+    }
+    pub const fn last_mut(&mut self) -> Option<&mut T> {
+        self.data.last_mut()
+    }
+    pub const fn first_chunk<const N: usize>(&self) -> Option<&IndexArray<I, T, N>> {
+        match self.data.first_chunk() {
+            Some(arr) => Some(IndexArray::from_array_ref(arr)),
+            None => None,
+        }
+    }
+    pub const fn first_chunk_mut<const N: usize>(&mut self) -> Option<&IndexArray<I, T, N>> {
+        match self.data.first_chunk_mut() {
+            Some(arr) => Some(IndexArray::from_array_ref_mut(arr)),
+            None => None,
+        }
+    }
+    pub const fn split_first_chunk<const N: usize>(
+        &self,
+    ) -> Option<(&IndexArray<I, T, N>, &IndexSlice<I, T>)> {
+        match self.data.split_first_chunk() {
+            Some((arr, slice)) => Some((
+                IndexArray::from_array_ref(arr),
+                IndexSlice::from_slice(slice),
+            )),
+            None => None,
+        }
+    }
+    pub const fn split_first_chunk_mut<const N: usize>(
+        &mut self,
+    ) -> Option<(&mut IndexArray<I, T, N>, &mut IndexSlice<I, T>)> {
+        match self.data.split_first_chunk_mut() {
+            Some((arr, slice)) => Some((
+                IndexArray::from_array_ref_mut(arr),
+                IndexSlice::from_mut_slice(slice),
+            )),
+            None => None,
+        }
+    }
+    pub const fn split_last_chunk<const N: usize>(
+        &self,
+    ) -> Option<(&IndexSlice<I, T>, &IndexArray<I, T, N>)> {
+        match self.data.split_last_chunk() {
+            Some((slice, arr)) => Some((
+                IndexSlice::from_slice(slice),
+                IndexArray::from_array_ref(arr),
+            )),
+            None => None,
+        }
+    }
+    pub const fn split_last_chunk_mut<const N: usize>(
+        &mut self,
+    ) -> Option<(&mut IndexSlice<I, T>, &mut IndexArray<I, T, N>)> {
+        match self.data.split_last_chunk_mut() {
+            Some((slice, arr)) => Some((
+                IndexSlice::from_mut_slice(slice),
+                IndexArray::from_array_ref_mut(arr),
+            )),
+            None => None,
+        }
+    }
+    pub const fn last_chunk<const N: usize>(&self) -> Option<&IndexArray<I, T, N>> {
+        match self.data.last_chunk() {
+            Some(arr) => Some(IndexArray::from_array_ref(arr)),
+            None => None,
+        }
+    }
+    pub const fn last_chunk_mut<const N: usize>(&mut self) -> Option<&IndexArray<I, T, N>> {
+        match self.data.last_chunk_mut() {
+            Some(arr) => Some(IndexArray::from_array_ref_mut(arr)),
+            None => None,
+        }
+    }
+    pub fn get(&self, idx: I) -> Option<&T>
+    where
+        I: Idx,
+    {
+        self.data.get(idx.into_usize())
+    }
+    pub fn get_mut(&mut self, idx: I) -> Option<&mut T>
+    where
+        I: Idx,
+    {
+        self.data.get_mut(idx.into_usize())
+    }
+
+    /// # Safety
+    ///
+    /// Calling this method with an out-of-bounds index is undefined behavior,
+    /// even if the resulting reference is not used.
+    pub unsafe fn get_unchechecked(&self, idx: I) -> &T
+    where
+        I: Idx,
+    {
+        unsafe { self.data.get_unchecked(idx.into_usize()) }
+    }
+
+    /// # Safety
+    ///
+    /// Calling this method with an out-of-bounds index is undefined behavior,
+    /// even if the resulting reference is not used.
+    pub unsafe fn get_unchecked_mut(&mut self, idx: I) -> &mut T
+    where
+        I: Idx,
+    {
+        unsafe { self.data.get_unchecked_mut(idx.into_usize()) }
+    }
+
+    pub fn as_ptr(&self) -> *const T {
+        self.data.as_ptr()
+    }
+
+    pub fn as_mut_ptr(&mut self) -> *const T {
+        self.data.as_mut_ptr()
+    }
+
+    pub fn as_ptr_range(&self) -> Range<*const T> {
+        self.data.as_ptr_range()
+    }
+
+    pub fn as_mut_ptr_range(&mut self) -> Range<*mut T> {
+        self.data.as_mut_ptr_range()
+    }
+
+    pub fn swap(&mut self, a: I, b: I)
+    where
+        I: Idx,
+    {
+        self.data.swap(a.into_usize(), b.into_usize());
+    }
+
+    pub fn reverse(&mut self) {
+        self.data.reverse();
+    }
+
+    pub fn iter(&self) -> core::slice::Iter<T> {
+        self.data.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> core::slice::IterMut<T> {
+        self.data.iter_mut()
+    }
+
+    pub fn split_at_mut(&mut self, idx: I) -> (&mut IndexSlice<I, T>, &mut IndexSlice<I, T>)
+    where
+        I: Idx,
+    {
+        let (l, r) = self.data.split_at_mut(idx.into_usize());
+        (IndexSlice::from_mut_slice(l), IndexSlice::from_mut_slice(r))
+    }
+
+    pub fn windows(&self, size: usize) -> Windows<'_, I, T> {
+        let size = NonZero::new(size).expect("window size must be non-zero");
+        Windows::new(self, size)
     }
 
     /// The slice version of `iter_enumerated` takes an `initial_offset`
@@ -101,68 +427,9 @@ impl<I, T> IndexSlice<I, T> {
     ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
         IndexEnumerate::new(initial_offset, &mut self.data)
     }
-    pub fn is_empty(&self) -> bool {
-        self.data.is_empty()
-    }
-    pub fn len(&self) -> usize {
-        self.data.len()
-    }
-    pub fn len_idx(&self) -> I
-    where
-        I: Idx,
-    {
-        I::from_usize(self.data.len())
-    }
-    pub fn last_idx(&self) -> Option<I>
-    where
-        I: Idx,
-    {
-        self.len().checked_sub(1).map(I::from_usize)
-    }
-    pub fn first(&self) -> Option<&T> {
-        self.data.first()
-    }
-    pub fn first_mut(&mut self) -> Option<&mut T> {
-        self.data.first_mut()
-    }
-    pub fn last(&self) -> Option<&T> {
-        self.data.last()
-    }
-    pub fn last_mut(&mut self) -> Option<&mut T> {
-        self.data.last_mut()
-    }
-    pub fn as_slice(&self) -> &[T] {
-        &self.data
-    }
-    pub fn as_mut_slice(&mut self) -> &mut [T] {
-        &mut self.data
-    }
-    pub fn get(&self, idx: I) -> Option<&T>
-    where
-        I: Idx,
-    {
-        self.data.get(idx.into_usize())
-    }
-    pub fn get_mut(&mut self, idx: I) -> Option<&mut T>
-    where
-        I: Idx,
-    {
-        self.data.get_mut(idx.into_usize())
-    }
-    pub fn iter(&self) -> core::slice::Iter<T> {
-        self.data.iter()
-    }
-    pub fn iter_mut(&mut self) -> core::slice::IterMut<T> {
-        self.data.iter_mut()
-    }
-    pub fn split_at_mut(&mut self, idx: I) -> (&mut IndexSlice<I, T>, &mut IndexSlice<I, T>)
-    where
-        I: Idx,
-    {
-        let (l, r) = self.data.split_at_mut(idx.into_usize());
-        (IndexSlice::from_mut_slice(l), IndexSlice::from_mut_slice(r))
-    }
 }
+
+impl<I, T> ExactSizeIterator for Windows<'_, I, T> {}
 
 unsafe impl<I: Idx> GetDisjointMutIndex<I> for I {
     #[inline]

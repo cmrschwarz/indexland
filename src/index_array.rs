@@ -195,6 +195,12 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     {
         IndexEnumerate::new(I::ZERO, self.data)
     }
+    pub const fn from_array(arr: [T; N]) -> Self {
+        Self {
+            data: arr,
+            _phantom: PhantomData,
+        }
+    }
     pub const fn into_array(self) -> [T; N] {
         self.into_inner()
     }
@@ -202,6 +208,12 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
         let res = unsafe { core::ptr::read(&raw const self.data) };
         core::mem::forget(self);
         res
+    }
+    pub const fn from_array_ref(arr: &[T; N]) -> &IndexArray<I, T, N> {
+        unsafe { &*arr.as_ptr().cast() }
+    }
+    pub const fn from_array_ref_mut(arr: &mut [T; N]) -> &mut IndexArray<I, T, N> {
+        unsafe { &mut *arr.as_mut_ptr().cast() }
     }
 }
 

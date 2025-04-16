@@ -326,7 +326,7 @@ impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeInclusive<C> {
             if range.start() != range.end() {
                 return RangeInclusive::new(*range.start(), *range.end() - 1);
             }
-            range.next();
+            let _ = range.next();
             return range;
         }
         range

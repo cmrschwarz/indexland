@@ -639,7 +639,7 @@ mod test {
     #[test]
     #[should_panic(expected = "NonMaxOutOfRangeError")]
     fn nonmax_oob() {
-        NonMax::<u8>::from_usize(255);
+        let _ = NonMax::<u8>::from_usize(255);
     }
 
     #[test]
