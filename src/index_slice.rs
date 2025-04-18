@@ -13,10 +13,10 @@ use core::{
 };
 
 #[cfg(feature = "alloc")]
-use alloc::{borrow::ToOwned, boxed::Box};
+use alloc::{borrow::Cow, borrow::ToOwned, boxed::Box, rc::Rc, sync::Arc};
 
 #[cfg(feature = "alloc")]
-use crate::IndexVec;
+use crate::{IndexVec, IndexVecDeque};
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -800,6 +800,16 @@ impl<I, T> IndexSlice<I, T> {
     }
 
     #[cfg(feature = "alloc")]
+    pub fn into_vec(self: alloc::boxed::Box<Self>) -> alloc::vec::Vec<T> {
+        Self::into_boxed_slice(self).into_vec()
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn into_index_vec<A>(self: alloc::boxed::Box<Self>) -> IndexVec<I, T> {
+        self.into_vec().into()
+    }
+
+    #[cfg(feature = "alloc")]
     pub fn repeat(&self, n: usize) -> IndexVec<I, T>
     where
         T: Copy,
@@ -866,127 +876,6 @@ impl<I, T> IndexSlice<I, T> {
         initial_offset: I,
     ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
         IndexEnumerate::new(initial_offset, &mut self.data)
-    }
-}
-
-impl<I, T: Debug> Debug for IndexSlice<I, T> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        Debug::fmt(&self.data, f)
-    }
-}
-
-impl<I, T, Idx: IndexSliceIndex<I, T>> Index<Idx> for IndexSlice<I, T> {
-    type Output = Idx::Output;
-    #[inline]
-    fn index(&self, index: Idx) -> &Self::Output {
-        index.index(self)
-    }
-}
-
-impl<I, T, ISI: IndexSliceIndex<I, T>> IndexMut<ISI> for IndexSlice<I, T> {
-    #[inline]
-    fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
-        index.index_mut(self)
-    }
-}
-
-impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
-    type Item = &'a T;
-
-    type IntoIter = core::slice::Iter<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-impl<'a, I, T> IntoIterator for &'a mut IndexSlice<I, T> {
-    type Item = &'a mut T;
-
-    type IntoIter = core::slice::IterMut<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter_mut()
-    }
-}
-
-impl<I, T: PartialEq, const N: usize> PartialEq<IndexSlice<I, T>> for [T; N] {
-    fn eq(&self, other: &IndexSlice<I, T>) -> bool {
-        self.as_slice() == &other.data
-    }
-}
-
-impl<I, T: PartialEq, const N: usize> PartialEq<[T; N]> for IndexSlice<I, T> {
-    fn eq(&self, other: &[T; N]) -> bool {
-        &self.data == other.as_slice()
-    }
-}
-
-impl<I, T: PartialEq> PartialEq<IndexSlice<I, T>> for [T] {
-    fn eq(&self, other: &IndexSlice<I, T>) -> bool {
-        self == &other.data
-    }
-}
-
-impl<I, T: PartialEq> PartialEq<[T]> for IndexSlice<I, T> {
-    fn eq(&self, other: &[T]) -> bool {
-        &self.data == other
-    }
-}
-
-impl<'a, I, T> From<&'a IndexSlice<I, T>> for &'a [T] {
-    fn from(value: &'a IndexSlice<I, T>) -> Self {
-        value.as_slice()
-    }
-}
-impl<'a, I, T> From<&'a mut IndexSlice<I, T>> for &'a mut [T] {
-    fn from(value: &'a mut IndexSlice<I, T>) -> Self {
-        value.as_mut_slice()
-    }
-}
-
-impl<'a, I, T> From<&'a [T]> for &'a IndexSlice<I, T> {
-    fn from(value: &'a [T]) -> Self {
-        IndexSlice::from_slice(value)
-    }
-}
-impl<'a, I, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
-    fn from(value: &'a mut [T]) -> Self {
-        IndexSlice::from_mut_slice(value)
-    }
-}
-
-impl<I, T> AsRef<[T]> for IndexSlice<I, T> {
-    fn as_ref(&self) -> &[T] {
-        &self.data
-    }
-}
-impl<I, T> AsMut<[T]> for IndexSlice<I, T> {
-    fn as_mut(&mut self) -> &mut [T] {
-        &mut self.data
-    }
-}
-
-impl<I, T> Borrow<[T]> for IndexSlice<I, T> {
-    fn borrow(&self) -> &[T] {
-        &self.data
-    }
-}
-impl<I, T> BorrowMut<[T]> for IndexSlice<I, T> {
-    fn borrow_mut(&mut self) -> &mut [T] {
-        &mut self.data
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl<I, T> ToOwned for IndexSlice<I, T>
-where
-    T: Clone,
-{
-    type Owned = IndexVec<I, T>;
-
-    fn to_owned(&self) -> Self::Owned {
-        IndexVec::from(self.as_slice().to_vec())
     }
 }
 
@@ -1624,6 +1513,309 @@ wrap_pred_iter!(rsplit, RSplit, rsplit_mut, RSplitMut, FnMut(&T) -> bool);
 
 wrap_pred_iter_n!(splitn, SplitN, splitn_mut, SplitNMut, FnMut(&T) -> bool);
 wrap_pred_iter_n!(rsplitn, RSplitN, rsplitn_mut, RSplitNMut, FnMut(&T) -> bool);
+
+// ===== traits ======
+
+impl<I, T> AsRef<[T]> for IndexSlice<I, T> {
+    fn as_ref(&self) -> &[T] {
+        &self.data
+    }
+}
+impl<I, T> AsMut<[T]> for IndexSlice<I, T> {
+    fn as_mut(&mut self) -> &mut [T] {
+        &mut self.data
+    }
+}
+impl<I, T> Borrow<[T]> for IndexSlice<I, T> {
+    fn borrow(&self) -> &[T] {
+        &self.data
+    }
+}
+impl<I, T> BorrowMut<[T]> for IndexSlice<I, T> {
+    fn borrow_mut(&mut self) -> &mut [T] {
+        &mut self.data
+    }
+}
+
+impl<I, T: Debug> Debug for IndexSlice<I, T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(&self.data, f)
+    }
+}
+
+impl<I, T> Default for &IndexSlice<I, T> {
+    fn default() -> Self {
+        IndexSlice::from_slice(&[])
+    }
+}
+
+impl<I, T> Default for &mut IndexSlice<I, T> {
+    fn default() -> Self {
+        IndexSlice::from_mut_slice(&mut [])
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> Default for alloc::boxed::Box<IndexSlice<I, T>> {
+    fn default() -> Self {
+        IndexSlice::from_boxed_slice(Box::<[T]>::default())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> From<&[T]> for alloc::boxed::Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &[T]) -> Self {
+        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> From<&IndexSlice<I, T>> for alloc::boxed::Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &IndexSlice<I, T>) -> Self {
+        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value.as_slice()))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> From<&mut [T]> for alloc::boxed::Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &mut [T]) -> Self {
+        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> From<&mut IndexSlice<I, T>> for alloc::boxed::Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &mut IndexSlice<I, T>) -> Self {
+        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value.as_slice()))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> From<&IndexSlice<I, T>> for Rc<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &IndexSlice<I, T>) -> Self {
+        let res = From::<&[T]>::from(value.as_slice());
+        unsafe { std::mem::transmute::<Rc<[T]>, _>(res) }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> From<&mut IndexSlice<I, T>> for Rc<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &mut IndexSlice<I, T>) -> Self {
+        let res = From::<&[T]>::from(value.as_slice());
+        unsafe { std::mem::transmute::<Rc<[T]>, _>(res) }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> From<&IndexSlice<I, T>> for Arc<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &IndexSlice<I, T>) -> Self {
+        let res = From::<&[T]>::from(value.as_slice());
+        unsafe { std::mem::transmute::<Arc<[T]>, _>(res) }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> From<&mut IndexSlice<I, T>> for Arc<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &mut IndexSlice<I, T>) -> Self {
+        let res = From::<&[T]>::from(value.as_slice());
+        unsafe { std::mem::transmute::<Arc<[T]>, _>(res) }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> From<alloc::borrow::Cow<'_, IndexSlice<I, T>>> for Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: alloc::borrow::Cow<'_, IndexSlice<I, T>>) -> Self {
+        value.into_owned().into_boxed_index_slice()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> FromIterator<T> for Box<IndexSlice<I, T>> {
+    fn from_iter<It: IntoIterator<Item = T>>(iter: It) -> Self {
+        IndexSlice::from_boxed_slice(Box::from_iter(iter))
+    }
+}
+
+impl<I, T, Idx: IndexSliceIndex<I, T>> Index<Idx> for IndexSlice<I, T> {
+    type Output = Idx::Output;
+    #[inline]
+    fn index(&self, index: Idx) -> &Self::Output {
+        index.index(self)
+    }
+}
+
+impl<I, T, ISI: IndexSliceIndex<I, T>> IndexMut<ISI> for IndexSlice<I, T> {
+    #[inline]
+    fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
+        index.index_mut(self)
+    }
+}
+
+impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
+    type Item = &'a T;
+
+    type IntoIter = core::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, I, T> IntoIterator for &'a mut IndexSlice<I, T> {
+    type Item = &'a mut T;
+
+    type IntoIter = core::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> IntoIterator for Box<IndexSlice<I, T>> {
+    type Item = T;
+
+    type IntoIter = alloc::vec::IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.into_vec().into_iter()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<'a, I, T> IntoIterator for &'a Box<IndexSlice<I, T>> {
+    type Item = &'a T;
+
+    type IntoIter = core::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_slice().iter()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<'a, I, T> IntoIterator for &'a mut Box<IndexSlice<I, T>> {
+    type Item = &'a mut T;
+
+    type IntoIter = core::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_mut_slice().iter_mut()
+    }
+}
+
+impl<I, T, U, const N: usize> PartialEq<IndexArray<I, U, N>> for IndexSlice<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexArray<I, U, N>) -> bool {
+        self.as_slice().eq(other.as_slice())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T, U> PartialEq<Cow<'_, IndexSlice<I, U>>> for IndexSlice<I, T>
+where
+    T: PartialEq<U>,
+    U: Clone,
+{
+    fn eq(&self, other: &Cow<'_, IndexSlice<I, U>>) -> bool {
+        self.as_slice().eq(other.as_slice())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T, U> PartialEq<IndexSlice<I, U>> for Cow<'_, IndexSlice<I, T>>
+where
+    T: PartialEq<U> + Clone,
+{
+    fn eq(&self, other: &IndexSlice<I, U>) -> bool {
+        self.as_slice().eq(other.as_slice())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T, U> PartialEq<IndexVec<I, U>> for IndexSlice<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        self.as_slice().eq(other.as_slice())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T, U> PartialEq<IndexVecDeque<I, U>> for IndexSlice<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVecDeque<I, U>) -> bool {
+        let s = self.as_slice();
+        let (s1, s2) = other.as_slices();
+        s1.len() + s2.len() == s.len() && &s[0..s1.len()] == s1 && &s[s1.len()..] == s2
+    }
+}
+
+impl<'a, I, T> From<&'a IndexSlice<I, T>> for &'a [T] {
+    fn from(value: &'a IndexSlice<I, T>) -> Self {
+        value.as_slice()
+    }
+}
+impl<'a, I, T> From<&'a mut IndexSlice<I, T>> for &'a mut [T] {
+    fn from(value: &'a mut IndexSlice<I, T>) -> Self {
+        value.as_mut_slice()
+    }
+}
+
+impl<'a, I, T> From<&'a [T]> for &'a IndexSlice<I, T> {
+    fn from(value: &'a [T]) -> Self {
+        IndexSlice::from_slice(value)
+    }
+}
+impl<'a, I, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
+    fn from(value: &'a mut [T]) -> Self {
+        IndexSlice::from_mut_slice(value)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> ToOwned for IndexSlice<I, T>
+where
+    T: Clone,
+{
+    type Owned = IndexVec<I, T>;
+
+    fn to_owned(&self) -> Self::Owned {
+        IndexVec::from(self.as_slice().to_vec())
+    }
+}
 
 // ===== serde =====
 #[cfg(feature = "serde")]

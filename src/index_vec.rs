@@ -118,9 +118,6 @@ impl<I, T> IndexVec<I, T> {
     pub fn as_mut_vec(&mut self) -> &mut Vec<T> {
         &mut self.data
     }
-    pub fn into_boxed_slice(self) -> Box<IndexSlice<I, T>> {
-        IndexSlice::from_boxed_slice(self.data.into_boxed_slice())
-    }
     pub fn push_get_idx(&mut self, v: T) -> I
     where
         I: Idx,
@@ -186,16 +183,18 @@ impl<I, T> IndexVec<I, T> {
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
         Self::from_iter(arr.into_inner())
     }
-}
 
-impl<I, T> AsMut<IndexSlice<I, T>> for IndexVec<I, T> {
-    fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
-        self.as_mut_index_slice()
+    pub const fn into_vec(self) -> Vec<T> {
+        let res = unsafe { std::ptr::read(&raw const self.data) };
+        std::mem::forget(self);
+        res
     }
-}
-impl<I, T> AsMut<[T]> for IndexVec<I, T> {
-    fn as_mut(&mut self) -> &mut [T] {
-        self.as_mut_slice()
+
+    pub fn into_boxed_slice(self) -> Box<[T]> {
+        self.data.into_boxed_slice()
+    }
+    pub fn into_boxed_index_slice(self) -> Box<IndexSlice<I, T>> {
+        IndexSlice::from_boxed_slice(self.into_boxed_slice())
     }
 }
 
@@ -210,6 +209,17 @@ impl<I, T> AsRef<[T]> for IndexVec<I, T> {
     }
 }
 
+impl<I, T> AsMut<IndexSlice<I, T>> for IndexVec<I, T> {
+    fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
+    }
+}
+impl<I, T> AsMut<[T]> for IndexVec<I, T> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+}
+
 impl<I, T> Borrow<IndexSlice<I, T>> for IndexVec<I, T> {
     fn borrow(&self) -> &IndexSlice<I, T> {
         self.as_index_slice()
@@ -220,6 +230,7 @@ impl<I, T> Borrow<[T]> for IndexVec<I, T> {
         self.as_slice()
     }
 }
+
 impl<I, T> BorrowMut<IndexSlice<I, T>> for IndexVec<I, T> {
     fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
         self.as_mut_index_slice()
@@ -327,26 +338,20 @@ impl<I, T> FromIterator<T> for IndexVec<I, T> {
     }
 }
 
-impl<I, T: PartialEq, const N: usize> PartialEq<IndexVec<I, T>> for [T; N] {
-    fn eq(&self, other: &IndexVec<I, T>) -> bool {
-        self.as_slice() == other.as_slice()
-    }
-}
-
 impl<I, T: PartialEq, const N: usize> PartialEq<[T; N]> for IndexVec<I, T> {
     fn eq(&self, other: &[T; N]) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<I, T: PartialEq> PartialEq<IndexSlice<I, T>> for IndexVec<I, T> {
-    fn eq(&self, other: &IndexSlice<I, T>) -> bool {
+impl<I, T: PartialEq, const N: usize> PartialEq<IndexVec<I, T>> for [T; N] {
+    fn eq(&self, other: &IndexVec<I, T>) -> bool {
         self.as_slice() == other.as_slice()
     }
 }
 
-impl<I, T: PartialEq> PartialEq<IndexVec<I, T>> for IndexSlice<I, T> {
-    fn eq(&self, other: &IndexVec<I, T>) -> bool {
+impl<I, T: PartialEq> PartialEq<IndexSlice<I, T>> for IndexVec<I, T> {
+    fn eq(&self, other: &IndexSlice<I, T>) -> bool {
         self.as_slice() == other.as_slice()
     }
 }

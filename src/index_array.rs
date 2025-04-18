@@ -217,9 +217,14 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     }
 }
 
-impl<I, T, const N: usize> AsMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
-    fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
-        self.as_mut_index_slice()
+impl<I, T, const N: usize> AsRef<[T]> for IndexArray<I, T, N> {
+    fn as_ref(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+impl<I, T, const N: usize> AsMut<[T]> for IndexArray<I, T, N> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
     }
 }
 
@@ -228,10 +233,9 @@ impl<I, T, const N: usize> AsRef<IndexSlice<I, T>> for IndexArray<I, T, N> {
         self.as_index_slice()
     }
 }
-
-impl<I, T, const N: usize> Borrow<IndexSlice<I, T>> for IndexArray<I, T, N> {
-    fn borrow(&self) -> &IndexSlice<I, T> {
-        self.as_index_slice()
+impl<I, T, const N: usize> AsMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
+    fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
     }
 }
 
@@ -240,16 +244,20 @@ impl<I, T, const N: usize> Borrow<[T]> for IndexArray<I, T, N> {
         self.as_slice()
     }
 }
-
-impl<I, T, const N: usize> BorrowMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
-    fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
-        self.as_mut_index_slice()
+impl<I, T, const N: usize> Borrow<IndexSlice<I, T>> for IndexArray<I, T, N> {
+    fn borrow(&self) -> &IndexSlice<I, T> {
+        self.as_index_slice()
     }
 }
 
 impl<I, T, const N: usize> BorrowMut<[T]> for IndexArray<I, T, N> {
     fn borrow_mut(&mut self) -> &mut [T] {
         self.as_mut_slice()
+    }
+}
+impl<I, T, const N: usize> BorrowMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
+    fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
     }
 }
 

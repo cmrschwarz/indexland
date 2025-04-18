@@ -1,4 +1,5 @@
 use core::{
+    borrow::{Borrow, BorrowMut},
     fmt::Debug,
     marker::PhantomData,
     mem::{ManuallyDrop, MaybeUninit},
@@ -337,7 +338,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
         IndexSlice::from_slice(self.as_slice())
     }
-    pub fn as_mut_index_slice(&mut self) -> &IndexSlice<I, T> {
+    pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
         IndexSlice::from_mut_slice(self.as_mut_slice())
     }
 
@@ -387,6 +388,50 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
         }
         unsafe { self.push_unchecked(element) };
         Ok(())
+    }
+}
+
+impl<I, T, const N: usize> AsRef<[T]> for IndexArrayVec<I, T, N> {
+    fn as_ref(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+impl<I, T, const N: usize> AsMut<[T]> for IndexArrayVec<I, T, N> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+}
+
+impl<I, T, const N: usize> AsRef<IndexSlice<I, T>> for IndexArrayVec<I, T, N> {
+    fn as_ref(&self) -> &IndexSlice<I, T> {
+        self.as_index_slice()
+    }
+}
+impl<I, T, const N: usize> AsMut<IndexSlice<I, T>> for IndexArrayVec<I, T, N> {
+    fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
+    }
+}
+
+impl<I, T, const N: usize> Borrow<[T]> for IndexArrayVec<I, T, N> {
+    fn borrow(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+impl<I, T, const N: usize> Borrow<IndexSlice<I, T>> for IndexArrayVec<I, T, N> {
+    fn borrow(&self) -> &IndexSlice<I, T> {
+        self.as_index_slice()
+    }
+}
+
+impl<I, T, const N: usize> BorrowMut<[T]> for IndexArrayVec<I, T, N> {
+    fn borrow_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+}
+impl<I, T, const N: usize> BorrowMut<IndexSlice<I, T>> for IndexArrayVec<I, T, N> {
+    fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
     }
 }
 

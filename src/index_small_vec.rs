@@ -1,3 +1,4 @@
+use core::borrow::{Borrow, BorrowMut};
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -202,13 +203,57 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
         IndexSlice::from_slice(&self.data)
     }
-    pub fn as_mut_index_slice(&mut self) -> &IndexSlice<I, T> {
+    pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
         IndexSlice::from_mut_slice(&mut self.data)
     }
 
     /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
         Self::from_iter(arr.into_inner())
+    }
+}
+
+impl<I, T, const CAP: usize> AsRef<[T]> for IndexSmallVec<I, T, CAP> {
+    fn as_ref(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+impl<I, T, const CAP: usize> AsMut<[T]> for IndexSmallVec<I, T, CAP> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+}
+
+impl<I, T, const CAP: usize> AsRef<IndexSlice<I, T>> for IndexSmallVec<I, T, CAP> {
+    fn as_ref(&self) -> &IndexSlice<I, T> {
+        self.as_index_slice()
+    }
+}
+impl<I, T, const CAP: usize> AsMut<IndexSlice<I, T>> for IndexSmallVec<I, T, CAP> {
+    fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
+    }
+}
+
+impl<I, T, const CAP: usize> Borrow<[T]> for IndexSmallVec<I, T, CAP> {
+    fn borrow(&self) -> &[T] {
+        self.as_slice()
+    }
+}
+impl<I, T, const CAP: usize> Borrow<IndexSlice<I, T>> for IndexSmallVec<I, T, CAP> {
+    fn borrow(&self) -> &IndexSlice<I, T> {
+        self.as_index_slice()
+    }
+}
+
+impl<I, T, const CAP: usize> BorrowMut<[T]> for IndexSmallVec<I, T, CAP> {
+    fn borrow_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
+    }
+}
+impl<I, T, const CAP: usize> BorrowMut<IndexSlice<I, T>> for IndexSmallVec<I, T, CAP> {
+    fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self.as_mut_index_slice()
     }
 }
 
