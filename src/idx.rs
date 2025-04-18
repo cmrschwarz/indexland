@@ -1,11 +1,8 @@
 #![allow(clippy::inline_always)]
 
-use core::{
-    hash::Hash,
-    ops::{Add, Sub},
-};
+use core::hash::Hash;
 
-pub trait Idx: 'static + Copy + Ord + Hash + Add<Output = Self> + Sub<Output = Self> {
+pub trait Idx: 'static + Copy + Ord + Hash {
     const ZERO: Self;
     const ONE: Self;
     const MAX: Self;

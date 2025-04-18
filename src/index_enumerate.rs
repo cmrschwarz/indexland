@@ -17,11 +17,11 @@ impl<I, BaseIter: Iterator> IndexEnumerate<I, BaseIter> {
     }
 }
 
-impl<I, IT: Iterator> Iterator for IndexEnumerate<I, IT>
+impl<I, It: Iterator> Iterator for IndexEnumerate<I, It>
 where
     I: Idx,
 {
-    type Item = (I, IT::Item);
+    type Item = (I, It::Item);
 
     fn next(&mut self) -> Option<Self::Item> {
         let value = self.base_iter.next()?;
@@ -45,8 +45,8 @@ where
         match self.base_iter.nth(n) {
             Some(v) => {
                 let pos = self.next_idx;
-                self.next_idx = self.next_idx + I::from_usize(n + 1);
-                Some((pos + I::from_usize(n), v))
+                self.next_idx = I::from_usize(n + self.next_idx.into_usize() + 1);
+                Some((I::from_usize(pos.into_usize() + n), v))
             }
             None => None,
         }

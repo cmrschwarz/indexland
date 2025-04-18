@@ -69,7 +69,8 @@
 //! ```
 use crate::{idx::IdxCompatible, Idx};
 use core::ops::{
-    Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+    Add, Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo,
+    RangeToInclusive, Sub,
 };
 
 pub trait IndexRangeBounds<I, C = I>: RangeBounds<C> {
@@ -428,7 +429,7 @@ impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeFull {
     }
 }
 
-impl<I: Idx> Iterator for IndexRange<I> {
+impl<I: Idx + Add<Output = I>> Iterator for IndexRange<I> {
     type Item = I;
     fn next(&mut self) -> Option<I> {
         if self.start == self.end {
@@ -439,7 +440,7 @@ impl<I: Idx> Iterator for IndexRange<I> {
         Some(curr)
     }
 }
-impl<I: Idx> DoubleEndedIterator for IndexRange<I> {
+impl<I: Idx + Add<Output = I> + Sub<Output = I>> DoubleEndedIterator for IndexRange<I> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.start == self.end {
             return None;
@@ -449,7 +450,7 @@ impl<I: Idx> DoubleEndedIterator for IndexRange<I> {
     }
 }
 
-impl<I: Idx> Iterator for IndexRangeInclusive<I> {
+impl<I: Idx + Add<Output = I>> Iterator for IndexRangeInclusive<I> {
     type Item = I;
     fn next(&mut self) -> Option<I> {
         let curr = self.start;
@@ -464,7 +465,7 @@ impl<I: Idx> Iterator for IndexRangeInclusive<I> {
         Some(curr)
     }
 }
-impl<I: Idx> DoubleEndedIterator for IndexRangeInclusive<I> {
+impl<I: Idx + Add<Output = I> + Sub<Output = I>> DoubleEndedIterator for IndexRangeInclusive<I> {
     fn next_back(&mut self) -> Option<Self::Item> {
         let curr = self.end;
         if self.start == curr {
@@ -479,13 +480,13 @@ impl<I: Idx> DoubleEndedIterator for IndexRangeInclusive<I> {
     }
 }
 
-impl<I: Idx> Iterator for IndexRangeFrom<I> {
+impl<I: Idx + Add<Output = I>> Iterator for IndexRangeFrom<I> {
     type Item = I;
     fn next(&mut self) -> Option<I> {
         let curr = self.start;
         // NOTE: this might overflow or wrap. This is intentional and the
         // same that std does.
-        self.start = self.start - I::ONE;
+        self.start = self.start + I::ONE;
         Some(curr)
     }
 }
