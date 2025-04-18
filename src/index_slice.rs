@@ -1,5 +1,8 @@
 use super::Idx;
-use crate::{index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex, IndexArray};
+use crate::{
+    index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex, IndexArray,
+    IndexRangeBounds,
+};
 
 use core::{
     borrow::{Borrow, BorrowMut},
@@ -443,6 +446,384 @@ impl<I, T> IndexSlice<I, T> {
         self.data.ends_with(needle.as_ref())
     }
 
+    pub fn strip_prefix<P: AsRef<[T]>>(&self, prefix: &P) -> Option<&IndexSlice<I, T>>
+    where
+        T: PartialEq,
+    {
+        self.data
+            .strip_prefix(prefix.as_ref())
+            .map(IndexSlice::from_slice)
+    }
+
+    pub fn strip_suffix<S: AsRef<[T]>>(&self, suffix: &S) -> Option<&IndexSlice<I, T>>
+    where
+        T: PartialEq,
+    {
+        self.data
+            .strip_suffix(suffix.as_ref())
+            .map(IndexSlice::from_slice)
+    }
+
+    pub fn binary_search(&self, x: &T) -> Result<I, I>
+    where
+        I: Idx,
+        T: Ord,
+    {
+        self.data
+            .binary_search(x)
+            .map(I::from_usize)
+            .map_err(I::from_usize)
+    }
+
+    pub fn binary_search_by<F>(&self, f: F) -> Result<I, I>
+    where
+        I: Idx,
+        F: FnMut(&T) -> core::cmp::Ordering,
+    {
+        self.data
+            .binary_search_by(f)
+            .map(I::from_usize)
+            .map_err(I::from_usize)
+    }
+
+    pub fn binary_search_by_key<B, F>(&self, b: &B, f: F) -> Result<I, I>
+    where
+        I: Idx,
+        B: Ord,
+        F: FnMut(&T) -> B,
+    {
+        self.data
+            .binary_search_by_key(b, f)
+            .map(I::from_usize)
+            .map_err(I::from_usize)
+    }
+
+    pub fn sort_unstable(&mut self)
+    where
+        T: Ord,
+    {
+        self.data.sort_unstable();
+    }
+
+    pub fn sort_unstable_by<F>(&mut self, compare: F)
+    where
+        F: FnMut(&T, &T) -> core::cmp::Ordering,
+    {
+        self.data.sort_unstable_by(compare);
+    }
+
+    pub fn sort_unstable_by_key<K, F>(&mut self, f: F)
+    where
+        F: FnMut(&T) -> K,
+        K: Ord,
+    {
+        self.data.sort_unstable_by_key(f);
+    }
+
+    pub fn select_nth_unstable(
+        &mut self,
+        index: I,
+    ) -> (&mut T, &mut IndexSlice<I, T>, &mut IndexSlice<I, T>)
+    where
+        I: Idx,
+        T: Ord,
+    {
+        let (left, pivot, right) = self.data.select_nth_unstable(index.into_usize());
+        (pivot, left.into(), right.into())
+    }
+
+    pub fn select_nth_unstable_by<F>(
+        &mut self,
+        index: I,
+        compare: F,
+    ) -> (&mut T, &mut IndexSlice<I, T>, &mut IndexSlice<I, T>)
+    where
+        I: Idx,
+        F: FnMut(&T, &T) -> core::cmp::Ordering,
+    {
+        let (left, pivot, right) = self
+            .data
+            .select_nth_unstable_by(index.into_usize(), compare);
+        (pivot, left.into(), right.into())
+    }
+
+    pub fn select_nth_unstable_by_key<K, F>(
+        &mut self,
+        index: I,
+        f: F,
+    ) -> (&mut T, &mut IndexSlice<I, T>, &mut IndexSlice<I, T>)
+    where
+        I: Idx,
+        F: FnMut(&T) -> K,
+        K: Ord,
+    {
+        let (left, pivot, right) = self.data.select_nth_unstable_by_key(index.into_usize(), f);
+        (pivot, left.into(), right.into())
+    }
+
+    pub fn rotate_left(&mut self, mid: I)
+    where
+        I: Idx,
+    {
+        self.data.rotate_left(mid.into_usize());
+    }
+
+    pub fn rotate_right(&mut self, k: I)
+    where
+        I: Idx,
+    {
+        self.data.rotate_right(k.into_usize());
+    }
+
+    pub fn fill(&mut self, value: T)
+    where
+        T: Clone,
+    {
+        self.data.fill(value);
+    }
+
+    pub fn fill_with<F>(&mut self, f: F)
+    where
+        F: FnMut() -> T,
+    {
+        self.data.fill_with(f);
+    }
+
+    pub fn clone_from_slice<S>(&mut self, src: &S)
+    where
+        T: Clone,
+        S: AsRef<[T]>,
+    {
+        self.data.clone_from_slice(src.as_ref());
+    }
+
+    pub fn copy_from_slice<S>(&mut self, src: &S)
+    where
+        T: Copy,
+        S: AsRef<[T]>,
+    {
+        self.data.copy_from_slice(src.as_ref());
+    }
+
+    pub fn copy_within<R>(&mut self, src: R, dest: I)
+    where
+        I: Idx,
+        T: Copy,
+        R: IndexRangeBounds<I>,
+    {
+        self.data
+            .copy_within(R::canonicalize(src, self.len()), dest.into_usize());
+    }
+
+    pub fn swap_with_slice(&mut self, other: &mut IndexSlice<I, T>) {
+        self.data.swap_with_slice(&mut other.data);
+    }
+
+    /// ## Safety
+    /// This method is essentially a [transmute](core::mem::transmute)
+    /// with respect to the elements in the returned middle slice,
+    /// so all the usual caveats pertaining to `transmute::<T, U>` also apply here.
+    pub unsafe fn align_to<U>(&self) -> (&IndexSlice<I, T>, &IndexSlice<I, U>, &IndexSlice<I, T>) {
+        let (head, mid, tail) = unsafe { self.data.align_to::<U>() };
+        (head.into(), mid.into(), tail.into())
+    }
+
+    /// ## Safety
+    /// This method is essentially a [transmute](core::mem::transmute)
+    /// with respect to the elements in the returned middle slice,
+    /// so all the usual caveats pertaining to `transmute::<T, U>` also apply here.
+    pub unsafe fn align_to_mut<U>(
+        &mut self,
+    ) -> (
+        &mut IndexSlice<I, T>,
+        &mut IndexSlice<I, U>,
+        &mut IndexSlice<I, T>,
+    ) {
+        let (head, mid, tail) = unsafe { self.data.align_to_mut::<U>() };
+        (head.into(), mid.into(), tail.into())
+    }
+
+    pub fn is_sorted(&self) -> bool
+    where
+        T: PartialOrd,
+    {
+        self.data.is_sorted()
+    }
+
+    pub fn is_sorted_by<F>(&self, compare: F) -> bool
+    where
+        F: FnMut(&T, &T) -> bool,
+    {
+        self.data.is_sorted_by(compare)
+    }
+
+    pub fn is_sorted_by_key<'a, F, K>(&'a self, f: F) -> bool
+    where
+        F: FnMut(&'a T) -> K,
+        K: PartialOrd,
+    {
+        self.data.is_sorted_by_key(f)
+    }
+
+    pub fn partition_point<P>(&self, pred: P) -> I
+    where
+        I: Idx,
+        P: FnMut(&T) -> bool,
+    {
+        I::from_usize(self.data.partition_point(pred))
+    }
+
+    /// Get multiple mutable references to elements or subslices of the slice.
+    ///
+    /// # Safety
+    /// Calling this method with overlapping indices is undefined behavior
+    /// even if the resulting references are not used.
+    #[allow(clippy::needless_pass_by_value)]
+    pub unsafe fn get_disjoint_unchecked_mut<ISI, const N: usize>(
+        &mut self,
+        indices: [ISI; N],
+    ) -> [&mut ISI::Output; N]
+    where
+        I: Idx,
+        ISI: IndexSliceIndex<I, T> + GetDisjointMutIndex<I>,
+    {
+        let slice = self as *mut IndexSlice<I, T>;
+        let mut arr: core::mem::MaybeUninit<[&mut ISI::Output; N]> =
+            core::mem::MaybeUninit::uninit();
+        let arr_ptr = arr.as_mut_ptr();
+
+        // SAFETY: We expect `indices` to be disjunct and in bounds
+        unsafe {
+            for i in 0..N {
+                let idx = indices.get_unchecked(i);
+                arr_ptr
+                    .cast::<&mut ISI::Output>()
+                    .add(i)
+                    .write(&mut *idx.clone().get_unchecked_mut(slice));
+            }
+            arr.assume_init()
+        }
+    }
+
+    /// Get multiple mutable references to elements or subslices of the slice.
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn get_disjoint_mut<ISI, const N: usize>(
+        &mut self,
+        indices: [ISI; N],
+    ) -> Result<[&mut ISI::Output; N], GetDisjointMutError>
+    where
+        I: Idx,
+        ISI: IndexSliceIndex<I, T> + GetDisjointMutIndex<I>,
+    {
+        let len = self.len_idx();
+        // NB: The optimizer should inline the loops into a sequence
+        // of instructions without additional branching.
+        for (i, idx) in indices.iter().enumerate() {
+            if !idx.is_in_bounds(len) {
+                return Err(GetDisjointMutError::IndexOutOfBounds);
+            }
+            for idx2 in &indices[..i] {
+                if idx.is_overlapping(idx2) {
+                    return Err(GetDisjointMutError::OverlappingIndices);
+                }
+            }
+        }
+        // SAFETY: We've checked that all indices are disjunct and in bounds
+        unsafe { Ok(self.get_disjoint_unchecked_mut(indices)) }
+    }
+}
+
+impl<I, T, const N: usize> IndexSlice<I, [T; N]> {
+    /// Returns a view of the slice where N successive elements are flattened into one.
+    pub fn as_flattened<'a>(&'a self) -> &'a IndexSlice<I, T>
+    where
+        T: 'a,
+    {
+        self.data.as_flattened().into()
+    }
+
+    /// Returns a mutable view of the slice where N successive elements are flattened into one.
+    pub fn as_flattened_mut<'a>(&'a mut self) -> &'a mut IndexSlice<I, T>
+    where
+        T: 'a,
+    {
+        self.data.as_flattened_mut().into()
+    }
+}
+
+impl<I, T> IndexSlice<I, T> {
+    pub fn sort(&mut self)
+    where
+        T: Ord,
+    {
+        self.data.sort_unstable();
+    }
+
+    pub fn sort_by<F>(&mut self, compare: F)
+    where
+        F: FnMut(&T, &T) -> core::cmp::Ordering,
+    {
+        self.data.sort_unstable_by(compare);
+    }
+
+    pub fn sort_by_key<K, F>(&mut self, f: F)
+    where
+        F: FnMut(&T) -> K,
+        K: Ord,
+    {
+        self.data.sort_unstable_by_key(f);
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn sort_by_cached_key<K, F>(&mut self, f: F)
+    where
+        F: FnMut(&T) -> K,
+        K: Ord,
+    {
+        self.data.sort_by_cached_key(f);
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_vec(&self) -> alloc::vec::Vec<T>
+    where
+        T: Clone,
+    {
+        self.data.to_vec()
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_index_vec(&self) -> IndexVec<I, T>
+    where
+        T: Clone,
+    {
+        self.data.to_vec().into()
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn repeat(&self, n: usize) -> IndexVec<I, T>
+    where
+        T: Copy,
+    {
+        self.data.repeat(n).into()
+    }
+
+    pub fn concat<Item>(&self) -> <IndexSlice<I, T> as Concat<Item>>::Output
+    where
+        IndexSlice<I, T>: Concat<Item>,
+        Item: ?Sized,
+    {
+        Concat::concat(self)
+    }
+
+    pub fn join<Separator>(&self, sep: Separator) -> <IndexSlice<I, T> as Join<Separator>>::Output
+    where
+        IndexSlice<I, T>: Join<Separator>,
+    {
+        Join::join(self, sep)
+    }
+}
+
+impl<I, T> IndexSlice<I, T> {
     /// The slice version of `iter_enumerated` takes an `initial_offset`
     /// parameter to avoid the following common mistake:
     /// ``` compile fail
@@ -485,67 +866,6 @@ impl<I, T> IndexSlice<I, T> {
         initial_offset: I,
     ) -> IndexEnumerate<I, core::slice::IterMut<T>> {
         IndexEnumerate::new(initial_offset, &mut self.data)
-    }
-}
-
-impl<I, T> ExactSizeIterator for Windows<'_, I, T> {}
-
-impl<I, T> IndexSlice<I, T> {
-    /// # Safety
-    /// Calling this method with overlapping keys is undefined behavior
-    /// even if the resulting references are not used.
-    #[allow(clippy::needless_pass_by_value)]
-    pub unsafe fn get_disjoint_unchecked_mut<ISI, const N: usize>(
-        &mut self,
-        indices: [ISI; N],
-    ) -> [&mut ISI::Output; N]
-    where
-        I: Idx,
-        ISI: IndexSliceIndex<I, T> + GetDisjointMutIndex<I>,
-    {
-        let slice = self as *mut IndexSlice<I, T>;
-        let mut arr: core::mem::MaybeUninit<[&mut ISI::Output; N]> =
-            core::mem::MaybeUninit::uninit();
-        let arr_ptr = arr.as_mut_ptr();
-
-        // SAFETY: We expect `indices` to be disjunct and in bounds
-        unsafe {
-            for i in 0..N {
-                let idx = indices.get_unchecked(i);
-                arr_ptr
-                    .cast::<&mut ISI::Output>()
-                    .add(i)
-                    .write(&mut *idx.clone().get_unchecked_mut(slice));
-            }
-            arr.assume_init()
-        }
-    }
-
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn get_disjoint_mut<ISI, const N: usize>(
-        &mut self,
-        indices: [ISI; N],
-    ) -> Result<[&mut ISI::Output; N], GetDisjointMutError>
-    where
-        I: Idx,
-        ISI: IndexSliceIndex<I, T> + GetDisjointMutIndex<I>,
-    {
-        let len = self.len_idx();
-        // NB: The optimizer should inline the loops into a sequence
-        // of instructions without additional branching.
-        for (i, idx) in indices.iter().enumerate() {
-            if !idx.is_in_bounds(len) {
-                return Err(GetDisjointMutError::IndexOutOfBounds);
-            }
-            for idx2 in &indices[..i] {
-                if idx.is_overlapping(idx2) {
-                    return Err(GetDisjointMutError::OverlappingIndices);
-                }
-            }
-        }
-        // SAFETY: The `get_many_check_valid()` call checked that all indices
-        // are disjunct and in bounds.
-        unsafe { Ok(self.get_disjoint_unchecked_mut(indices)) }
     }
 }
 
@@ -796,6 +1116,59 @@ unsafe impl<I: Idx> GetDisjointMutIndex<I> for RangeInclusive<I> {
     #[inline]
     fn is_overlapping(&self, other: &Self) -> bool {
         (self.start() <= other.end()) & (other.start() <= self.end())
+    }
+}
+
+// ===== Concat =====
+pub trait Concat<Item>
+where
+    Item: ?Sized,
+{
+    type Output;
+
+    fn concat(slice: &Self) -> Self::Output;
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T: Clone, V: Borrow<[T]>> Concat<T> for IndexSlice<I, V> {
+    type Output = IndexVec<I, T>;
+
+    fn concat(slice: &Self) -> Self::Output {
+        slice.data.concat().into()
+    }
+}
+
+// ===== Join =====
+pub trait Join<Separator> {
+    type Output;
+
+    fn join(slice: &Self, sep: Separator) -> Self::Output;
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T: Clone, V: Borrow<[T]>> Join<&IndexSlice<I, T>> for IndexSlice<I, V> {
+    type Output = IndexVec<I, T>;
+
+    fn join(slice: &Self, sep: &IndexSlice<I, T>) -> IndexVec<I, T> {
+        slice.data.join(sep.as_slice()).into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T: Clone, V: Borrow<[T]>> Join<&[T]> for IndexSlice<I, V> {
+    type Output = IndexVec<I, T>;
+
+    fn join(slice: &Self, sep: &[T]) -> IndexVec<I, T> {
+        slice.data.join(sep).into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T: Clone, V: Borrow<[T]>> Join<&T> for IndexSlice<I, V> {
+    type Output = IndexVec<I, T>;
+
+    fn join(slice: &Self, sep: &T) -> IndexVec<I, T> {
+        slice.data.join(sep).into()
     }
 }
 
