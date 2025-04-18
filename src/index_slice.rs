@@ -352,48 +352,75 @@ impl<I, T> IndexSlice<I, T> {
         Some((a.into(), b.into()))
     }
 
-    // TODO: we unfortunately need to wrap these iters aswell as they return slices
-    // pub fn split<F>(&self, pred: F) -> core::slice::Split<'_, T, F>
-    // where
-    //     F: FnMut(&T) -> bool,
-    // {
-    //     self.data.split(pred)
-    // }
-    //
-    // pub fn split_mut<F>(&mut self, pred: F) -> core::slice::SplitMut<'_, T, F>
-    // where
-    //     F: FnMut(&T) -> bool,
-    // {
-    //     self.data.split_mut(pred)
-    // }
-    //
-    // pub fn split_inclusive<F>(&self, pred: F) -> core::slice::SplitInclusive<'_, T, F>
-    // where
-    //     F: FnMut(&T) -> bool,
-    // {
-    //     self.data.split_inclusive(pred)
-    // }
-    //
-    // pub fn split_inclusive_mut<F>(&mut self, pred: F) -> core::slice::SplitInclusiveMut<'_, T, F>
-    // where
-    //     F: FnMut(&T) -> bool,
-    // {
-    //     self.data.split_inclusive_mut(pred)
-    // }
-    //
-    // pub fn rsplit<F>(&self, pred: F) -> core::slice::RSplit<'_, T, F>
-    // where
-    //     F: FnMut(&T) -> bool,
-    // {
-    //     self.data.rsplit(pred)
-    // }
-    //
-    // pub fn rsplit_mut<F>(&mut self, pred: F) -> core::slice::RSplitMut<'_, T, F>
-    // where
-    //     F: FnMut(&T) -> bool,
-    // {
-    //     self.data.rsplit_mut(pred)
-    // }
+    pub fn split<F>(&self, pred: F) -> Split<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        Split::new(&self.data, pred)
+    }
+
+    pub fn split_mut<F>(&mut self, pred: F) -> SplitMut<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        SplitMut::new(&mut self.data, pred)
+    }
+
+    pub fn split_inclusive<F>(&self, pred: F) -> SplitInclusive<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        SplitInclusive::new(&self.data, pred)
+    }
+
+    pub fn split_inclusive_mut<F>(&mut self, pred: F) -> SplitInclusiveMut<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        SplitInclusiveMut::new(&mut self.data, pred)
+    }
+
+    pub fn rsplit<F>(&self, pred: F) -> RSplit<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        RSplit::new(&self.data, pred)
+    }
+
+    pub fn rsplit_mut<F>(&mut self, pred: F) -> RSplitMut<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        RSplitMut::new(&mut self.data, pred)
+    }
+
+    pub fn splitn<F>(&self, n: usize, pred: F) -> SplitN<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        SplitN::new(&self.data, n, pred)
+    }
+
+    pub fn splitn_mut<F>(&mut self, n: usize, pred: F) -> SplitNMut<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        SplitNMut::new(&mut self.data, n, pred)
+    }
+
+    pub fn rsplitn<F>(&self, n: usize, pred: F) -> RSplitN<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        RSplitN::new(&self.data, n, pred)
+    }
+
+    pub fn rsplitn_mut<F>(&mut self, n: usize, pred: F) -> RSplitNMut<'_, I, T, F>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        RSplitNMut::new(&mut self.data, n, pred)
+    }
 
     pub fn contains(&self, x: &T) -> bool
     where
@@ -712,696 +739,6 @@ impl<'a, I, T> DoubleEndedIterator for Windows<'a, I, T> {
     }
 }
 
-// ===== Chunks =====
-
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct Chunks<'a, I, T: 'a> {
-    chunks: core::slice::Chunks<'a, T>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a> Chunks<'a, I, T> {
-    #[inline]
-    pub fn new(slice: &'a [T], size: usize) -> Self {
-        Self {
-            chunks: slice.chunks(size),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<I, T> Clone for Chunks<'_, I, T> {
-    fn clone(&self) -> Self {
-        Chunks {
-            chunks: self.chunks.clone(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T> Iterator for Chunks<'a, I, T> {
-    type Item = &'a IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunks.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunks.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunks.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.last()?))
-    }
-}
-
-impl<'a, I, T> DoubleEndedIterator for Chunks<'a, I, T> {
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunks.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.nth_back(n)?))
-    }
-}
-
-impl<I, T> ExactSizeIterator for Chunks<'_, I, T> {}
-impl<I, T> FusedIterator for Chunks<'_, I, T> {}
-
-// ===== ChunksMut =====
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct ChunksMut<'a, I, T: 'a> {
-    chunks: core::slice::ChunksMut<'a, T>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a> ChunksMut<'a, I, T> {
-    #[inline]
-    pub fn new(slice: &'a mut [T], size: usize) -> Self {
-        Self {
-            chunks: slice.chunks_mut(size),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T> Iterator for ChunksMut<'a, I, T> {
-    type Item = &'a mut IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunks.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunks.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.last()?))
-    }
-}
-
-impl<'a, I, T> DoubleEndedIterator for ChunksMut<'a, I, T> {
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth_back(n)?))
-    }
-}
-
-impl<I, T> ExactSizeIterator for ChunksMut<'_, I, T> {}
-impl<I, T> FusedIterator for ChunksMut<'_, I, T> {}
-
-// ===== ChunksExact =====
-
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct ChunksExact<'a, I, T: 'a> {
-    chunks: core::slice::ChunksExact<'a, T>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a> ChunksExact<'a, I, T> {
-    #[inline]
-    pub fn new(slice: &'a [T], size: usize) -> Self {
-        Self {
-            chunks: slice.chunks_exact(size),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<I, T> Clone for ChunksExact<'_, I, T> {
-    fn clone(&self) -> Self {
-        ChunksExact {
-            chunks: self.chunks.clone(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T> Iterator for ChunksExact<'a, I, T> {
-    type Item = &'a IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunks.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunks.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunks.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.last()?))
-    }
-}
-
-impl<'a, I, T> DoubleEndedIterator for ChunksExact<'a, I, T> {
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunks.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.nth_back(n)?))
-    }
-}
-
-impl<I, T> ExactSizeIterator for ChunksExact<'_, I, T> {}
-impl<I, T> FusedIterator for ChunksExact<'_, I, T> {}
-
-// ===== ChunksExactMut =====
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct ChunksExactMut<'a, I, T: 'a> {
-    chunks: core::slice::ChunksExactMut<'a, T>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a> ChunksExactMut<'a, I, T> {
-    #[inline]
-    pub fn new(slice: &'a mut [T], size: usize) -> Self {
-        Self {
-            chunks: slice.chunks_exact_mut(size),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T> Iterator for ChunksExactMut<'a, I, T> {
-    type Item = &'a mut IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunks.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunks.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.last()?))
-    }
-}
-
-impl<'a, I, T> DoubleEndedIterator for ChunksExactMut<'a, I, T> {
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth_back(n)?))
-    }
-}
-
-impl<I, T> ExactSizeIterator for ChunksExactMut<'_, I, T> {}
-
-impl<I, T> FusedIterator for ChunksExactMut<'_, I, T> {}
-
-// ===== RChunks =====
-
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct RChunks<'a, I, T: 'a> {
-    chunks: core::slice::RChunks<'a, T>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a> RChunks<'a, I, T> {
-    #[inline]
-    pub fn new(slice: &'a [T], size: usize) -> Self {
-        Self {
-            chunks: slice.rchunks(size),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<I, T> Clone for RChunks<'_, I, T> {
-    fn clone(&self) -> Self {
-        RChunks {
-            chunks: self.chunks.clone(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T> Iterator for RChunks<'a, I, T> {
-    type Item = &'a IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunks.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunks.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunks.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.last()?))
-    }
-}
-
-impl<'a, I, T> DoubleEndedIterator for RChunks<'a, I, T> {
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunks.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.nth_back(n)?))
-    }
-}
-
-impl<I, T> ExactSizeIterator for RChunks<'_, I, T> {}
-impl<I, T> FusedIterator for RChunks<'_, I, T> {}
-
-// ===== RChunksMut =====
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct RChunksMut<'a, I, T: 'a> {
-    chunks: core::slice::RChunksMut<'a, T>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a> RChunksMut<'a, I, T> {
-    #[inline]
-    pub fn new(slice: &'a mut [T], size: usize) -> Self {
-        Self {
-            chunks: slice.rchunks_mut(size),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T> Iterator for RChunksMut<'a, I, T> {
-    type Item = &'a mut IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunks.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunks.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.last()?))
-    }
-}
-
-impl<'a, I, T> DoubleEndedIterator for RChunksMut<'a, I, T> {
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth_back(n)?))
-    }
-}
-
-impl<I, T> ExactSizeIterator for RChunksMut<'_, I, T> {}
-impl<I, T> FusedIterator for RChunksMut<'_, I, T> {}
-
-// ===== RChunksExact =====
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct RChunksExact<'a, I, T: 'a> {
-    chunks: core::slice::RChunksExact<'a, T>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a> RChunksExact<'a, I, T> {
-    #[inline]
-    pub fn new(slice: &'a [T], size: usize) -> Self {
-        Self {
-            chunks: slice.rchunks_exact(size),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<I, T> Clone for RChunksExact<'_, I, T> {
-    fn clone(&self) -> Self {
-        RChunksExact {
-            chunks: self.chunks.clone(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T> Iterator for RChunksExact<'a, I, T> {
-    type Item = &'a IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunks.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunks.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunks.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.last()?))
-    }
-}
-
-impl<'a, I, T> DoubleEndedIterator for RChunksExact<'a, I, T> {
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunks.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunks.nth_back(n)?))
-    }
-}
-
-impl<I, T> ExactSizeIterator for RChunksExact<'_, I, T> {}
-impl<I, T> FusedIterator for RChunksExact<'_, I, T> {}
-
-// ===== RChunksExactMut =====
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct RChunksExactMut<'a, I, T: 'a> {
-    chunks: core::slice::RChunksExactMut<'a, T>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a> RChunksExactMut<'a, I, T> {
-    #[inline]
-    pub fn new(slice: &'a mut [T], size: usize) -> Self {
-        Self {
-            chunks: slice.rchunks_exact_mut(size),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T> Iterator for RChunksExactMut<'a, I, T> {
-    type Item = &'a mut IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunks.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunks.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.last()?))
-    }
-}
-
-impl<'a, I, T> DoubleEndedIterator for RChunksExactMut<'a, I, T> {
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth_back(n)?))
-    }
-}
-
-impl<I, T> ExactSizeIterator for RChunksExactMut<'_, I, T> {}
-impl<I, T> FusedIterator for RChunksExactMut<'_, I, T> {}
-
-// ===== ChunkBy =====
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct ChunkBy<'a, I, T: 'a, P> {
-    chunk_by: core::slice::ChunkBy<'a, T, P>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a, P> ChunkBy<'a, I, T, P> {
-    #[inline]
-    pub fn new(slice: &'a [T], pred: P) -> Self
-    where
-        P: FnMut(&T, &T) -> bool,
-    {
-        Self {
-            chunk_by: slice.chunk_by(pred),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T, P> Clone for ChunkBy<'a, I, T, P>
-where
-    // currently not implemented by ChunkBy for some reason, adding this as documentation
-    core::slice::ChunkBy<'a, T, P>: Clone,
-{
-    fn clone(&self) -> Self {
-        ChunkBy {
-            chunk_by: self.chunk_by.clone(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T, P> Iterator for ChunkBy<'a, I, T, P>
-where
-    P: FnMut(&T, &T) -> bool,
-{
-    type Item = &'a IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunk_by.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunk_by.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunk_by.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunk_by.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunk_by.last()?))
-    }
-}
-
-impl<'a, I, T, P> DoubleEndedIterator for ChunkBy<'a, I, T, P>
-where
-    P: FnMut(&T, &T) -> bool,
-{
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.chunk_by.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.chunk_by.nth_back(n)?))
-    }
-}
-
-impl<I, T, P> FusedIterator for ChunkBy<'_, I, T, P> where P: FnMut(&T, &T) -> bool {}
-
-// ===== ChunkByMut =====
-#[derive(Debug)]
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct ChunkByMut<'a, I, T: 'a, P> {
-    chunks: core::slice::ChunkByMut<'a, T, P>,
-    _phantom: PhantomData<&'a IndexSlice<I, T>>,
-}
-
-impl<'a, I, T: 'a, P> ChunkByMut<'a, I, T, P> {
-    #[inline]
-    pub fn new(slice: &'a mut [T], pred: P) -> Self
-    where
-        P: FnMut(&T, &T) -> bool,
-    {
-        Self {
-            chunks: slice.chunk_by_mut(pred),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T, P> Iterator for ChunkByMut<'a, I, T, P>
-where
-    P: FnMut(&T, &T) -> bool,
-{
-    type Item = &'a mut IndexSlice<I, T>;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next()?))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.chunks.size_hint()
-    }
-
-    #[inline]
-    fn count(self) -> usize {
-        self.chunks.count()
-    }
-
-    #[inline]
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth(n)?))
-    }
-
-    #[inline]
-    fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.last()?))
-    }
-}
-
-impl<'a, I, T, P> DoubleEndedIterator for ChunkByMut<'a, I, T, P>
-where
-    P: FnMut(&T, &T) -> bool,
-{
-    #[inline]
-    fn next_back(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-        Some(IndexSlice::from_mut_slice(self.chunks.next_back()?))
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_mut_slice(self.chunks.nth_back(n)?))
-    }
-}
-
-impl<I, T, P> ExactSizeIterator for ChunkByMut<'_, I, T, P> where P: FnMut(&T, &T) -> bool {}
-impl<I, T, P> FusedIterator for ChunkByMut<'_, I, T, P> where P: FnMut(&T, &T) -> bool {}
-
 // ===== get_disjoint_mut =====
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GetDisjointMutError {
@@ -1461,6 +798,459 @@ unsafe impl<I: Idx> GetDisjointMutIndex<I> for RangeInclusive<I> {
         (self.start() <= other.end()) & (other.start() <= self.end())
     }
 }
+
+// ===== Iters =====
+macro_rules! wrap_chunk_iter {
+    ($slice_fn: ident, $name: ident, $slice_fn_mut: ident, $name_mut: ident) => {
+        #[derive(Debug)]
+        #[must_use = "iterators are lazy and do nothing unless consumed"]
+        pub struct $name<'a, I, T: 'a> {
+            base: core::slice::$name<'a, T>,
+            _phantom: PhantomData<&'a IndexSlice<I, T>>,
+        }
+
+        impl<'a, I, T: 'a> $name<'a, I, T> {
+            #[inline]
+            pub fn new(slice: &'a [T], size: usize) -> Self {
+                Self {
+                    base: slice.$slice_fn(size),
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<I, T> Clone for $name<'_, I, T> {
+            fn clone(&self) -> Self {
+                Self {
+                    base: self.base.clone(),
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<'a, I, T> Iterator for $name<'a, I, T> {
+            type Item = &'a IndexSlice<I, T>;
+
+            #[inline]
+            fn next(&mut self) -> Option<&'a IndexSlice<I, T>> {
+                Some(IndexSlice::from_slice(self.base.next()?))
+            }
+
+            #[inline]
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                self.base.size_hint()
+            }
+
+            #[inline]
+            fn count(self) -> usize {
+                self.base.count()
+            }
+
+            #[inline]
+            fn nth(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.nth(n)?))
+            }
+
+            #[inline]
+            fn last(self) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.last()?))
+            }
+        }
+
+        impl<'a, I, T> DoubleEndedIterator for $name<'a, I, T> {
+            #[inline]
+            fn next_back(&mut self) -> Option<&'a IndexSlice<I, T>> {
+                Some(IndexSlice::from_slice(self.base.next_back()?))
+            }
+
+            #[inline]
+            fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.nth_back(n)?))
+            }
+        }
+
+        impl<I, T> ExactSizeIterator for $name<'_, I, T> {}
+        impl<I, T> FusedIterator for $name<'_, I, T> {}
+
+        #[derive(Debug)]
+        #[must_use = "iterators are lazy and do nothing unless consumed"]
+        pub struct $name_mut<'a, I, T: 'a> {
+            base: core::slice::$name_mut<'a, T>,
+            _phantom: PhantomData<&'a IndexSlice<I, T>>,
+        }
+
+        impl<'a, I, T: 'a> $name_mut<'a, I, T> {
+            #[inline]
+            pub fn new(slice: &'a mut [T], size: usize) -> Self {
+                Self {
+                    base: slice.$slice_fn_mut(size),
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<'a, I, T> Iterator for $name_mut<'a, I, T> {
+            type Item = &'a mut IndexSlice<I, T>;
+
+            #[inline]
+            fn next(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
+                Some(IndexSlice::from_mut_slice(self.base.next()?))
+            }
+
+            #[inline]
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                self.base.size_hint()
+            }
+
+            #[inline]
+            fn count(self) -> usize {
+                self.base.count()
+            }
+
+            #[inline]
+            fn nth(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.nth(n)?))
+            }
+
+            #[inline]
+            fn last(self) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.last()?))
+            }
+        }
+
+        impl<'a, I, T> DoubleEndedIterator for $name_mut<'a, I, T> {
+            #[inline]
+            fn next_back(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
+                Some(IndexSlice::from_mut_slice(self.base.next_back()?))
+            }
+
+            #[inline]
+            fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.nth_back(n)?))
+            }
+        }
+
+        impl<I, T> ExactSizeIterator for $name_mut<'_, I, T> {}
+        impl<I, T> FusedIterator for $name_mut<'_, I, T> {}
+    };
+}
+macro_rules! wrap_pred_iter {
+    (
+        $slice_fn: ident, $name: ident,
+        $slice_fn_mut: ident, $name_mut: ident,
+        $($pred_ty: tt)*
+    ) => {
+        #[derive(Debug)]
+        #[must_use = "iterators are lazy and do nothing unless consumed"]
+        pub struct $name<'a, I, T: 'a, P: $($pred_ty)*> {
+            base: core::slice::$name<'a, T, P>,
+            _phantom: PhantomData<&'a IndexSlice<I, T>>,
+        }
+
+        impl<'a, I, T: 'a, P> $name<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            #[inline]
+            pub fn new(slice: &'a [T], pred: P) -> Self
+            where
+                P: $($pred_ty)*,
+            {
+                Self {
+                    base: slice.$slice_fn(pred),
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<'a, I, T, P> Clone for $name<'a, I, T, P>
+        where
+            core::slice::$name<'a, T, P>: Clone,
+            P: $($pred_ty)*,
+        {
+            fn clone(&self) -> Self {
+                Self {
+                    base: self.base.clone(),
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<'a, I, T, P> Iterator for $name<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            type Item = &'a IndexSlice<I, T>;
+
+            #[inline]
+            fn next(&mut self) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.next()?))
+            }
+
+            #[inline]
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                self.base.size_hint()
+            }
+
+            #[inline]
+            fn count(self) -> usize {
+                self.base.count()
+            }
+
+            #[inline]
+            fn nth(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.nth(n)?))
+            }
+
+            #[inline]
+            fn last(self) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.last()?))
+            }
+        }
+
+        impl<'a, I, T, P> DoubleEndedIterator for $name<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            #[inline]
+            fn next_back(&mut self) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.next_back()?))
+            }
+
+            #[inline]
+            fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.nth_back(n)?))
+            }
+        }
+
+        impl<I, T, P> FusedIterator for $name<'_, I, T, P> where P: $($pred_ty)* {}
+
+        #[derive(Debug)]
+        #[must_use = "iterators are lazy and do nothing unless consumed"]
+        pub struct $name_mut<'a, I, T: 'a, P: $($pred_ty)*> {
+            base: core::slice::$name_mut<'a, T, P>,
+            _phantom: PhantomData<&'a IndexSlice<I, T>>,
+        }
+
+        impl<'a, I, T: 'a, P> $name_mut<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            #[inline]
+            pub fn new(slice: &'a mut [T], pred: P) -> Self
+            where
+                P: $($pred_ty)*,
+            {
+                Self {
+                    base: slice.$slice_fn_mut(pred),
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<'a, I, T, P> Iterator for $name_mut<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            type Item = &'a mut IndexSlice<I, T>;
+
+            #[inline]
+            fn next(&mut self) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.next()?))
+            }
+
+            #[inline]
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                self.base.size_hint()
+            }
+
+            #[inline]
+            fn count(self) -> usize {
+                self.base.count()
+            }
+
+            #[inline]
+            fn nth(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.nth(n)?))
+            }
+
+            #[inline]
+            fn last(self) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.last()?))
+            }
+        }
+
+        impl<'a, I, T, P> DoubleEndedIterator for $name_mut<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            #[inline]
+            fn next_back(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
+                Some(IndexSlice::from_mut_slice(self.base.next_back()?))
+            }
+
+            #[inline]
+            fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.nth_back(n)?))
+            }
+        }
+
+        impl<I, T, P> FusedIterator for $name_mut<'_, I, T, P> where P: $($pred_ty)* {}
+    };
+}
+
+macro_rules! wrap_pred_iter_n {
+    (
+        $slice_fn: ident, $name: ident,
+        $slice_fn_mut: ident, $name_mut: ident,
+        $($pred_ty: tt)*
+    ) => {
+        #[derive(Debug)]
+        #[must_use = "iterators are lazy and do nothing unless consumed"]
+        pub struct $name<'a, I, T: 'a, P: $($pred_ty)*> {
+            base: core::slice::$name<'a, T, P>,
+            _phantom: PhantomData<&'a IndexSlice<I, T>>,
+        }
+
+        impl<'a, I, T: 'a, P> $name<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            #[inline]
+            pub fn new(slice: &'a [T], n: usize, pred: P) -> Self
+            where
+                P: $($pred_ty)*,
+            {
+                Self {
+                    base: slice.$slice_fn(n, pred),
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<'a, I, T, P> Clone for $name<'a, I, T, P>
+        where
+            core::slice::$name<'a, T, P>: Clone,
+            P: $($pred_ty)*,
+        {
+            fn clone(&self) -> Self {
+                Self {
+                    base: self.base.clone(),
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<'a, I, T, P> Iterator for $name<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            type Item = &'a IndexSlice<I, T>;
+
+            #[inline]
+            fn next(&mut self) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.next()?))
+            }
+
+            #[inline]
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                self.base.size_hint()
+            }
+
+            #[inline]
+            fn count(self) -> usize {
+                self.base.count()
+            }
+
+            #[inline]
+            fn nth(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.nth(n)?))
+            }
+
+            #[inline]
+            fn last(self) -> Option<Self::Item> {
+                Some(IndexSlice::from_slice(self.base.last()?))
+            }
+        }
+        impl<I, T, P> FusedIterator for $name<'_, I, T, P> where P: $($pred_ty)* {}
+
+        #[derive(Debug)]
+        #[must_use = "iterators are lazy and do nothing unless consumed"]
+        pub struct $name_mut<'a, I, T: 'a, P: $($pred_ty)*> {
+            base: core::slice::$name_mut<'a, T, P>,
+            _phantom: PhantomData<&'a IndexSlice<I, T>>,
+        }
+
+        impl<'a, I, T: 'a, P> $name_mut<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            #[inline]
+            pub fn new(slice: &'a mut [T], n: usize, pred: P) -> Self
+            where
+                P: $($pred_ty)*,
+            {
+                Self {
+                    base: slice.$slice_fn_mut(n, pred),
+                    _phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<'a, I, T, P> Iterator for $name_mut<'a, I, T, P>
+        where
+            P: $($pred_ty)*,
+        {
+            type Item = &'a mut IndexSlice<I, T>;
+
+            #[inline]
+            fn next(&mut self) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.next()?))
+            }
+
+            #[inline]
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                self.base.size_hint()
+            }
+
+            #[inline]
+            fn count(self) -> usize {
+                self.base.count()
+            }
+
+            #[inline]
+            fn nth(&mut self, n: usize) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.nth(n)?))
+            }
+
+            #[inline]
+            fn last(self) -> Option<Self::Item> {
+                Some(IndexSlice::from_mut_slice(self.base.last()?))
+            }
+        }
+
+        impl<I, T, P> FusedIterator for $name_mut<'_, I, T, P> where P: $($pred_ty)* {}
+    };
+}
+
+wrap_chunk_iter!(chunks, Chunks, chunks_mut, ChunksMut);
+wrap_chunk_iter!(chunks_exact, ChunksExact, chunks_exact_mut, ChunksExactMut);
+wrap_chunk_iter!(rchunks, RChunks, rchunks_mut, RChunksMut);
+//TODO: rustfmt bug?
+wrap_chunk_iter!(
+    rchunks_exact,
+    RChunksExact,
+    rchunks_exact_mut,
+    RChunksExactMut
+);
+
+wrap_pred_iter!(chunk_by, ChunkBy, chunk_by_mut, ChunkByMut, FnMut(&T, &T) -> bool);
+wrap_pred_iter!(split, Split, split_mut, SplitMut, FnMut(&T) -> bool);
+wrap_pred_iter!(split_inclusive, SplitInclusive, split_inclusive_mut, SplitInclusiveMut, FnMut(&T) -> bool);
+wrap_pred_iter!(rsplit, RSplit, rsplit_mut, RSplitMut, FnMut(&T) -> bool);
+
+wrap_pred_iter_n!(splitn, SplitN, splitn_mut, SplitNMut, FnMut(&T) -> bool);
+wrap_pred_iter_n!(rsplitn, RSplitN, rsplitn_mut, RSplitNMut, FnMut(&T) -> bool);
 
 // ===== serde =====
 #[cfg(feature = "serde")]
