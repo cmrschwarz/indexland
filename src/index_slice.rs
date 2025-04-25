@@ -7,18 +7,18 @@ use crate::{
 use core::{
     borrow::{Borrow, BorrowMut},
     fmt::Debug,
+    hash::Hash,
     iter::FusedIterator,
     marker::PhantomData,
     ops::{Index, IndexMut, Range, RangeInclusive},
 };
 
 #[cfg(feature = "alloc")]
-use alloc::{borrow::Cow, borrow::ToOwned, boxed::Box, rc::Rc, sync::Arc};
+use alloc::{borrow::Cow, borrow::ToOwned, boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 
 #[cfg(feature = "alloc")]
 use crate::{IndexVec, IndexVecDeque};
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct IndexSlice<I, T> {
     _phantom: PhantomData<fn(I) -> T>,
@@ -115,7 +115,7 @@ impl<I, T> IndexSlice<I, T> {
     }
     pub const fn first_chunk_mut<const N: usize>(&mut self) -> Option<&IndexArray<I, T, N>> {
         match self.data.first_chunk_mut() {
-            Some(arr) => Some(IndexArray::from_array_ref_mut(arr)),
+            Some(arr) => Some(IndexArray::from_mut_array_ref(arr)),
             None => None,
         }
     }
@@ -135,7 +135,7 @@ impl<I, T> IndexSlice<I, T> {
     ) -> Option<(&mut IndexArray<I, T, N>, &mut IndexSlice<I, T>)> {
         match self.data.split_first_chunk_mut() {
             Some((arr, slice)) => Some((
-                IndexArray::from_array_ref_mut(arr),
+                IndexArray::from_mut_array_ref(arr),
                 IndexSlice::from_mut_slice(slice),
             )),
             None => None,
@@ -158,7 +158,7 @@ impl<I, T> IndexSlice<I, T> {
         match self.data.split_last_chunk_mut() {
             Some((slice, arr)) => Some((
                 IndexSlice::from_mut_slice(slice),
-                IndexArray::from_array_ref_mut(arr),
+                IndexArray::from_mut_array_ref(arr),
             )),
             None => None,
         }
@@ -171,7 +171,7 @@ impl<I, T> IndexSlice<I, T> {
     }
     pub const fn last_chunk_mut<const N: usize>(&mut self) -> Option<&IndexArray<I, T, N>> {
         match self.data.last_chunk_mut() {
-            Some(arr) => Some(IndexArray::from_array_ref_mut(arr)),
+            Some(arr) => Some(IndexArray::from_mut_array_ref(arr)),
             None => None,
         }
     }
@@ -1498,7 +1498,6 @@ macro_rules! wrap_pred_iter_n {
 wrap_chunk_iter!(chunks, Chunks, chunks_mut, ChunksMut);
 wrap_chunk_iter!(chunks_exact, ChunksExact, chunks_exact_mut, ChunksExactMut);
 wrap_chunk_iter!(rchunks, RChunks, rchunks_mut, RChunksMut);
-//TODO: rustfmt bug?
 wrap_chunk_iter!(
     rchunks_exact,
     RChunksExact,
@@ -1521,16 +1520,19 @@ impl<I, T> AsRef<[T]> for IndexSlice<I, T> {
         &self.data
     }
 }
+
 impl<I, T> AsMut<[T]> for IndexSlice<I, T> {
     fn as_mut(&mut self) -> &mut [T] {
         &mut self.data
     }
 }
+
 impl<I, T> Borrow<[T]> for IndexSlice<I, T> {
     fn borrow(&self) -> &[T] {
         &self.data
     }
 }
+
 impl<I, T> BorrowMut<[T]> for IndexSlice<I, T> {
     fn borrow_mut(&mut self) -> &mut [T] {
         &mut self.data
@@ -1548,13 +1550,11 @@ impl<I, T> Default for &IndexSlice<I, T> {
         IndexSlice::from_slice(&[])
     }
 }
-
 impl<I, T> Default for &mut IndexSlice<I, T> {
     fn default() -> Self {
         IndexSlice::from_mut_slice(&mut [])
     }
 }
-
 #[cfg(feature = "alloc")]
 impl<I, T> Default for alloc::boxed::Box<IndexSlice<I, T>> {
     fn default() -> Self {
@@ -1571,17 +1571,6 @@ where
         IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value))
     }
 }
-
-#[cfg(feature = "alloc")]
-impl<I, T> From<&IndexSlice<I, T>> for alloc::boxed::Box<IndexSlice<I, T>>
-where
-    T: Clone,
-{
-    fn from(value: &IndexSlice<I, T>) -> Self {
-        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value.as_slice()))
-    }
-}
-
 #[cfg(feature = "alloc")]
 impl<I, T> From<&mut [T]> for alloc::boxed::Box<IndexSlice<I, T>>
 where
@@ -1591,7 +1580,15 @@ where
         IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value))
     }
 }
-
+#[cfg(feature = "alloc")]
+impl<I, T> From<&IndexSlice<I, T>> for alloc::boxed::Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &IndexSlice<I, T>) -> Self {
+        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value.as_slice()))
+    }
+}
 #[cfg(feature = "alloc")]
 impl<I, T> From<&mut IndexSlice<I, T>> for alloc::boxed::Box<IndexSlice<I, T>>
 where
@@ -1602,6 +1599,8 @@ where
     }
 }
 
+// unfortunately cannot implement From<&[T]> for Rc<IndexSlice<I, T>>
+// unfortunately cannot implement From<&mut [T]> for Rc<IndexSlice<I, T>>
 #[cfg(feature = "alloc")]
 impl<I, T> From<&IndexSlice<I, T>> for Rc<IndexSlice<I, T>>
 where
@@ -1612,7 +1611,6 @@ where
         unsafe { std::mem::transmute::<Rc<[T]>, _>(res) }
     }
 }
-
 #[cfg(feature = "alloc")]
 impl<I, T> From<&mut IndexSlice<I, T>> for Rc<IndexSlice<I, T>>
 where
@@ -1624,6 +1622,8 @@ where
     }
 }
 
+// unfortunately cannot implement From<&[T]> for Arc<IndexSlice<I, T>>
+// unfortunately cannot implement From<&mut [T]> for Arc<IndexSlice<I, T>>
 #[cfg(feature = "alloc")]
 impl<I, T> From<&IndexSlice<I, T>> for Arc<IndexSlice<I, T>>
 where
@@ -1634,7 +1634,6 @@ where
         unsafe { std::mem::transmute::<Arc<[T]>, _>(res) }
     }
 }
-
 #[cfg(feature = "alloc")]
 impl<I, T> From<&mut IndexSlice<I, T>> for Arc<IndexSlice<I, T>>
 where
@@ -1647,12 +1646,61 @@ where
 }
 
 #[cfg(feature = "alloc")]
-impl<I, T> From<alloc::borrow::Cow<'_, IndexSlice<I, T>>> for Box<IndexSlice<I, T>>
+impl<I, T> From<&IndexSlice<I, T>> for Vec<T>
 where
     T: Clone,
 {
-    fn from(value: alloc::borrow::Cow<'_, IndexSlice<I, T>>) -> Self {
+    fn from(value: &IndexSlice<I, T>) -> Self {
+        Vec::from(value.as_slice())
+    }
+}
+#[cfg(feature = "alloc")]
+impl<I, T> From<&mut IndexSlice<I, T>> for Vec<T>
+where
+    T: Clone,
+{
+    fn from(value: &mut IndexSlice<I, T>) -> Self {
+        Vec::from(value.as_slice())
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<'a, I, T> From<&'a IndexSlice<I, T>> for Cow<'a, IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &'a IndexSlice<I, T>) -> Self {
+        Cow::Borrowed(value)
+    }
+}
+
+// unfortunately cannot implement Cow<[T]> for Box<IndexSlice<I, T>>
+#[cfg(feature = "alloc")]
+impl<I, T> From<Cow<'_, IndexSlice<I, T>>> for Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: Cow<'_, IndexSlice<I, T>>) -> Self {
         value.into_owned().into_boxed_index_slice()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T, const N: usize> From<[T; N]> for Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: [T; N]) -> Self {
+        IndexSlice::from_boxed_slice(Box::from(value))
+    }
+}
+#[cfg(feature = "alloc")]
+impl<I, T, const N: usize> From<IndexArray<I, T, N>> for Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: IndexArray<I, T, N>) -> Self {
+        IndexSlice::from_boxed_slice(Box::from(value.into_array()))
     }
 }
 
@@ -1728,6 +1776,41 @@ impl<'a, I, T> IntoIterator for &'a mut Box<IndexSlice<I, T>> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.as_mut_slice().iter_mut()
+    }
+}
+
+impl<I, T, U> PartialEq<IndexSlice<I, U>> for IndexSlice<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexSlice<I, U>) -> bool {
+        self.as_slice().eq(other.as_slice())
+    }
+}
+impl<I, T> Eq for IndexSlice<I, T> where T: PartialEq {}
+
+impl<I, T> PartialOrd for IndexSlice<I, T>
+where
+    T: PartialOrd,
+{
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        self.as_slice().partial_cmp(other.as_slice())
+    }
+}
+impl<I, T> Ord for IndexSlice<I, T>
+where
+    T: Ord,
+{
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        self.as_slice().cmp(other.as_slice())
+    }
+}
+impl<I, T> Hash for IndexSlice<I, T>
+where
+    T: Hash,
+{
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.as_slice().hash(state);
     }
 }
 

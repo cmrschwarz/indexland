@@ -218,15 +218,15 @@ impl<I, T, const CAP: usize> AsRef<[T]> for IndexSmallVec<I, T, CAP> {
         self.as_slice()
     }
 }
-impl<I, T, const CAP: usize> AsMut<[T]> for IndexSmallVec<I, T, CAP> {
-    fn as_mut(&mut self) -> &mut [T] {
-        self.as_mut_slice()
-    }
-}
-
 impl<I, T, const CAP: usize> AsRef<IndexSlice<I, T>> for IndexSmallVec<I, T, CAP> {
     fn as_ref(&self) -> &IndexSlice<I, T> {
         self.as_index_slice()
+    }
+}
+
+impl<I, T, const CAP: usize> AsMut<[T]> for IndexSmallVec<I, T, CAP> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
     }
 }
 impl<I, T, const CAP: usize> AsMut<IndexSlice<I, T>> for IndexSmallVec<I, T, CAP> {

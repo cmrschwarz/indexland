@@ -212,7 +212,7 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     pub const fn from_array_ref(arr: &[T; N]) -> &IndexArray<I, T, N> {
         unsafe { &*arr.as_ptr().cast() }
     }
-    pub const fn from_array_ref_mut(arr: &mut [T; N]) -> &mut IndexArray<I, T, N> {
+    pub const fn from_mut_array_ref(arr: &mut [T; N]) -> &mut IndexArray<I, T, N> {
         unsafe { &mut *arr.as_mut_ptr().cast() }
     }
 }
@@ -222,15 +222,15 @@ impl<I, T, const N: usize> AsRef<[T]> for IndexArray<I, T, N> {
         self.as_slice()
     }
 }
-impl<I, T, const N: usize> AsMut<[T]> for IndexArray<I, T, N> {
-    fn as_mut(&mut self) -> &mut [T] {
-        self.as_mut_slice()
-    }
-}
-
 impl<I, T, const N: usize> AsRef<IndexSlice<I, T>> for IndexArray<I, T, N> {
     fn as_ref(&self) -> &IndexSlice<I, T> {
         self.as_index_slice()
+    }
+}
+
+impl<I, T, const N: usize> AsMut<[T]> for IndexArray<I, T, N> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.as_mut_slice()
     }
 }
 impl<I, T, const N: usize> AsMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
@@ -439,6 +439,41 @@ impl<I, T: PartialEq, const N: usize> PartialEq<IndexArray<I, T, N>> for [T] {
 impl<I, T: PartialEq, const N: usize> PartialEq<[T]> for IndexArray<I, T, N> {
     fn eq(&self, other: &[T]) -> bool {
         self.data == other
+    }
+}
+
+impl<'a, I, T, const N: usize> TryFrom<&'a [T]> for &'a IndexArray<I, T, N> {
+    type Error = core::array::TryFromSliceError;
+
+    fn try_from(value: &'a [T]) -> Result<Self, Self::Error> {
+        Ok(IndexArray::from_array_ref(<&'a [T; N]>::try_from(value)?))
+    }
+}
+impl<'a, I, T, const N: usize> TryFrom<&'a mut [T]> for &'a mut IndexArray<I, T, N> {
+    type Error = core::array::TryFromSliceError;
+
+    fn try_from(value: &'a mut [T]) -> Result<Self, Self::Error> {
+        Ok(IndexArray::from_mut_array_ref(<&'a mut [T; N]>::try_from(
+            value,
+        )?))
+    }
+}
+impl<'a, I, T, const N: usize> TryFrom<&'a IndexSlice<I, T>> for &'a IndexArray<I, T, N> {
+    type Error = core::array::TryFromSliceError;
+
+    fn try_from(value: &'a IndexSlice<I, T>) -> Result<Self, Self::Error> {
+        Ok(IndexArray::from_array_ref(<&'a [T; N]>::try_from(
+            value.as_slice(),
+        )?))
+    }
+}
+impl<'a, I, T, const N: usize> TryFrom<&'a mut IndexSlice<I, T>> for &'a mut IndexArray<I, T, N> {
+    type Error = core::array::TryFromSliceError;
+
+    fn try_from(value: &'a mut IndexSlice<I, T>) -> Result<Self, Self::Error> {
+        Ok(IndexArray::from_mut_array_ref(<&'a mut [T; N]>::try_from(
+            value.as_mut_slice(),
+        )?))
     }
 }
 
