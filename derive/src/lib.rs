@@ -165,16 +165,18 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 /// - "always": Enable bounds checks regardless of build type.
 /// - "never": Disable all bounds checks. Always silently wrap around.
 ///
-/// ## `#[indexland(full_arith)]`
+/// ## `#[indexland(arith_full)]`
 /// Implement [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign),
 /// [`Div`](core::ops::Div) + [`DivAssign`](core::ops::DivAssign),
 /// and [`Rem`](core::ops::Rem) + [`RemAssign`](core::ops::RemAssign).
 ///
-/// If `usize_arith` is enabled, also implements the respective versions for `usize`.
+/// If `arith(T)` is specified, also implements the respective versions for `T`.
 ///
-/// ## `#[indexland(usize_arith)]`
-/// Implement [`Add<usize>`](core::ops::Add) + [`AddAssign<usize>`](core::ops::AddAssign),
-/// and [`Sub<usize>`](core::ops::Sub) + [`SubAssign<usize>`](core::ops::SubAssign).
+/// ## `#[indexland(arith(T))]`
+/// Implement [`Add<T>`](core::ops::Add) + [`AddAssign<T>`](core::ops::AddAssign),
+/// and [`Sub<T>`](core::ops::Sub) + [`SubAssign<T>`](core::ops::SubAssign).
+///
+/// The primary usecase is `#[indexland(arith(usize))]`.
 ///
 /// If `full_arith` is enabled, also implements
 /// [`Mul<usize>`](core::ops::Mul) + [`MulAssign<usize>`](core::ops::MulAssign),
@@ -192,7 +194,7 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 /// ## `#[indexland(only(..))]`
 /// Suppress the derivation of all traits except the specified ones (whitelist).
 ///
-/// ## `#[indexland(compatible(..))]`
+/// ## `#[indexland(compat(..))]`
 /// Allow other types to be used to index containers of this type.
 ///
 /// # Attributes Examples

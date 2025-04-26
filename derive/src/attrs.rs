@@ -12,11 +12,11 @@ const CRATE: &str = "crate";
 const ONLY: &str = "only";
 const OMIT: &str = "omit";
 const EXTRA: &str = "extra";
-const COMPATIBLE: &str = "compatible";
+const COMPATIBLE: &str = "compat";
 const BOUNDS_CHECKS: &str = "bounds_checks";
 
-const USIZE_ARITH: &str = "usize_arith";
-const FULL_ARITH: &str = "full_arith";
+const ARITH_COMPAT: &str = "arith_compat";
+const ARITH_MODE: &str = "arith";
 
 #[derive(Default)]
 pub enum BoundsChecksMode {
@@ -24,6 +24,14 @@ pub enum BoundsChecksMode {
     DebugOnly,
     Always,
     Never,
+}
+
+#[derive(Default)]
+pub enum ArithMode {
+    #[default]
+    Basic,
+    Disabled,
+    Full,
 }
 
 #[derive(Default)]
@@ -35,13 +43,13 @@ pub struct Attrs {
     pub indexland_path: syn::Path,
     pub blacklist: Vec<TokenStream>,
     pub whitelist: Vec<TokenStream>,
-    pub compatible_list: Vec<syn::Path>,
+    pub compat_list: Vec<syn::Path>,
+    pub arith_compat_list: Vec<syn::Path>,
     pub extra_list: Vec<TokenStream>,
     // could be active despite being empty
     pub whitelist_active: bool,
     pub bounds_checks_mode: BoundsChecksMode,
-    pub enable_usize_arith: bool,
-    pub enable_full_arith: bool,
+    pub arith_mode: ArithMode,
 }
 
 impl ErrorList {
@@ -118,10 +126,10 @@ impl Attrs {
         let mut first_whitelist = None;
         let mut extra_list = Vec::new();
         let mut first_extra_list = None;
-        let mut compatible_list = Vec::new();
+        let mut compat_list = Vec::new();
+        let mut arith_compat_list = Vec::new();
         let mut bounds_checks_mode = BoundsChecksMode::default();
-        let mut enable_usize_arith = false;
-        let mut enable_full_arith = false;
+        let mut arith_mode = ArithMode::default();
         for attr in &ast.attrs {
             if !attr.path().is_ident(INDEXLAND) {
                 continue;
@@ -146,12 +154,19 @@ impl Attrs {
                             r#""debug_only", "always", or "never""#
                         ))),
                     }
-                } else if meta.path.is_ident(USIZE_ARITH) {
-                    // #[indexland(usize_arith)]
-                    enable_usize_arith = true;
-                } else if meta.path.is_ident(FULL_ARITH) {
-                    // #[indexland(full_arith)]
-                    enable_full_arith = true;
+                } else if meta.path.is_ident(ARITH_MODE) {
+                    // #[indexland(arith = "full")]
+                    let literal: LitStr = meta.value()?.parse()?;
+                    let value = literal.value();
+                    match &*value {
+                        "disabled" => arith_mode = ArithMode::Disabled,
+                        "basic" => arith_mode = ArithMode::Basic,
+                        "full" => arith_mode = ArithMode::Full,
+                        _ => errs.push(meta.error(format!(
+                            r#"unknown arith mode "{value}", expected {}"#,
+                            r#""disabled", "basic", or "full""#
+                        ))),
+                    }
                 } else if meta.path.is_ident(OMIT) {
                     // e.g. #[indexland(omit(Display))]
                     let omit;
@@ -191,13 +206,20 @@ impl Attrs {
                         first_extra_list = Some(meta.path.span());
                     }
                     extra_list.extend(elements);
+                } else if meta.path.is_ident(ARITH_COMPAT) {
+                    // e.g. #[indexland(arith_compat(usize))]
+                    let arith_compat;
+                    parenthesized!(arith_compat in meta.input);
+                    let elements =
+                        Punctuated::<syn::Path, Token![,]>::parse_terminated(&arith_compat)?;
+                    arith_compat_list.extend(elements);
                 } else if meta.path.is_ident(COMPATIBLE) {
-                    // e.g. #[indexland(compatible(usize))]
+                    // e.g. #[indexland(compat(usize))]
                     let compatible;
                     parenthesized!(compatible in meta.input);
                     let elements =
                         Punctuated::<syn::Path, Token![,]>::parse_terminated(&compatible)?;
-                    compatible_list.extend(elements);
+                    compat_list.extend(elements);
                 } else {
                     errs.push(meta.error(format!(
                         "unknown {INDEXLAND} attribute {}",
@@ -231,11 +253,11 @@ impl Attrs {
             whitelist,
             blacklist,
             extra_list,
-            compatible_list,
+            compat_list,
+            arith_compat_list,
             whitelist_active: first_whitelist.is_some(),
             bounds_checks_mode,
-            enable_usize_arith,
-            enable_full_arith,
+            arith_mode,
         }
     }
 }

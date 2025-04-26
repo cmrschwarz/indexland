@@ -126,7 +126,7 @@ impl<C> DeriveContext<C> {
             }
         }
 
-        for compat in &self.base.attrs.compatible_list {
+        for compat in &self.base.attrs.compat_list {
             derivations.push(derive_compatible(
                 &self.base.attrs.indexland_path,
                 &self.base.name,

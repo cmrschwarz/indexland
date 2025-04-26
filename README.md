@@ -18,11 +18,11 @@ Newtype Indices for Rust Collection Types.
 - Strongly typed collection indices for better type safety and readability.
 
 - All array-based `std::collections` wrapped in one place through a single
-  [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) trait,
+  [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) trait.
 
-  with optional support for the popular `arrayvec`, `smallvec`, and `indexmap` crates.
+- Optional support for the popular `arrayvec`, `smallvec`, `indexmap` and `slab` crates.
 
-- All underlying APIs faithfully adapted for `Idx` types.
+- All underlying APIs exposed and faithfully adapted for `Idx` types.
 
 ## Examples
 ### Newtype Indices
@@ -71,6 +71,7 @@ let message = STATUS_MESSAGE[Status::Running];
 | [`IndexSmallVec<I, T, CAP>`](https://docs.rs/indexland/latest/indexland/struct.IndexSmallVec.html) | [`smallvec::SmallVec<[T; CAP]>`](https://docs.rs/smallvec/latest/smallvec/struct.SmallVec.html)  | `smallvec`  |
 | [`IndexHashMap<I, K, V>`](https://docs.rs/indexland/latest/indexland/struct.IndexHashMap.html) | [`indexmap::IndexMap<K, V>`](https://docs.rs/indexmap/latest/indexmap/map/struct.IndexMap.html) | `indexmap` |
 | [`IndexHashSet<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexHashSet.html) | [`indexmap::IndexSet<T>`](https://docs.rs/indexmap/latest/indexmap/set/struct.IndexSet.html) | `indexmap` |
+| [`IndexSlab<I, T>`](https://docs.rs/indexland/latest/indexland/struct.IndexSlab.html) | [`slab::Slab<T>`](https://docs.rs/slab/latest/slab/struct.Slab.html) | `slab` |
 
 `std` and therefore `alloc` are enabled by default.
 Use the `full` feature to enable all collections.
@@ -99,7 +100,7 @@ Popularized by
 and even used by
 [the Rust Compiler itself](https://github.com/rust-lang/rust/blob/2b285cd5f0877e30ad1d83e04f8cc46254e43391/compiler/rustc_index/src/vec.rs#L40),
 the pattern solves many borrow checker issues and often increases performance.
-Indexed collections can often reduce allocations and memory usage while increasing
+Indexed collections can reduce allocations and memory usage while simultaneously increasing
 data locality.
 
 Heavy use of this pattern can cause issues though. The standard approach is to
@@ -110,9 +111,11 @@ use `type NodeId = usize`, but this negatively affects:
      without getting any compiler errors. Rust excells at
      enabling fearless refactoring, the compiler errors become your todo list.
      Non-newtype type aliases reduce the robustness and refactorability of your code.
+     Just like `Any` in typescript or `void*` in C, overuse of this pattern can negate the
+     benefits of a typesafe language.
 
   2. **Readability**: Container type definitions don't tell us what index
-     should be used to access them. When structs contain multiple collections
+     should be used to access them. When structs contain multiple collections,
      this becomes hard to read quickly.
 
 `indexland` solves both of these issues.
@@ -121,21 +124,23 @@ use `type NodeId = usize`, but this negatively affects:
 1.  **Unified API**: `indexland` offers all common collections in one place,
     **using a single `Idx` trait**. Sometimes the same index type is used
     for multiple data structures. Sometimes you want to switch from a `Vec<T>`
-    to a `VecDeque<T>`, or can use a static array.
+    to a `VecDeque<T>` without rewriting all your code.
 
-2.  **Type Safety**: We deliberately **don't** implement
-    `Index<usize> for IndexSlice` and `Add<usize> for Idx`,
-    as they negatively impact type safety. Opt-in support is available
-    via
-    [`#[indexland(compatible(usize))]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandcompatible)
-    and
-    [`#[indexland(usize_arith)]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandusize_arith)
-    respectively for cases where it makes sense.
-
-3.  **Cleaner Syntax**: Our `Idx` derive macro is much nicer to use than
+2.  **Cleaner Syntax**: Our `Idx` derive macro is much simpler to use than
     `index_vec`'s [`define_index_newtype!`](https://docs.rs/index_vec/latest/index_vec/macro.define_index_type.html),
     while also offering more customization options.
-    We offer a declarative alternative if you dislike proc-macros though.
+    We still offer a (specced down) declarative alternative for crates that want to avoid proc-macro dependencies.
+
+2.  **Better Type Safety**: We deliberately **don't** implement
+    `Index<usize> for IndexSlice` and `Add<usize> for Idx`,
+    as they circumvent the type safety benefits of newtypes. Opt-in support is available
+    via
+    [`#[indexland(compat(usize))]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandcompatible)
+    and
+    [`#[indexland(arith_compat(usize))]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandusize_arith)
+    respectively for cases where the ergonomic benefits are worth it.
+
+
 
 ## Performance
 There's close to zero runtime overhead. The core index conversion functions are
