@@ -1577,7 +1577,8 @@ where
     T: Clone,
 {
     fn from(value: &mut [T]) -> Self {
-        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value))
+        // the `From<&mut [T]>` version was only stabilized in 1.84
+        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(&*value))
     }
 }
 #[cfg(feature = "alloc")]
