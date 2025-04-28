@@ -175,7 +175,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
             pub const OK: () = assert!(N <= CAP);
         }
         let _: () = AssertArrayBounds::<N, CAP>::OK;
-        assert!(N <= CAP);
+
         let mut res = [const { MaybeUninit::uninit() }; CAP];
         let src = (&raw const arr).cast::<T>();
 
@@ -184,6 +184,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
             core::ptr::copy_nonoverlapping(src, tgt, N);
         }
         core::mem::forget(arr);
+        #[allow(clippy::cast_possible_truncation)]
         IndexArrayVec {
             len: N as IndexArrayVecLen,
             data: res,
@@ -270,7 +271,11 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
                 self.as_mut_ptr().add(len),
                 self.len as usize - len,
             );
-            self.len = len as IndexArrayVecLen;
+            // SAFETY: len is guaranteed to be smaller than CAP
+            #[allow(clippy::cast_possible_truncation)]
+            {
+                self.len = len as IndexArrayVecLen;
+            }
             core::ptr::drop_in_place(rem);
         }
     }
@@ -371,6 +376,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     /// - `len` must be less than or equal to `CAP`
     /// - The elements at `self.len()..new_len` must be initialized.
     pub const unsafe fn set_len(&mut self, new_len: usize) {
+        #![allow(clippy::cast_possible_truncation)]
         self.len = new_len as IndexArrayVecLen;
     }
 

@@ -237,7 +237,7 @@ pub mod __private {
             }
             initialized[target_index] = true;
             // SAFETY: the pointer comes from an array
-            data[target_index] = MaybeUninit::new(unsafe { core::ptr::read(&values[i]) });
+            data[target_index] = MaybeUninit::new(unsafe { core::ptr::read(&raw const values[i]) });
             i += 1;
         }
         // SAFETY: we just successfully initialized `N` distinct slots in an
@@ -272,7 +272,7 @@ pub mod __private {
 
             // SAFETY: the pointer comes from an array
             data[indices[i].into_usize()] =
-                MaybeUninit::new(unsafe { core::ptr::read(&values[i]) });
+                MaybeUninit::new(unsafe { core::ptr::read(&raw const values[i]) });
             i += 1;
         }
         // SAFETY: we just successfully initialized `N` distinct slots in an
