@@ -185,8 +185,8 @@ impl<I, T> IndexVec<I, T> {
     }
 
     pub const fn into_vec(self) -> Vec<T> {
-        let res = unsafe { std::ptr::read(&raw const self.data) };
-        std::mem::forget(self);
+        let res = unsafe { core::ptr::read(&raw const self.data) };
+        core::mem::forget(self);
         res
     }
 

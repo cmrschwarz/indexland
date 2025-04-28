@@ -1608,7 +1608,7 @@ where
 {
     fn from(value: &IndexSlice<I, T>) -> Self {
         let res = From::<&[T]>::from(value.as_slice());
-        unsafe { std::mem::transmute::<Rc<[T]>, _>(res) }
+        unsafe { core::mem::transmute::<Rc<[T]>, _>(res) }
     }
 }
 #[cfg(feature = "alloc")]
@@ -1618,7 +1618,7 @@ where
 {
     fn from(value: &mut IndexSlice<I, T>) -> Self {
         let res = From::<&[T]>::from(value.as_slice());
-        unsafe { std::mem::transmute::<Rc<[T]>, _>(res) }
+        unsafe { core::mem::transmute::<Rc<[T]>, _>(res) }
     }
 }
 
@@ -1631,7 +1631,7 @@ where
 {
     fn from(value: &IndexSlice<I, T>) -> Self {
         let res = From::<&[T]>::from(value.as_slice());
-        unsafe { std::mem::transmute::<Arc<[T]>, _>(res) }
+        unsafe { core::mem::transmute::<Arc<[T]>, _>(res) }
     }
 }
 #[cfg(feature = "alloc")]
@@ -1641,7 +1641,7 @@ where
 {
     fn from(value: &mut IndexSlice<I, T>) -> Self {
         let res = From::<&[T]>::from(value.as_slice());
-        unsafe { std::mem::transmute::<Arc<[T]>, _>(res) }
+        unsafe { core::mem::transmute::<Arc<[T]>, _>(res) }
     }
 }
 
