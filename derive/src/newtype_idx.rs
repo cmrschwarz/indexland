@@ -1,16 +1,18 @@
 use proc_macro2::{Span, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{Data, DeriveInput, Fields, Type};
 
 use crate::{
     attrs::{Attrs, BoundsChecksMode},
-    derive_context::DeriveContext,
+    derive_context::{DeriveContext, DeriveContextBase},
     shared_derives::{
-        derive_add_assign, derive_add_assign_usize, derive_clone, derive_copy, derive_default,
-        derive_div_assign, derive_div_assign_usize, derive_eq, derive_mul_assign,
-        derive_mul_assign_usize, derive_rem_assign, derive_rem_assign_usize, derive_sub_assign,
-        derive_sub_assign_usize,
+        derive_add_assign, derive_add_assign_compat, derive_add_compat, derive_clone, derive_copy,
+        derive_default, derive_div_assign, derive_div_assign_compat, derive_div_compat, derive_eq,
+        derive_mul_assign, derive_mul_assign_compat, derive_mul_compat, derive_rem_assign,
+        derive_rem_assign_compat, derive_rem_compat, derive_sub_assign, derive_sub_assign_compat,
+        derive_sub_compat,
     },
+    utils::token_stream_to_compact_string,
 };
 
 struct NewtypeCtxCustom<'a> {
@@ -296,89 +298,12 @@ fn newtype_derive_partial_eq(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn newtype_derive_add_usize(ctx: &NewtypeCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Add<usize> for #name {
-            type Output = Self;
-            fn add(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) + rhs,
-                )
-            }
-        }
-    }
-}
-
-fn newtype_derive_sub_usize(ctx: &NewtypeCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Sub<usize> for #name {
-            type Output = Self;
-            fn sub(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) - rhs,
-                )
-            }
-        }
-    }
-}
-
-fn newtype_derive_mul_usize(ctx: &NewtypeCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Mul<usize> for #name {
-            type Output = Self;
-            fn mul(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) * rhs,
-                )
-            }
-        }
-    }
-}
-
-fn newtype_derive_div_usize(ctx: &NewtypeCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Div<usize> for #name {
-            type Output = Self;
-            fn div(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) / rhs,
-                )
-            }
-        }
-    }
-}
-
-fn newtype_derive_rem_usize(ctx: &NewtypeCtx) -> TokenStream {
-    let indexland = &ctx.base.attrs.indexland_path;
-    let name = &ctx.base.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::Rem<usize> for #name {
-            type Output = Self;
-            fn rem(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) % rhs,
-                )
-            }
-        }
-    }
-}
-
 fn fill_derivation_list(ctx: &mut NewtypeCtx) {
-    let usize_arith = ctx.base.attrs.enable_usize_arith;
-    let full_arith = ctx.base.attrs.enable_full_arith;
+    let (base_arith, full_arith) = match ctx.base.attrs.arith_mode {
+        crate::attrs::ArithMode::Disabled => (false, false),
+        crate::attrs::ArithMode::Basic => (true, false),
+        crate::attrs::ArithMode::Full => (true, true),
+    };
     ctx.add_deriv_custom(true, "Idx", newtype_derive_idx);
     ctx.add_deriv_custom(true, "IdxEnum", newtype_derive_idx_newtype);
     ctx.add_deriv_custom(true, "Debug", newtype_derive_debug);
@@ -407,40 +332,33 @@ fn fill_derivation_list(ctx: &mut NewtypeCtx) {
         "From<Self> for usize",
         newtype_derive_from_self_for_usize,
     );
-    ctx.add_deriv_custom(usize_arith, "Add<usize>", newtype_derive_add_usize);
-    ctx.add_deriv_custom(usize_arith, "Sub<usize>", newtype_derive_sub_usize);
-    ctx.add_deriv_custom(
-        usize_arith && full_arith,
-        "Mul<usize>",
-        newtype_derive_mul_usize,
-    );
-    ctx.add_deriv_custom(
-        usize_arith && full_arith,
-        "Div<usize>",
-        newtype_derive_div_usize,
-    );
-    ctx.add_deriv_custom(
-        usize_arith && full_arith,
-        "Rem<usize>",
-        newtype_derive_rem_usize,
-    );
-    ctx.add_deriv_shared(usize_arith, "AddAssign<usize>", derive_add_assign_usize);
-    ctx.add_deriv_shared(usize_arith, "SubAssign<usize>", derive_sub_assign_usize);
-    ctx.add_deriv_shared(
-        usize_arith && full_arith,
-        "MulAssign<usize>",
-        derive_mul_assign_usize,
-    );
-    ctx.add_deriv_shared(
-        usize_arith && full_arith,
-        "DivAssign<usize>",
-        derive_div_assign_usize,
-    );
-    ctx.add_deriv_shared(
-        usize_arith && full_arith,
-        "RemAssign<usize>",
-        derive_rem_assign_usize,
-    );
+
+    for i in 0..ctx.base.attrs.arith_compat_list.len() {
+        let ty_tt = ctx.base.attrs.arith_compat_list[i].to_token_stream();
+        let ty_str = token_stream_to_compact_string(&ty_tt);
+
+        let add_compat =
+            move |ctx: &mut DeriveContext<NewtypeCtxCustom<'_>>,
+                  default: bool,
+                  name: &str,
+                  f: fn(&DeriveContextBase, TokenStream) -> TokenStream| {
+                let ty = ty_tt.clone();
+                ctx.add_deriv_shared(default, format!("{name}<{ty_str}>"), move |ctx| f(ctx, ty));
+            };
+
+        add_compat(ctx, base_arith, "Add", derive_add_compat);
+        add_compat(ctx, base_arith, "Sub", derive_sub_compat);
+        add_compat(ctx, base_arith, "AddAssign", derive_add_assign_compat);
+        add_compat(ctx, base_arith, "SubAssign", derive_sub_assign_compat);
+
+        add_compat(ctx, full_arith, "Mul", derive_mul_compat);
+        add_compat(ctx, full_arith, "Div", derive_div_compat);
+        add_compat(ctx, full_arith, "Rem", derive_rem_compat);
+
+        add_compat(ctx, full_arith, "MulAssign", derive_mul_assign_compat);
+        add_compat(ctx, full_arith, "DivAssign", derive_div_assign_compat);
+        add_compat(ctx, full_arith, "RemAssign", derive_rem_assign_compat);
+    }
 }
 
 pub fn derive_idx_newtype_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {

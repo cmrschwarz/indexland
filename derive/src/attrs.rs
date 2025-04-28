@@ -12,7 +12,7 @@ const CRATE: &str = "crate";
 const ONLY: &str = "only";
 const OMIT: &str = "omit";
 const EXTRA: &str = "extra";
-const COMPATIBLE: &str = "compat";
+const IDX_COMPAT: &str = "idx_compat";
 const BOUNDS_CHECKS: &str = "bounds_checks";
 
 const ARITH_COMPAT: &str = "arith_compat";
@@ -43,7 +43,7 @@ pub struct Attrs {
     pub indexland_path: syn::Path,
     pub blacklist: Vec<TokenStream>,
     pub whitelist: Vec<TokenStream>,
-    pub compat_list: Vec<syn::Path>,
+    pub idx_compat_list: Vec<syn::Path>,
     pub arith_compat_list: Vec<syn::Path>,
     pub extra_list: Vec<TokenStream>,
     // could be active despite being empty
@@ -213,7 +213,7 @@ impl Attrs {
                     let elements =
                         Punctuated::<syn::Path, Token![,]>::parse_terminated(&arith_compat)?;
                     arith_compat_list.extend(elements);
-                } else if meta.path.is_ident(COMPATIBLE) {
+                } else if meta.path.is_ident(IDX_COMPAT) {
                     // e.g. #[indexland(compat(usize))]
                     let compatible;
                     parenthesized!(compatible in meta.input);
@@ -253,7 +253,7 @@ impl Attrs {
             whitelist,
             blacklist,
             extra_list,
-            compat_list,
+            idx_compat_list: compat_list,
             arith_compat_list,
             whitelist_active: first_whitelist.is_some(),
             bounds_checks_mode,

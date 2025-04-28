@@ -121,7 +121,7 @@ fn bounds_checks_never() {
 #[test]
 fn usize_arith() {
     #[derive(Idx)]
-    #[indexland(usize_arith)]
+    #[indexland(arith_compat(usize))]
     struct FooId(u32);
 
     let mut idx = FooId(12);
@@ -134,7 +134,7 @@ fn usize_arith() {
 #[test]
 fn usize_compatible() {
     #[derive(Idx)]
-    #[indexland(compatible(usize))]
+    #[indexland(idx_compat(usize))]
     struct FooId(u32);
 
     let v: IndexArray<FooId, i32, 3> = index_array![1, 2, 3];
@@ -147,7 +147,7 @@ fn multi_integer_compatible() {
     #![allow(clippy::unnecessary_cast)]
 
     #[derive(Idx)]
-    #[indexland(compatible(usize, u8))]
+    #[indexland(idx_compat(usize, u8))]
     struct FooId(u32);
 
     let v: IndexArray<FooId, i32, 3> = index_array![1, 2, 3];

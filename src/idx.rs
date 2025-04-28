@@ -76,6 +76,17 @@ impl<I: Idx> IdxCompatible<I> for I {
     }
 }
 
+pub trait ArithCompat<I>: Idx {
+    fn to_idx(self) -> I;
+}
+
+impl<I: Idx> ArithCompat<I> for I {
+    #[inline(always)]
+    fn to_idx(self) -> I {
+        self
+    }
+}
+
 impl Idx for usize {
     const ZERO: usize = 0;
     const ONE: usize = 1;

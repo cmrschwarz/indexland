@@ -4,7 +4,9 @@ use std::collections::HashMap;
 use syn::{Generics, Ident};
 
 use crate::{
-    attrs::Attrs, shared_derives::derive_compatible, utils::token_stream_to_compact_string,
+    attrs::Attrs,
+    shared_derives::{derive_arith_compat, derive_idx_compat},
+    utils::token_stream_to_compact_string,
 };
 
 pub struct DeriveContextBase {
@@ -16,18 +18,19 @@ pub struct DeriveContextBase {
 
 pub struct DeriveContext<C> {
     pub base: DeriveContextBase,
-    pub derivs_catalog: HashMap<&'static str, DeriveCatalogEntry<C>>,
-    pub derivs_default: Vec<&'static str>,
+    pub derivs_catalog: HashMap<String, DeriveCatalogEntry<C>>,
+    pub derivs_default: Vec<String>,
     pub custom: C,
 }
 
+#[allow(clippy::type_complexity)]
 pub enum DeriveCatalogEntry<C> {
-    Base(fn(&DeriveContextBase) -> TokenStream),
-    Custom(fn(&DeriveContext<C>) -> TokenStream),
+    Base(Box<dyn FnOnce(&DeriveContextBase) -> TokenStream>),
+    Custom(Box<dyn FnOnce(&DeriveContext<C>) -> TokenStream>),
 }
 
 impl<C> DeriveCatalogEntry<C> {
-    fn call(&self, ctx: &DeriveContext<C>) -> TokenStream {
+    fn call(self, ctx: &DeriveContext<C>) -> TokenStream {
         match self {
             DeriveCatalogEntry::Base(f) => f(&ctx.base),
             DeriveCatalogEntry::Custom(f) => f(ctx),
@@ -51,27 +54,31 @@ impl<C> DeriveContext<C> {
             custom,
         }
     }
-    pub fn add_deriv(&mut self, default: bool, name: &'static str, f: DeriveCatalogEntry<C>) {
-        self.derivs_catalog.insert(name, f);
+    pub fn add_deriv(&mut self, default: bool, name: String, f: DeriveCatalogEntry<C>) {
         if default {
-            self.derivs_default.push(name);
+            self.derivs_default.push(name.clone());
         }
+        self.derivs_catalog.insert(name, f);
     }
     pub fn add_deriv_shared(
         &mut self,
         default: bool,
-        name: &'static str,
-        f: fn(&DeriveContextBase) -> TokenStream,
+        name: impl Into<String>,
+        f: impl FnOnce(&DeriveContextBase) -> TokenStream + 'static,
     ) {
-        self.add_deriv(default, name, DeriveCatalogEntry::Base(f));
+        self.add_deriv(default, name.into(), DeriveCatalogEntry::Base(Box::new(f)));
     }
     pub fn add_deriv_custom(
         &mut self,
         default: bool,
-        name: &'static str,
-        f: fn(&Self) -> TokenStream,
+        name: impl Into<String>,
+        f: impl FnOnce(&Self) -> TokenStream + 'static,
     ) {
-        self.add_deriv(default, name, DeriveCatalogEntry::Custom(f));
+        self.add_deriv(
+            default,
+            name.into(),
+            DeriveCatalogEntry::Custom(Box::new(f)),
+        );
     }
 
     pub fn push_unknown_entry_error(&self, entry: &TokenStream, descr: &str) {
@@ -101,7 +108,7 @@ impl<C> DeriveContext<C> {
         if self.base.attrs.whitelist_active {
             for entry in &self.base.attrs.whitelist {
                 let descr = token_stream_to_compact_string(entry);
-                match self.derivs_catalog.get(&*descr) {
+                match self.derivs_catalog.remove(&*descr) {
                     Some(deriv) => {
                         derivations.push(deriv.call(self));
                     }
@@ -110,7 +117,7 @@ impl<C> DeriveContext<C> {
             }
         } else {
             for deriv_descr in &self.derivs_default {
-                if let Some(deriv) = self.derivs_catalog.get(deriv_descr) {
+                if let Some(deriv) = self.derivs_catalog.remove(deriv_descr) {
                     derivations.push(deriv.call(self));
                 }
             }
@@ -118,7 +125,7 @@ impl<C> DeriveContext<C> {
 
         for entry in &self.base.attrs.extra_list {
             let descr = token_stream_to_compact_string(entry);
-            match self.derivs_catalog.get(&*descr) {
+            match self.derivs_catalog.remove(&*descr) {
                 Some(deriv) => {
                     derivations.push(deriv.call(self));
                 }
@@ -126,11 +133,19 @@ impl<C> DeriveContext<C> {
             }
         }
 
-        for compat in &self.base.attrs.compat_list {
-            derivations.push(derive_compatible(
+        for arith_compat in &self.base.attrs.arith_compat_list {
+            derivations.push(derive_arith_compat(
                 &self.base.attrs.indexland_path,
                 &self.base.name,
-                compat,
+                arith_compat,
+            ));
+        }
+
+        for idx_compat in &self.base.attrs.idx_compat_list {
+            derivations.push(derive_idx_compat(
+                &self.base.attrs.indexland_path,
+                &self.base.name,
+                idx_compat,
             ));
         }
 

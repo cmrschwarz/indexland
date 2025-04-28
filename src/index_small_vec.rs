@@ -1,4 +1,8 @@
-use core::borrow::{Borrow, BorrowMut};
+use core::{
+    borrow::{Borrow, BorrowMut},
+    cmp::Ordering,
+    hash::Hash,
+};
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -30,7 +34,6 @@ macro_rules! index_small_vec {
     };
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IndexSmallVec<I, T, const CAP: usize> {
     data: SmallVec<[T; CAP]>,
     _phantom: PhantomData<fn(I) -> T>,
@@ -257,6 +260,21 @@ impl<I, T, const CAP: usize> BorrowMut<IndexSlice<I, T>> for IndexSmallVec<I, T,
     }
 }
 
+impl<I, T, const CAP: usize> Clone for IndexSmallVec<I, T, CAP>
+where
+    T: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+            _phantom: PhantomData,
+        }
+    }
+    fn clone_from(&mut self, source: &Self) {
+        self.data.clone_from(&source.data);
+    }
+}
+
 impl<I, T, const CAP: usize> Extend<T> for IndexSmallVec<I, T, CAP> {
     fn extend<It: IntoIterator<Item = T>>(&mut self, iter: It) {
         self.data.extend(iter);
@@ -299,11 +317,52 @@ impl<I, T, const CAP: usize> FromIterator<T> for IndexSmallVec<I, T, CAP> {
     }
 }
 
-impl<I, T: PartialEq, const CAP: usize, const N: usize> PartialEq<IndexSmallVec<I, T, CAP>>
-    for [T; N]
+impl<I, T, U, const CAP: usize, const CAP2: usize> PartialEq<IndexSmallVec<I, U, CAP2>>
+    for IndexSmallVec<I, T, CAP>
+where
+    T: PartialEq<U>,
 {
-    fn eq(&self, other: &IndexSmallVec<I, T, CAP>) -> bool {
+    fn eq(&self, other: &IndexSmallVec<I, U, CAP2>) -> bool {
         self.as_slice() == other.as_slice()
+    }
+}
+
+impl<I, T, const CAP: usize> Eq for IndexSmallVec<I, T, CAP> where T: Eq {}
+
+impl<I, T, U, const CAP: usize, const CAP2: usize> PartialOrd<IndexSmallVec<I, U, CAP2>>
+    for IndexSmallVec<I, T, CAP>
+where
+    T: PartialOrd<U>,
+{
+    fn partial_cmp(&self, other: &IndexSmallVec<I, U, CAP2>) -> Option<Ordering> {
+        self.iter().partial_cmp(other.iter())
+    }
+}
+
+impl<I, T, const CAP: usize> Ord for IndexSmallVec<I, T, CAP>
+where
+    T: Ord,
+{
+    fn cmp(&self, other: &IndexSmallVec<I, T, CAP>) -> Ordering {
+        self.as_slice().cmp(other.as_slice())
+    }
+}
+
+impl<I, T, const CAP: usize> Hash for IndexSmallVec<I, T, CAP>
+where
+    T: Hash,
+{
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.data.hash(state);
+    }
+}
+
+impl<I, T, U, const CAP: usize, const N: usize> PartialEq<IndexSmallVec<I, U, CAP>> for [T; N]
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexSmallVec<I, U, CAP>) -> bool {
+        self.as_slice().eq(other.as_slice())
     }
 }
 

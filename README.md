@@ -135,7 +135,7 @@ use `type NodeId = usize`, but this negatively affects:
     `Index<usize> for IndexSlice` and `Add<usize> for Idx`,
     as they circumvent the type safety benefits of newtypes. Opt-in support is available
     via
-    [`#[indexland(compat(usize))]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandcompatible)
+    [`#[indexland(idx_compat(usize))]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandcompatible)
     and
     [`#[indexland(arith_compat(usize))]`](https://docs.rs/indexland_derive/latest/indexland_derive/derive.Idx.html#indexlandusize_arith)
     respectively for cases where the ergonomic benefits are worth it.

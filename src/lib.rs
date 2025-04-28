@@ -61,6 +61,10 @@ pub mod index_hash_map;
 #[cfg_attr(docsrs, doc(cfg(feature = "indexmap")))]
 pub mod index_hash_set;
 
+#[cfg(feature = "slab")]
+#[cfg_attr(docsrs, doc(cfg(feature = "slab")))]
+pub mod index_slab;
+
 #[cfg(feature = "nonmax")]
 #[cfg_attr(docsrs, doc(cfg(feature = "nonmax")))]
 pub mod nonmax;
@@ -70,7 +74,7 @@ pub mod nonmax;
 // traits
 #[doc(inline)]
 pub use crate::{
-    idx::{Idx, IdxEnum, IdxNewtype},
+    idx::{ArithCompat, Idx, IdxCompatible, IdxEnum, IdxNewtype},
     index_range::IndexRangeBounds,
 };
 

@@ -61,27 +61,27 @@ pub struct IndexHashMap<I, K, V, S> {
 }
 
 #[repr(transparent)]
-pub struct IndexHashMapSlice<I, K, V> {
+pub struct IndexSlice<I, K, V> {
     _phantom: PhantomData<fn(I) -> (K, V)>,
     #[allow(unused)]
     data: Slice<K, V>,
 }
 
-impl<I, K, V> IndexHashMapSlice<I, K, V> {
+impl<I, K, V> IndexSlice<I, K, V> {
     #[inline]
-    pub fn from_index_map_slice(s: &Slice<K, V>) -> &Self {
+    pub fn from_slice(s: &Slice<K, V>) -> &Self {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline]
-    pub fn from_index_map_slice_mut(s: &mut Slice<K, V>) -> &mut Self {
+    pub fn from_slice_mut(s: &mut Slice<K, V>) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[inline]
-    pub fn into_index_map_slice(s: &Self) -> &Slice<K, V> {
+    pub fn into_slice(s: &Self) -> &Slice<K, V> {
         unsafe { &*(core::ptr::from_ref(s) as *const Slice<K, V>) }
     }
     #[inline]
-    pub fn into_index_map_slice_mut(s: &mut Self) -> &mut Slice<K, V> {
+    pub fn into_slice_mut(s: &mut Self) -> &mut Slice<K, V> {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Slice<K, V>) }
     }
     pub fn from_boxed_slice(slice_box: Box<Slice<K, V>>) -> Box<Self> {
@@ -92,24 +92,24 @@ impl<I, K, V> IndexHashMapSlice<I, K, V> {
     }
 }
 
-impl<'a, I, K, V> From<&'a Slice<K, V>> for &'a IndexHashMapSlice<I, K, V> {
+impl<'a, I, K, V> From<&'a Slice<K, V>> for &'a IndexSlice<I, K, V> {
     fn from(data: &'a Slice<K, V>) -> Self {
-        IndexHashMapSlice::from_index_map_slice(data)
+        IndexSlice::from_slice(data)
     }
 }
-impl<'a, I, K, V> From<&'a IndexHashMapSlice<I, K, V>> for &'a Slice<K, V> {
-    fn from(data: &'a IndexHashMapSlice<I, K, V>) -> Self {
-        IndexHashMapSlice::into_index_map_slice(data)
+impl<'a, I, K, V> From<&'a IndexSlice<I, K, V>> for &'a Slice<K, V> {
+    fn from(data: &'a IndexSlice<I, K, V>) -> Self {
+        IndexSlice::into_slice(data)
     }
 }
-impl<'a, I, K, V> From<&'a mut Slice<K, V>> for &'a mut IndexHashMapSlice<I, K, V> {
+impl<'a, I, K, V> From<&'a mut Slice<K, V>> for &'a mut IndexSlice<I, K, V> {
     fn from(data: &'a mut Slice<K, V>) -> Self {
-        IndexHashMapSlice::from_index_map_slice_mut(data)
+        IndexSlice::from_slice_mut(data)
     }
 }
-impl<'a, I, K, V> From<&'a mut IndexHashMapSlice<I, K, V>> for &'a mut Slice<K, V> {
-    fn from(data: &'a mut IndexHashMapSlice<I, K, V>) -> Self {
-        IndexHashMapSlice::into_index_map_slice_mut(data)
+impl<'a, I, K, V> From<&'a mut IndexSlice<I, K, V>> for &'a mut Slice<K, V> {
+    fn from(data: &'a mut IndexSlice<I, K, V>) -> Self {
+        IndexSlice::into_slice_mut(data)
     }
 }
 

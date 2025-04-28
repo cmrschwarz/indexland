@@ -1,18 +1,20 @@
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{Data, DeriveInput, Fields};
 
 use crate::{
     attrs::{Attrs, BoundsChecksMode},
-    derive_context::DeriveContext,
+    derive_context::{DeriveContext, DeriveContextBase},
     shared_derives::{
-        derive_add, derive_add_assign, derive_add_assign_usize, derive_add_usize, derive_clone,
-        derive_copy, derive_default, derive_div, derive_div_assign, derive_div_assign_usize,
-        derive_div_usize, derive_eq, derive_from_self_for_usize, derive_from_usize, derive_mul,
-        derive_mul_assign, derive_mul_assign_usize, derive_mul_usize, derive_ord,
-        derive_partial_ord, derive_rem, derive_rem_assign, derive_rem_assign_usize,
-        derive_rem_usize, derive_sub, derive_sub_assign, derive_sub_assign_usize, derive_sub_usize,
+        derive_add, derive_add_assign, derive_add_assign_compat, derive_add_compat, derive_clone,
+        derive_copy, derive_default, derive_div, derive_div_assign, derive_div_assign_compat,
+        derive_div_compat, derive_eq, derive_from_self_for_usize, derive_from_usize, derive_mul,
+        derive_mul_assign, derive_mul_assign_compat, derive_mul_compat, derive_ord,
+        derive_partial_ord, derive_rem, derive_rem_assign, derive_rem_assign_compat,
+        derive_rem_compat, derive_sub, derive_sub_assign, derive_sub_assign_compat,
+        derive_sub_compat,
     },
+    utils::token_stream_to_compact_string,
 };
 
 struct EnumCtxCustom<'a> {
@@ -220,8 +222,11 @@ fn enum_derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
 }
 
 fn fill_derivation_list(ctx: &mut EnumCtx) {
-    let usize_arith = ctx.base.attrs.enable_usize_arith;
-    let full_arith = ctx.base.attrs.enable_full_arith;
+    let (base_arith, full_arith) = match ctx.base.attrs.arith_mode {
+        crate::attrs::ArithMode::Disabled => (false, false),
+        crate::attrs::ArithMode::Basic => (true, false),
+        crate::attrs::ArithMode::Full => (true, true),
+    };
     ctx.add_deriv_custom(true, "Idx", enum_derive_idx);
     ctx.add_deriv_custom(true, "IdxEnum", enum_derive_idx_enum);
     ctx.add_deriv_custom(true, "Debug", enum_derive_debug);
@@ -246,28 +251,33 @@ fn fill_derivation_list(ctx: &mut EnumCtx) {
     ctx.add_deriv_shared(true, "Eq", derive_eq);
     ctx.add_deriv_shared(true, "From<usize>", derive_from_usize);
     ctx.add_deriv_shared(true, "From<Self> for usize", derive_from_self_for_usize);
-    ctx.add_deriv_shared(usize_arith, "Add<usize>", derive_add_usize);
-    ctx.add_deriv_shared(usize_arith, "Sub<usize>", derive_sub_usize);
-    ctx.add_deriv_shared(usize_arith && full_arith, "Mul<usize>", derive_mul_usize);
-    ctx.add_deriv_shared(usize_arith && full_arith, "Div<usize>", derive_div_usize);
-    ctx.add_deriv_shared(usize_arith && full_arith, "Rem<usize>", derive_rem_usize);
-    ctx.add_deriv_shared(usize_arith, "AddAssign<usize>", derive_add_assign_usize);
-    ctx.add_deriv_shared(usize_arith, "SubAssign<usize>", derive_sub_assign_usize);
-    ctx.add_deriv_shared(
-        usize_arith && full_arith,
-        "MulAssign<usize>",
-        derive_mul_assign_usize,
-    );
-    ctx.add_deriv_shared(
-        usize_arith && full_arith,
-        "DivAssign<usize>",
-        derive_div_assign_usize,
-    );
-    ctx.add_deriv_shared(
-        usize_arith && full_arith,
-        "RemAssign<usize>",
-        derive_rem_assign_usize,
-    );
+
+    for i in 0..ctx.base.attrs.arith_compat_list.len() {
+        let ty_tt = ctx.base.attrs.arith_compat_list[i].to_token_stream();
+        let ty_str = token_stream_to_compact_string(&ty_tt);
+
+        let add_compat =
+            move |ctx: &mut DeriveContext<EnumCtxCustom<'_>>,
+                  default: bool,
+                  name: &str,
+                  f: fn(&DeriveContextBase, TokenStream) -> TokenStream| {
+                let ty = ty_tt.clone();
+                ctx.add_deriv_shared(default, format!("{name}<{ty_str}>"), move |ctx| f(ctx, ty));
+            };
+
+        add_compat(ctx, base_arith, "Add", derive_add_compat);
+        add_compat(ctx, base_arith, "Sub", derive_sub_compat);
+        add_compat(ctx, base_arith, "AddAssign", derive_add_assign_compat);
+        add_compat(ctx, base_arith, "SubAssign", derive_sub_assign_compat);
+
+        add_compat(ctx, full_arith, "Mul", derive_mul_compat);
+        add_compat(ctx, full_arith, "Div", derive_div_compat);
+        add_compat(ctx, full_arith, "Rem", derive_rem_compat);
+
+        add_compat(ctx, full_arith, "MulAssign", derive_mul_assign_compat);
+        add_compat(ctx, full_arith, "DivAssign", derive_div_assign_compat);
+        add_compat(ctx, full_arith, "RemAssign", derive_rem_assign_compat);
+    }
 }
 
 pub fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {

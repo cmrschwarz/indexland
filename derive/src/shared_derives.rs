@@ -3,15 +3,15 @@ use quote::quote;
 
 use crate::derive_context::DeriveContextBase;
 
-pub fn derive_compatible(
+pub fn derive_idx_compat(
     indexland: &syn::Path,
     name: &syn::Ident,
     compat: &syn::Path,
 ) -> TokenStream {
     quote! {
         #[automatically_derived]
-        impl #indexland::idx::IdxCompatible<FooId> for #compat {
-            fn idx_cast(self) -> FooId {
+        impl #indexland::idx::IdxCompatible<#name> for #compat {
+            fn idx_cast(self) -> #name {
                 #name::from_usize(Idx::into_usize(self))
             }
         }
@@ -22,13 +22,13 @@ pub fn derive_compatible(
         {
             type Output = T;
 
-            fn get(self, slice: & #indexland::IndexSlice<FooId, T>) -> Option<&Self::Output> {
+            fn get(self, slice: & #indexland::IndexSlice<#name, T>) -> Option<&Self::Output> {
                 slice.as_slice().get(#indexland::Idx::into_usize(self))
             }
 
             fn get_mut(
                 self,
-                slice: &mut #indexland::IndexSlice<FooId, T>,
+                slice: &mut #indexland::IndexSlice<#name, T>,
             ) -> Option<&mut Self::Output> {
                 slice
                     .as_mut_slice()
@@ -37,25 +37,25 @@ pub fn derive_compatible(
 
             unsafe fn get_unchecked(
                 self,
-                slice: *const #indexland::IndexSlice<FooId, T>,
+                slice: *const #indexland::IndexSlice<#name, T>,
             ) -> *const Self::Output {
                 unsafe { slice.cast::<T>().add(self.into_usize_unchecked()) }
             }
 
             unsafe fn get_unchecked_mut(
                 self,
-                slice: *mut #indexland::IndexSlice<FooId, T>,
+                slice: *mut #indexland::IndexSlice<#name, T>,
             ) -> *mut Self::Output {
                 unsafe { slice.cast::<T>().add(self.into_usize_unchecked()) }
             }
 
-            fn index(self, slice: & #indexland::IndexSlice<FooId, T>) -> &Self::Output {
+            fn index(self, slice: & #indexland::IndexSlice<#name, T>) -> &Self::Output {
                 &slice.as_slice()[#indexland::Idx::into_usize(self)]
             }
 
             fn index_mut(
                 self,
-                slice: &mut #indexland::IndexSlice<FooId, T>,
+                slice: &mut #indexland::IndexSlice<#name, T>,
             ) -> &mut Self::Output {
                 &mut slice.as_mut_slice()[#indexland::Idx::into_usize(self)]
             }
@@ -110,6 +110,21 @@ pub fn derive_compatible(
                 C: #indexland::raw_index_container::RawIndexContainerMut<Element = E, Slice = S>,
             {
                 C::index_mut(container, self.into_usize())
+            }
+        }
+    }
+}
+
+pub fn derive_arith_compat(
+    indexland: &syn::Path,
+    name: &syn::Ident,
+    compat: &syn::Path,
+) -> TokenStream {
+    quote! {
+        #[automatically_derived]
+        impl #indexland::idx::ArithCompat<#name> for #compat {
+            fn to_idx(self) -> #name {
+                #name::from_usize(Idx::into_usize(self))
             }
         }
     }
@@ -358,146 +373,136 @@ pub fn derive_from_self_for_usize(ctx: &DeriveContextBase) -> TokenStream {
     }
 }
 
-pub fn derive_add_usize(ctx: &DeriveContextBase) -> TokenStream {
+pub fn derive_add_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
-        impl ::core::ops::Add<usize> for #name {
+        impl ::core::ops::Add<#ty> for #name {
             type Output = Self;
-            fn add(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) + rhs,
-                )
+            fn add(self, rhs: #ty) -> Self::Output {
+                self + #indexland::ArithCompat::<#name>::to_idx(rhs)
             }
         }
     }
 }
 
-pub fn derive_sub_usize(ctx: &DeriveContextBase) -> TokenStream {
+pub fn derive_sub_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
-        impl ::core::ops::Sub<usize> for #name {
+        impl ::core::ops::Sub<#ty> for #name {
             type Output = Self;
-            fn sub(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) - rhs,
-                )
+            fn sub(self, rhs: #ty) -> Self::Output {
+                self - #indexland::ArithCompat::<#name>::to_idx(rhs)
             }
         }
     }
 }
 
-pub fn derive_mul_usize(ctx: &DeriveContextBase) -> TokenStream {
+pub fn derive_mul_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
-        impl ::core::ops::Mul<usize> for #name {
+        impl ::core::ops::Mul<#ty> for #name {
             type Output = Self;
-            fn mul(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) * rhs,
-                )
+            fn mul(self, rhs: #ty) -> Self::Output {
+                self * #indexland::ArithCompat::<#name>::to_idx(rhs)
             }
         }
     }
 }
 
-pub fn derive_div_usize(ctx: &DeriveContextBase) -> TokenStream {
+pub fn derive_div_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
-        impl ::core::ops::Div<usize> for #name {
+        impl ::core::ops::Div<#ty> for #name {
             type Output = Self;
-            fn div(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) / rhs,
-                )
+            fn div(self, rhs: #ty) -> Self::Output {
+                self / #indexland::ArithCompat::<#name>::to_idx(rhs)
             }
         }
     }
 }
 
-pub fn derive_rem_usize(ctx: &DeriveContextBase) -> TokenStream {
+pub fn derive_rem_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
-        impl ::core::ops::Rem<usize> for #name {
+        impl ::core::ops::Rem<#ty> for #name {
             type Output = Self;
-            fn rem(self, rhs: usize) -> Self::Output {
-                #indexland::Idx::from_usize(
-                    #indexland::Idx::into_usize(self) % rhs,
-                )
+            fn rem(self, rhs: #ty) -> Self::Output {
+                self % #indexland::ArithCompat::<#name>::to_idx(rhs)
             }
         }
     }
 }
 
-pub fn derive_add_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
+pub fn derive_add_assign_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
-        impl ::core::ops::AddAssign<usize> for #name {
-            fn add_assign(&mut self, rhs: usize) {
-                *self = *self + <#name as #indexland::Idx>::from_usize(rhs);
+        impl ::core::ops::AddAssign<#ty> for #name {
+            fn add_assign(&mut self, rhs: #ty) {
+                *self = *self + #indexland::ArithCompat::<#name>::to_idx(rhs);
             }
         }
     }
 }
 
-pub fn derive_sub_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
-    let self_as_idx = &ctx.self_as_idx;
-    let name = &ctx.name;
-    quote! {
-        #[automatically_derived]
-        impl ::core::ops::SubAssign<usize> for #name {
-            fn sub_assign(&mut self, rhs: usize) {
-                *self = *self - #self_as_idx::from_usize(rhs);
-            }
-        }
-    }
-}
-
-pub fn derive_mul_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
+pub fn derive_sub_assign_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
     let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
-        impl ::core::ops::MulAssign<usize> for #name {
-            fn mul_assign(&mut self, rhs: usize) {
-                *self = *self * <#name as #indexland::Idx>::from_usize(rhs);
+        impl ::core::ops::SubAssign<#ty> for #name {
+            fn sub_assign(&mut self, rhs: #ty) {
+                *self = *self - #indexland::ArithCompat::<#name>::to_idx(rhs);
             }
         }
     }
 }
 
-pub fn derive_div_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
-    let self_as_idx = &ctx.self_as_idx;
+pub fn derive_mul_assign_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
-        impl ::core::ops::DivAssign<usize> for #name {
-            fn div_assign(&mut self, rhs: usize) {
-                *self = *self / #self_as_idx::from_usize(rhs);
+        impl ::core::ops::MulAssign<#ty> for #name {
+            fn mul_assign(&mut self, rhs: #ty) {
+                *self = *self * #indexland::ArithCompat::<#name>::to_idx(rhs);
             }
         }
     }
 }
 
-pub fn derive_rem_assign_usize(ctx: &DeriveContextBase) -> TokenStream {
-    let self_as_idx = &ctx.self_as_idx;
+pub fn derive_div_assign_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
     let name = &ctx.name;
     quote! {
         #[automatically_derived]
-        impl ::core::ops::RemAssign<usize> for #name {
-            fn rem_assign(&mut self, rhs: usize) {
-                *self = *self % #self_as_idx::from_usize(rhs);
+        impl ::core::ops::DivAssign<#ty> for #name {
+            fn div_assign(&mut self, rhs: #ty) {
+                *self = *self / #indexland::ArithCompat::<#name>::to_idx(rhs);
+            }
+        }
+    }
+}
+
+pub fn derive_rem_assign_compat(ctx: &DeriveContextBase, ty: TokenStream) -> TokenStream {
+    let indexland = &ctx.attrs.indexland_path;
+    let name = &ctx.name;
+    quote! {
+        #[automatically_derived]
+        impl ::core::ops::RemAssign<#ty> for #name {
+            fn rem_assign(&mut self, rhs: #ty) {
+                *self = *self % #indexland::ArithCompat::<#name>::to_idx(rhs);
             }
         }
     }

@@ -1,5 +1,7 @@
 use core::{
+    cmp::Ordering,
     fmt::Debug,
+    hash::Hash,
     marker::PhantomData,
     ops::{Index, IndexMut},
 };
@@ -45,7 +47,6 @@ macro_rules! index_vec_deque {
     }};
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IndexVecDeque<I, T> {
     data: VecDeque<T>,
     _phantom: PhantomData<fn(I) -> T>,
@@ -274,6 +275,59 @@ impl<I, T> IndexVecDeque<I, T> {
     /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
         Self::from_iter(arr.into_inner())
+    }
+}
+
+impl<I, T> Clone for IndexVecDeque<I, T>
+where
+    T: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+            _phantom: PhantomData,
+        }
+    }
+    fn clone_from(&mut self, source: &Self) {
+        self.data.clone_from(&source.data);
+    }
+}
+
+impl<I, T, U> PartialEq<IndexVecDeque<I, U>> for IndexVecDeque<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVecDeque<I, U>) -> bool {
+        self.iter().eq(other.iter())
+    }
+}
+
+impl<I, T> Eq for IndexVecDeque<I, T> where T: Eq {}
+
+impl<I, T, U> PartialOrd<IndexVecDeque<I, U>> for IndexVecDeque<I, T>
+where
+    T: PartialOrd<U>,
+{
+    fn partial_cmp(&self, other: &IndexVecDeque<I, U>) -> Option<Ordering> {
+        self.iter().partial_cmp(other.iter())
+    }
+}
+
+impl<I, T> Ord for IndexVecDeque<I, T>
+where
+    T: Ord,
+{
+    fn cmp(&self, other: &IndexVecDeque<I, T>) -> Ordering {
+        self.data.cmp(&other.data)
+    }
+}
+
+impl<I, T> Hash for IndexVecDeque<I, T>
+where
+    T: Hash,
+{
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.data.hash(state);
     }
 }
 
