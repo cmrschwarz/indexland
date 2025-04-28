@@ -67,7 +67,7 @@
 //!     println!("myvec[{i}] = {v}");
 //! }
 //! ```
-use crate::{idx::IdxCompatible, Idx};
+use crate::{idx::IdxCompat, Idx};
 use core::ops::{
     Add, Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo,
     RangeToInclusive, Sub,
@@ -202,7 +202,7 @@ impl<I> RangeBounds<I> for IndexRange<I> {
         Bound::Excluded(&self.end)
     }
 }
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for IndexRange<C> {
+impl<I, C: IdxCompat<I>> IndexRangeBounds<I, C> for IndexRange<C> {
     type BaseRange = Range<C>;
     type IndexRange = IndexRange<C>;
     type UsizeRange = Range<usize>;
@@ -231,7 +231,7 @@ impl<I> RangeBounds<I> for IndexRangeInclusive<I> {
         Bound::Included(&self.end)
     }
 }
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for IndexRangeInclusive<C> {
+impl<I, C: IdxCompat<I>> IndexRangeBounds<I, C> for IndexRangeInclusive<C> {
     type BaseRange = IndexRangeInclusive<C>;
     type IndexRange = IndexRangeInclusive<C>;
     type UsizeRange = IndexRangeInclusive<usize>;
@@ -267,7 +267,7 @@ impl<I> RangeBounds<I> for IndexRangeFrom<I> {
         Bound::Unbounded
     }
 }
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for IndexRangeFrom<C> {
+impl<I, C: IdxCompat<I>> IndexRangeBounds<I, C> for IndexRangeFrom<C> {
     type BaseRange = RangeFrom<C>;
     type IndexRange = IndexRangeFrom<C>;
     type UsizeRange = RangeFrom<usize>;
@@ -290,7 +290,7 @@ impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for IndexRangeFrom<C> {
     }
 }
 
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for Range<C> {
+impl<I, C: IdxCompat<I>> IndexRangeBounds<I, C> for Range<C> {
     type BaseRange = Range<C>;
     type IndexRange = IndexRange<C>;
     type UsizeRange = Range<usize>;
@@ -311,7 +311,7 @@ impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for Range<C> {
     }
 }
 
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeInclusive<C> {
+impl<I, C: IdxCompat<I>> IndexRangeBounds<I, C> for RangeInclusive<C> {
     type BaseRange = RangeInclusive<C>;
     type IndexRange = IndexRangeInclusive<C>;
     type UsizeRange = RangeInclusive<usize>;
@@ -341,7 +341,7 @@ impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeInclusive<C> {
     }
 }
 
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeFrom<C> {
+impl<I, C: IdxCompat<I>> IndexRangeBounds<I, C> for RangeFrom<C> {
     type BaseRange = RangeFrom<C>;
     type IndexRange = IndexRangeFrom<C>;
     type UsizeRange = RangeFrom<usize>;
@@ -364,7 +364,7 @@ impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeFrom<C> {
     }
 }
 
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeTo<C> {
+impl<I, C: IdxCompat<I>> IndexRangeBounds<I, C> for RangeTo<C> {
     type BaseRange = RangeTo<C>;
     type IndexRange = RangeTo<C>;
     type UsizeRange = RangeTo<usize>;
@@ -387,7 +387,7 @@ impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeTo<C> {
     }
 }
 
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeToInclusive<C> {
+impl<I, C: IdxCompat<I>> IndexRangeBounds<I, C> for RangeToInclusive<C> {
     type BaseRange = RangeToInclusive<C>;
     type IndexRange = RangeToInclusive<C>;
     type UsizeRange = RangeToInclusive<usize>;
@@ -411,7 +411,7 @@ impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeToInclusive<C> {
     }
 }
 
-impl<I, C: IdxCompatible<I>> IndexRangeBounds<I, C> for RangeFull {
+impl<I, C: IdxCompat<I>> IndexRangeBounds<I, C> for RangeFull {
     type BaseRange = RangeFull;
     type IndexRange = RangeFull;
     type UsizeRange = RangeFull;

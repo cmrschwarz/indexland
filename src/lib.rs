@@ -74,7 +74,7 @@ pub mod nonmax;
 // traits
 #[doc(inline)]
 pub use crate::{
-    idx::{ArithCompat, Idx, IdxCompatible, IdxEnum, IdxNewtype},
+    idx::{ArithCompat, Idx, IdxCompat, IdxEnum, IdxNewtype},
     index_range::IndexRangeBounds,
 };
 

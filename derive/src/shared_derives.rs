@@ -10,7 +10,7 @@ pub fn derive_idx_compat(
 ) -> TokenStream {
     quote! {
         #[automatically_derived]
-        impl #indexland::idx::IdxCompatible<#name> for #compat {
+        impl #indexland::idx::IdxCompat<#name> for #compat {
             fn idx_cast(self) -> #name {
                 #name::from_usize(Idx::into_usize(self))
             }

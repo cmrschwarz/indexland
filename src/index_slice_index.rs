@@ -1,7 +1,7 @@
 use core::ops::{Index, IndexMut, RangeFull};
 
 use crate::{
-    idx::IdxCompatible,
+    idx::IdxCompat,
     index_range::{IndexRangeBounds, IndexRangeFrom, IndexRangeInclusive},
     Idx, IndexRange, IndexSlice,
 };
@@ -50,7 +50,7 @@ unsafe impl<I: Idx, T> IndexSliceIndex<I, T> for I {
     }
 }
 
-unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<I, T> for core::ops::Range<C> {
+unsafe impl<I: Idx, T, C: IdxCompat<I>> IndexSliceIndex<I, T> for core::ops::Range<C> {
     type Output = IndexSlice<I, T>;
 
     #[inline]
@@ -102,7 +102,7 @@ unsafe impl<I: Idx, T, C: IdxCompatible<I>> IndexSliceIndex<I, T> for core::ops:
 // inconsistent than useful though. Probably.
 macro_rules! index_slice_partial_range_impl {
     ($($range: path),* $(,)?) => {$(
-        unsafe impl<I: Idx, T, C: IdxCompatible<I>>
+        unsafe impl<I: Idx, T, C: IdxCompat<I>>
             IndexSliceIndex<I, T>
         for $range {
             type Output = IndexSlice<I, T>;

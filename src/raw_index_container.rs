@@ -1,7 +1,7 @@
 use core::ops::{Range, RangeFull};
 
 use crate::{
-    idx::IdxCompatible, Idx, IndexRange, IndexRangeBounds, IndexRangeFrom, IndexRangeInclusive,
+    idx::IdxCompat, Idx, IndexRange, IndexRangeBounds, IndexRangeFrom, IndexRangeInclusive,
 };
 
 /// ## Safety
@@ -241,7 +241,7 @@ macro_rules! index_slice_partial_range_impl {
             E: ?Sized,
             S: ?Sized,
             C: ?Sized,
-            X: IdxCompatible<I>
+            X: IdxCompat<I>
         >
             GenericIndex<I, E, S, C> for $range
         {

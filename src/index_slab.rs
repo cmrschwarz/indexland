@@ -7,7 +7,7 @@ use core::{
 pub use slab::Drain;
 use slab::Slab;
 
-use crate::{idx::IdxCompatible, Idx};
+use crate::{idx::IdxCompat, Idx};
 
 pub struct IndexSlab<I, T> {
     data: Slab<T>,
@@ -206,7 +206,7 @@ impl<I, T> IndexSlab<I, T> {
 
 impl<I, C, T> ops::Index<C> for IndexSlab<I, T>
 where
-    C: IdxCompatible<I>,
+    C: IdxCompat<I>,
 {
     type Output = T;
 
@@ -217,7 +217,7 @@ where
 
 impl<I, C, T> ops::IndexMut<C> for IndexSlab<I, T>
 where
-    C: IdxCompatible<I>,
+    C: IdxCompat<I>,
 {
     fn index_mut(&mut self, key: C) -> &mut T {
         self.data.index_mut(key.into_usize())

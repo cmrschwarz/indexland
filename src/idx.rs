@@ -65,11 +65,11 @@ pub trait IdxNewtype: Idx {
     fn into_inner(self) -> Self::Base;
 }
 
-pub trait IdxCompatible<I>: Idx {
+pub trait IdxCompat<I>: Idx {
     fn idx_cast(self) -> I;
 }
 
-impl<I: Idx> IdxCompatible<I> for I {
+impl<I: Idx> IdxCompat<I> for I {
     #[inline(always)]
     fn idx_cast(self) -> I {
         self
