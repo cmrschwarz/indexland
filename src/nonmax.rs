@@ -232,7 +232,7 @@ macro_rules! impl_wrapping_fn {
 macro_rules! impl_nonmax {
     ($($primitive: ty),*) => {$(
         impl NonMax<$primitive> {
-            const fn new(v: $primitive) -> Option<Self> {
+            pub const fn new(v: $primitive) -> Option<Self> {
                 if v == <$primitive>::MAX {
                     return None;
                 }

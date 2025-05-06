@@ -1,10 +1,13 @@
-use crate::{index_enumerate::IndexEnumerate, IndexArray, IndexRangeBounds};
+use crate::{
+    index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex, IndexArray,
+    IndexRangeBounds,
+};
 
 use core::{
     borrow::{Borrow, BorrowMut},
     fmt::Debug,
     marker::PhantomData,
-    ops::{Deref, DerefMut, Index, IndexMut, Range},
+    ops::{Deref, DerefMut, Index, IndexMut},
 };
 
 use alloc::{boxed::Box, vec::Vec};
@@ -367,32 +370,18 @@ impl<I, T: PartialEq> PartialEq<[T]> for IndexVec<I, T> {
     }
 }
 
-impl<I: Idx, T> Index<I> for IndexVec<I, T> {
-    type Output = T;
+impl<I, T, Idx: IndexSliceIndex<I, T>> Index<Idx> for IndexVec<I, T> {
+    type Output = Idx::Output;
     #[inline]
-    fn index(&self, index: I) -> &Self::Output {
-        &self.data[index.into_usize()]
+    fn index(&self, index: Idx) -> &Self::Output {
+        index.index(self.as_index_slice())
     }
 }
 
-impl<I: Idx, T> IndexMut<I> for IndexVec<I, T> {
+impl<I, T, ISI: IndexSliceIndex<I, T>> IndexMut<ISI> for IndexVec<I, T> {
     #[inline]
-    fn index_mut(&mut self, index: I) -> &mut Self::Output {
-        &mut self.data[index.into_usize()]
-    }
-}
-
-impl<I: Idx, T> Index<Range<I>> for IndexVec<I, T> {
-    type Output = IndexSlice<I, T>;
-
-    fn index(&self, index: Range<I>) -> &Self::Output {
-        IndexSlice::from_slice(&self.data[index.start.into_usize()..index.end.into_usize()])
-    }
-}
-
-impl<I: Idx, T> IndexMut<Range<I>> for IndexVec<I, T> {
-    fn index_mut(&mut self, index: Range<I>) -> &mut Self::Output {
-        IndexSlice::from_mut_slice(&mut self.data[index.start.into_usize()..index.end.into_usize()])
+    fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
+        index.index_mut(self.as_mut_index_slice())
     }
 }
 
@@ -422,5 +411,38 @@ where
         D: Deserializer<'de>,
     {
         Ok(Self::from(Vec::deserialize(deserializer)?))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use alloc::vec::Vec;
+
+    use indexland::Idx;
+
+    #[test]
+    fn index() {
+        #[derive(Idx)]
+        struct Foo(usize);
+
+        let v = index_vec![0, 1, 2, 3];
+
+        assert_eq!(v[Foo(1)], 1);
+
+        assert_eq!(&v[..].iter().copied().collect::<Vec<_>>(), &[0, 1, 2, 3]);
+        assert_eq!(&v[Foo(1)..].iter().copied().collect::<Vec<_>>(), &[1, 2, 3]);
+        assert_eq!(&v[..Foo(2)].iter().copied().collect::<Vec<_>>(), &[0, 1]);
+        assert_eq!(
+            &v[..=Foo(2)].iter().copied().collect::<Vec<_>>(),
+            &[0, 1, 2]
+        );
+        assert_eq!(
+            &v[Foo(1)..Foo(3)].iter().copied().collect::<Vec<_>>(),
+            &[1, 2]
+        );
+        assert_eq!(
+            &v[Foo(1)..=Foo(3)].iter().copied().collect::<Vec<_>>(),
+            &[1, 2, 3]
+        );
     }
 }
