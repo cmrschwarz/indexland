@@ -7,6 +7,7 @@ use core::{
     borrow::{Borrow, BorrowMut},
     fmt::Debug,
     marker::PhantomData,
+    mem::MaybeUninit,
     ops::{Deref, DerefMut, Index, IndexMut},
 };
 
@@ -96,7 +97,7 @@ impl<I, T> IndexVec<I, T> {
         I: Idx,
     {
         self.data
-            .reserve(self.len().saturating_sub(cap_idx.into_usize()));
+            .reserve(self.data.len().saturating_sub(cap_idx.into_usize()));
     }
     pub fn reserve_exact(&mut self, additional: usize) {
         self.data.reserve_exact(additional);
@@ -106,7 +107,7 @@ impl<I, T> IndexVec<I, T> {
         I: Idx,
     {
         self.data
-            .reserve_exact(self.len().saturating_sub(cap_idx.into_usize()));
+            .reserve_exact(self.data.len().saturating_sub(cap_idx.into_usize()));
     }
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), TryReserveError> {
         self.data.try_reserve(additional)
@@ -119,14 +120,14 @@ impl<I, T> IndexVec<I, T> {
         I: Idx,
     {
         self.data
-            .try_reserve(self.len().saturating_sub(cap_idx.into_usize()))
+            .try_reserve(self.data.len().saturating_sub(cap_idx.into_usize()))
     }
     pub fn try_reserve_exact_total(&mut self, cap_idx: I) -> Result<(), TryReserveError>
     where
         I: Idx,
     {
         self.data
-            .try_reserve_exact(self.len().saturating_sub(cap_idx.into_usize()))
+            .try_reserve_exact(self.data.len().saturating_sub(cap_idx.into_usize()))
     }
 
     pub fn shrink_to_fit(&mut self) {
@@ -188,8 +189,8 @@ impl<I, T> IndexVec<I, T> {
     }
 
     /// # Safety
-    /// - `len` must be less than or equal to [capacity].
-    /// - The elements at `self.len()`..`len` must be initialized.
+    /// - `len` must be less than or equal to [`Vec::capacity()`].
+    /// - The elements at [`Vec::len()`]..`len` must be initialized.
     pub unsafe fn set_len(&mut self, len: usize) {
         unsafe {
             self.data.set_len(len);
@@ -197,8 +198,8 @@ impl<I, T> IndexVec<I, T> {
     }
 
     /// # Safety
-    /// - `len` must be less than or equal to [capacity].
-    /// - The elements at `self.len()`..`len` must be initialized.
+    /// - `len` must be less than or equal to [`Vec::capacity`].
+    /// - The elements at [`Vec::len()`]..`len` must be initialized.
     /// - `len` must map to a valid usize
     pub unsafe fn set_len_idx(&mut self, len: I)
     where
@@ -289,6 +290,65 @@ impl<I, T> IndexVec<I, T> {
         self.data.drain(range.canonicalize(self.data.len()))
     }
 
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
+
+    pub fn len(&self) -> usize {
+        // TODO: make this const once that stabilizes
+        self.data.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        // TODO: make this const once that stabilizes
+        self.data.is_empty()
+    }
+
+    pub fn split_off(&mut self, at: I) -> IndexVec<I, T>
+    where
+        I: Idx,
+    {
+        IndexVec::from(self.data.split_off(at.into_usize()))
+    }
+
+    pub fn resize_with<F>(&mut self, new_len: usize, f: F)
+    where
+        F: FnMut() -> T,
+    {
+        self.data.resize_with(new_len, f);
+    }
+
+    pub fn resize_to_idx_with<F>(&mut self, new_len_idx: I, f: F)
+    where
+        I: Idx,
+        F: FnMut() -> T,
+    {
+        self.data.resize_with(new_len_idx.into_usize(), f);
+    }
+
+    pub fn leak<'a>(self) -> &'a mut IndexSlice<I, T> {
+        self.data.leak().into()
+    }
+
+    pub fn spare_capacity_mut(&mut self) -> &mut IndexSlice<I, MaybeUninit<T>> {
+        self.data.spare_capacity_mut().into()
+    }
+
+    pub fn resize(&mut self, new_len: usize, value: T)
+    where
+        T: Clone,
+    {
+        self.data.resize(new_len, value);
+    }
+
+    pub fn resize_to_idx(&mut self, len_idx: I, value: T)
+    where
+        I: Idx,
+        T: Clone,
+    {
+        self.data.resize(len_idx.into_usize(), value);
+    }
+
     pub fn extend_from_slice<S: AsRef<[T]>>(&mut self, slice: S)
     where
         T: Clone,
@@ -296,11 +356,14 @@ impl<I, T> IndexVec<I, T> {
         self.data.extend_from_slice(slice.as_ref());
     }
 
-    pub fn clear(&mut self) {
-        self.data.clear();
-    }
-    pub fn resize_with(&mut self, new_len: usize, f: impl FnMut() -> T) {
-        self.data.resize_with(new_len, f);
+    pub fn extend_from_within<C, R>(&mut self, src: R)
+    where
+        C: IdxCompat<I>,
+        R: IndexRangeBounds<C>,
+        T: Clone,
+    {
+        self.data
+            .extend_from_within(src.canonicalize(self.data.len()));
     }
 
     pub fn as_vec(&self) -> &Vec<T> {
@@ -324,7 +387,7 @@ impl<I, T> IndexVec<I, T> {
     where
         I: Idx,
     {
-        IndexEnumerate::new(I::ZERO, &self.data[range.canonicalize(self.len())])
+        IndexEnumerate::new(I::ZERO, &self.data[range.canonicalize(self.data.len())])
     }
     pub fn iter_enumerated_range_mut(
         &mut self,
