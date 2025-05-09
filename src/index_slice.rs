@@ -27,27 +27,27 @@ pub struct IndexSlice<I, T> {
 
 impl<I, T> IndexSlice<I, T> {
     #[inline(always)]
-    pub const fn from_slice(s: &[T]) -> &Self {
+    pub const fn from_raw_slice(s: &[T]) -> &Self {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline(always)]
-    pub const fn from_mut_slice(s: &mut [T]) -> &mut Self {
+    pub const fn from_mut_raw_slice(s: &mut [T]) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[cfg(feature = "alloc")]
-    pub fn from_boxed_slice(slice_box: Box<[T]>) -> Box<Self> {
+    pub fn from_boxed_raw_slice(slice_box: Box<[T]>) -> Box<Self> {
         unsafe { Box::from_raw(Box::into_raw(slice_box) as *mut Self) }
     }
     #[cfg(feature = "alloc")]
-    pub fn into_boxed_slice(self: Box<Self>) -> Box<[T]> {
+    pub fn into_boxed_raw_slice(self: Box<Self>) -> Box<[T]> {
         unsafe { Box::from_raw(Box::into_raw(self) as *mut [T]) }
     }
     #[inline(always)]
-    pub const fn as_slice(&self) -> &[T] {
+    pub const fn as_raw_slice(&self) -> &[T] {
         &self.data
     }
     #[inline(always)]
-    pub const fn as_mut_slice(&mut self) -> &mut [T] {
+    pub const fn as_mut_raw_slice(&mut self) -> &mut [T] {
         &mut self.data
     }
 
@@ -79,25 +79,25 @@ impl<I, T> IndexSlice<I, T> {
     }
     pub const fn split_first(&self) -> Option<(&T, &IndexSlice<I, T>)> {
         match self.data.split_first() {
-            Some((first, rest)) => Some((first, IndexSlice::from_slice(rest))),
+            Some((first, rest)) => Some((first, IndexSlice::from_raw_slice(rest))),
             None => None,
         }
     }
     pub const fn split_first_mut(&mut self) -> Option<(&T, &mut IndexSlice<I, T>)> {
         match self.data.split_first_mut() {
-            Some((first, rest)) => Some((first, IndexSlice::from_mut_slice(rest))),
+            Some((first, rest)) => Some((first, IndexSlice::from_mut_raw_slice(rest))),
             None => None,
         }
     }
     pub const fn split_last(&self) -> Option<(&T, &IndexSlice<I, T>)> {
         match self.data.split_last() {
-            Some((first, rest)) => Some((first, IndexSlice::from_slice(rest))),
+            Some((first, rest)) => Some((first, IndexSlice::from_raw_slice(rest))),
             None => None,
         }
     }
     pub const fn split_last_mut(&mut self) -> Option<(&T, &mut IndexSlice<I, T>)> {
         match self.data.split_last_mut() {
-            Some((first, rest)) => Some((first, IndexSlice::from_mut_slice(rest))),
+            Some((first, rest)) => Some((first, IndexSlice::from_mut_raw_slice(rest))),
             None => None,
         }
     }
@@ -125,7 +125,7 @@ impl<I, T> IndexSlice<I, T> {
         match self.data.split_first_chunk() {
             Some((arr, slice)) => Some((
                 IndexArray::from_array_ref(arr),
-                IndexSlice::from_slice(slice),
+                IndexSlice::from_raw_slice(slice),
             )),
             None => None,
         }
@@ -136,7 +136,7 @@ impl<I, T> IndexSlice<I, T> {
         match self.data.split_first_chunk_mut() {
             Some((arr, slice)) => Some((
                 IndexArray::from_mut_array_ref(arr),
-                IndexSlice::from_mut_slice(slice),
+                IndexSlice::from_mut_raw_slice(slice),
             )),
             None => None,
         }
@@ -146,7 +146,7 @@ impl<I, T> IndexSlice<I, T> {
     ) -> Option<(&IndexSlice<I, T>, &IndexArray<I, T, N>)> {
         match self.data.split_last_chunk() {
             Some((slice, arr)) => Some((
-                IndexSlice::from_slice(slice),
+                IndexSlice::from_raw_slice(slice),
                 IndexArray::from_array_ref(arr),
             )),
             None => None,
@@ -157,7 +157,7 @@ impl<I, T> IndexSlice<I, T> {
     ) -> Option<(&mut IndexSlice<I, T>, &mut IndexArray<I, T, N>)> {
         match self.data.split_last_chunk_mut() {
             Some((slice, arr)) => Some((
-                IndexSlice::from_mut_slice(slice),
+                IndexSlice::from_mut_raw_slice(slice),
                 IndexArray::from_mut_array_ref(arr),
             )),
             None => None,
@@ -452,7 +452,7 @@ impl<I, T> IndexSlice<I, T> {
     {
         self.data
             .strip_prefix(prefix.as_ref())
-            .map(IndexSlice::from_slice)
+            .map(IndexSlice::from_raw_slice)
     }
 
     pub fn strip_suffix<S: AsRef<[T]>>(&self, suffix: &S) -> Option<&IndexSlice<I, T>>
@@ -461,7 +461,7 @@ impl<I, T> IndexSlice<I, T> {
     {
         self.data
             .strip_suffix(suffix.as_ref())
-            .map(IndexSlice::from_slice)
+            .map(IndexSlice::from_raw_slice)
     }
 
     pub fn binary_search(&self, x: &T) -> Result<I, I>
@@ -801,7 +801,7 @@ impl<I, T> IndexSlice<I, T> {
 
     #[cfg(feature = "alloc")]
     pub fn into_vec(self: alloc::boxed::Box<Self>) -> alloc::vec::Vec<T> {
-        Self::into_boxed_slice(self).into_vec()
+        Self::into_boxed_raw_slice(self).into_vec()
     }
 
     #[cfg(feature = "alloc")]
@@ -912,7 +912,7 @@ impl<'a, I, T> Iterator for Windows<'a, I, T> {
 
     #[inline]
     fn next(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.windows.next()?))
+        Some(IndexSlice::from_raw_slice(self.windows.next()?))
     }
 
     #[inline]
@@ -927,24 +927,24 @@ impl<'a, I, T> Iterator for Windows<'a, I, T> {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.windows.nth(n)?))
+        Some(IndexSlice::from_raw_slice(self.windows.nth(n)?))
     }
 
     #[inline]
     fn last(self) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.windows.last()?))
+        Some(IndexSlice::from_raw_slice(self.windows.last()?))
     }
 }
 
 impl<'a, I, T> DoubleEndedIterator for Windows<'a, I, T> {
     #[inline]
     fn next_back(&mut self) -> Option<&'a IndexSlice<I, T>> {
-        Some(IndexSlice::from_slice(self.windows.next_back()?))
+        Some(IndexSlice::from_raw_slice(self.windows.next_back()?))
     }
 
     #[inline]
     fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        Some(IndexSlice::from_slice(self.windows.nth_back(n)?))
+        Some(IndexSlice::from_raw_slice(self.windows.nth_back(n)?))
     }
 }
 
@@ -1039,7 +1039,7 @@ impl<I, T: Clone, V: Borrow<[T]>> Join<&IndexSlice<I, T>> for IndexSlice<I, V> {
     type Output = IndexVec<I, T>;
 
     fn join(slice: &Self, sep: &IndexSlice<I, T>) -> IndexVec<I, T> {
-        slice.data.join(sep.as_slice()).into()
+        slice.data.join(sep.as_raw_slice()).into()
     }
 }
 
@@ -1095,7 +1095,7 @@ macro_rules! wrap_chunk_iter {
 
             #[inline]
             fn next(&mut self) -> Option<&'a IndexSlice<I, T>> {
-                Some(IndexSlice::from_slice(self.base.next()?))
+                Some(IndexSlice::from_raw_slice(self.base.next()?))
             }
 
             #[inline]
@@ -1110,24 +1110,24 @@ macro_rules! wrap_chunk_iter {
 
             #[inline]
             fn nth(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.nth(n)?))
+                Some(IndexSlice::from_raw_slice(self.base.nth(n)?))
             }
 
             #[inline]
             fn last(self) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.last()?))
+                Some(IndexSlice::from_raw_slice(self.base.last()?))
             }
         }
 
         impl<'a, I, T> DoubleEndedIterator for $name<'a, I, T> {
             #[inline]
             fn next_back(&mut self) -> Option<&'a IndexSlice<I, T>> {
-                Some(IndexSlice::from_slice(self.base.next_back()?))
+                Some(IndexSlice::from_raw_slice(self.base.next_back()?))
             }
 
             #[inline]
             fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.nth_back(n)?))
+                Some(IndexSlice::from_raw_slice(self.base.nth_back(n)?))
             }
         }
 
@@ -1156,7 +1156,7 @@ macro_rules! wrap_chunk_iter {
 
             #[inline]
             fn next(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-                Some(IndexSlice::from_mut_slice(self.base.next()?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.next()?))
             }
 
             #[inline]
@@ -1171,24 +1171,24 @@ macro_rules! wrap_chunk_iter {
 
             #[inline]
             fn nth(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.nth(n)?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.nth(n)?))
             }
 
             #[inline]
             fn last(self) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.last()?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.last()?))
             }
         }
 
         impl<'a, I, T> DoubleEndedIterator for $name_mut<'a, I, T> {
             #[inline]
             fn next_back(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-                Some(IndexSlice::from_mut_slice(self.base.next_back()?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.next_back()?))
             }
 
             #[inline]
             fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.nth_back(n)?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.nth_back(n)?))
             }
         }
 
@@ -1246,7 +1246,7 @@ macro_rules! wrap_pred_iter {
 
             #[inline]
             fn next(&mut self) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.next()?))
+                Some(IndexSlice::from_raw_slice(self.base.next()?))
             }
 
             #[inline]
@@ -1261,12 +1261,12 @@ macro_rules! wrap_pred_iter {
 
             #[inline]
             fn nth(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.nth(n)?))
+                Some(IndexSlice::from_raw_slice(self.base.nth(n)?))
             }
 
             #[inline]
             fn last(self) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.last()?))
+                Some(IndexSlice::from_raw_slice(self.base.last()?))
             }
         }
 
@@ -1276,12 +1276,12 @@ macro_rules! wrap_pred_iter {
         {
             #[inline]
             fn next_back(&mut self) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.next_back()?))
+                Some(IndexSlice::from_raw_slice(self.base.next_back()?))
             }
 
             #[inline]
             fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.nth_back(n)?))
+                Some(IndexSlice::from_raw_slice(self.base.nth_back(n)?))
             }
         }
 
@@ -1318,7 +1318,7 @@ macro_rules! wrap_pred_iter {
 
             #[inline]
             fn next(&mut self) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.next()?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.next()?))
             }
 
             #[inline]
@@ -1333,12 +1333,12 @@ macro_rules! wrap_pred_iter {
 
             #[inline]
             fn nth(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.nth(n)?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.nth(n)?))
             }
 
             #[inline]
             fn last(self) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.last()?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.last()?))
             }
         }
 
@@ -1348,12 +1348,12 @@ macro_rules! wrap_pred_iter {
         {
             #[inline]
             fn next_back(&mut self) -> Option<&'a mut IndexSlice<I, T>> {
-                Some(IndexSlice::from_mut_slice(self.base.next_back()?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.next_back()?))
             }
 
             #[inline]
             fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.nth_back(n)?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.nth_back(n)?))
             }
         }
 
@@ -1411,7 +1411,7 @@ macro_rules! wrap_pred_iter_n {
 
             #[inline]
             fn next(&mut self) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.next()?))
+                Some(IndexSlice::from_raw_slice(self.base.next()?))
             }
 
             #[inline]
@@ -1426,12 +1426,12 @@ macro_rules! wrap_pred_iter_n {
 
             #[inline]
             fn nth(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.nth(n)?))
+                Some(IndexSlice::from_raw_slice(self.base.nth(n)?))
             }
 
             #[inline]
             fn last(self) -> Option<Self::Item> {
-                Some(IndexSlice::from_slice(self.base.last()?))
+                Some(IndexSlice::from_raw_slice(self.base.last()?))
             }
         }
         impl<I, T, P> FusedIterator for $name<'_, I, T, P> where P: $($pred_ty)* {}
@@ -1467,7 +1467,7 @@ macro_rules! wrap_pred_iter_n {
 
             #[inline]
             fn next(&mut self) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.next()?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.next()?))
             }
 
             #[inline]
@@ -1482,12 +1482,12 @@ macro_rules! wrap_pred_iter_n {
 
             #[inline]
             fn nth(&mut self, n: usize) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.nth(n)?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.nth(n)?))
             }
 
             #[inline]
             fn last(self) -> Option<Self::Item> {
-                Some(IndexSlice::from_mut_slice(self.base.last()?))
+                Some(IndexSlice::from_mut_raw_slice(self.base.last()?))
             }
         }
 
@@ -1547,18 +1547,18 @@ impl<I, T: Debug> Debug for IndexSlice<I, T> {
 
 impl<I, T> Default for &IndexSlice<I, T> {
     fn default() -> Self {
-        IndexSlice::from_slice(&[])
+        IndexSlice::from_raw_slice(&[])
     }
 }
 impl<I, T> Default for &mut IndexSlice<I, T> {
     fn default() -> Self {
-        IndexSlice::from_mut_slice(&mut [])
+        IndexSlice::from_mut_raw_slice(&mut [])
     }
 }
 #[cfg(feature = "alloc")]
 impl<I, T> Default for alloc::boxed::Box<IndexSlice<I, T>> {
     fn default() -> Self {
-        IndexSlice::from_boxed_slice(Box::<[T]>::default())
+        IndexSlice::from_boxed_raw_slice(Box::<[T]>::default())
     }
 }
 
@@ -1568,7 +1568,7 @@ where
     T: Clone,
 {
     fn from(value: &[T]) -> Self {
-        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value))
+        IndexSlice::from_boxed_raw_slice(alloc::boxed::Box::from(value))
     }
 }
 #[cfg(feature = "alloc")]
@@ -1578,7 +1578,7 @@ where
 {
     fn from(value: &mut [T]) -> Self {
         // the `From<&mut [T]>` version was only stabilized in 1.84
-        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(&*value))
+        IndexSlice::from_boxed_raw_slice(alloc::boxed::Box::from(&*value))
     }
 }
 #[cfg(feature = "alloc")]
@@ -1587,7 +1587,7 @@ where
     T: Clone,
 {
     fn from(value: &IndexSlice<I, T>) -> Self {
-        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value.as_slice()))
+        IndexSlice::from_boxed_raw_slice(alloc::boxed::Box::from(value.as_raw_slice()))
     }
 }
 #[cfg(feature = "alloc")]
@@ -1596,7 +1596,7 @@ where
     T: Clone,
 {
     fn from(value: &mut IndexSlice<I, T>) -> Self {
-        IndexSlice::from_boxed_slice(alloc::boxed::Box::from(value.as_slice()))
+        IndexSlice::from_boxed_raw_slice(alloc::boxed::Box::from(value.as_raw_slice()))
     }
 }
 
@@ -1608,7 +1608,7 @@ where
     T: Clone,
 {
     fn from(value: &IndexSlice<I, T>) -> Self {
-        let res = From::<&[T]>::from(value.as_slice());
+        let res = From::<&[T]>::from(value.as_raw_slice());
         unsafe { core::mem::transmute::<Rc<[T]>, _>(res) }
     }
 }
@@ -1618,7 +1618,7 @@ where
     T: Clone,
 {
     fn from(value: &mut IndexSlice<I, T>) -> Self {
-        let res = From::<&[T]>::from(value.as_slice());
+        let res = From::<&[T]>::from(value.as_raw_slice());
         unsafe { core::mem::transmute::<Rc<[T]>, _>(res) }
     }
 }
@@ -1631,7 +1631,7 @@ where
     T: Clone,
 {
     fn from(value: &IndexSlice<I, T>) -> Self {
-        let res = From::<&[T]>::from(value.as_slice());
+        let res = From::<&[T]>::from(value.as_raw_slice());
         unsafe { core::mem::transmute::<Arc<[T]>, _>(res) }
     }
 }
@@ -1641,7 +1641,7 @@ where
     T: Clone,
 {
     fn from(value: &mut IndexSlice<I, T>) -> Self {
-        let res = From::<&[T]>::from(value.as_slice());
+        let res = From::<&[T]>::from(value.as_raw_slice());
         unsafe { core::mem::transmute::<Arc<[T]>, _>(res) }
     }
 }
@@ -1652,7 +1652,7 @@ where
     T: Clone,
 {
     fn from(value: &IndexSlice<I, T>) -> Self {
-        Vec::from(value.as_slice())
+        Vec::from(value.as_raw_slice())
     }
 }
 #[cfg(feature = "alloc")]
@@ -1661,7 +1661,7 @@ where
     T: Clone,
 {
     fn from(value: &mut IndexSlice<I, T>) -> Self {
-        Vec::from(value.as_slice())
+        Vec::from(value.as_raw_slice())
     }
 }
 
@@ -1682,7 +1682,7 @@ where
     T: Clone,
 {
     fn from(value: Cow<'_, IndexSlice<I, T>>) -> Self {
-        value.into_owned().into_boxed_index_slice()
+        value.into_owned().into_boxed_slice()
     }
 }
 
@@ -1692,7 +1692,7 @@ where
     T: Clone,
 {
     fn from(value: [T; N]) -> Self {
-        IndexSlice::from_boxed_slice(Box::from(value))
+        IndexSlice::from_boxed_raw_slice(Box::from(value))
     }
 }
 #[cfg(feature = "alloc")]
@@ -1701,14 +1701,14 @@ where
     T: Clone,
 {
     fn from(value: IndexArray<I, T, N>) -> Self {
-        IndexSlice::from_boxed_slice(Box::from(value.into_array()))
+        IndexSlice::from_boxed_raw_slice(Box::from(value.into_array()))
     }
 }
 
 #[cfg(feature = "alloc")]
 impl<I, T> FromIterator<T> for Box<IndexSlice<I, T>> {
     fn from_iter<It: IntoIterator<Item = T>>(iter: It) -> Self {
-        IndexSlice::from_boxed_slice(Box::from_iter(iter))
+        IndexSlice::from_boxed_raw_slice(Box::from_iter(iter))
     }
 }
 
@@ -1765,7 +1765,7 @@ impl<'a, I, T> IntoIterator for &'a Box<IndexSlice<I, T>> {
     type IntoIter = core::slice::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.as_slice().iter()
+        self.as_raw_slice().iter()
     }
 }
 
@@ -1776,7 +1776,7 @@ impl<'a, I, T> IntoIterator for &'a mut Box<IndexSlice<I, T>> {
     type IntoIter = core::slice::IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.as_mut_slice().iter_mut()
+        self.as_mut_raw_slice().iter_mut()
     }
 }
 
@@ -1785,7 +1785,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexSlice<I, U>) -> bool {
-        self.as_slice().eq(other.as_slice())
+        self.as_raw_slice().eq(other.as_raw_slice())
     }
 }
 impl<I, T> Eq for IndexSlice<I, T> where T: PartialEq {}
@@ -1795,7 +1795,7 @@ where
     T: PartialOrd,
 {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        self.as_slice().partial_cmp(other.as_slice())
+        self.as_raw_slice().partial_cmp(other.as_raw_slice())
     }
 }
 impl<I, T> Ord for IndexSlice<I, T>
@@ -1803,7 +1803,7 @@ where
     T: Ord,
 {
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        self.as_slice().cmp(other.as_slice())
+        self.as_raw_slice().cmp(other.as_raw_slice())
     }
 }
 impl<I, T> Hash for IndexSlice<I, T>
@@ -1811,7 +1811,7 @@ where
     T: Hash,
 {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        self.as_slice().hash(state);
+        self.as_raw_slice().hash(state);
     }
 }
 
@@ -1820,7 +1820,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexArray<I, U, N>) -> bool {
-        self.as_slice().eq(other.as_slice())
+        self.as_raw_slice().eq(other.as_slice())
     }
 }
 
@@ -1831,7 +1831,7 @@ where
     U: Clone,
 {
     fn eq(&self, other: &Cow<'_, IndexSlice<I, U>>) -> bool {
-        self.as_slice().eq(other.as_slice())
+        self.as_raw_slice().eq(other.as_raw_slice())
     }
 }
 
@@ -1841,7 +1841,7 @@ where
     T: PartialEq<U> + Clone,
 {
     fn eq(&self, other: &IndexSlice<I, U>) -> bool {
-        self.as_slice().eq(other.as_slice())
+        self.as_raw_slice().eq(other.as_raw_slice())
     }
 }
 
@@ -1851,7 +1851,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVec<I, U>) -> bool {
-        self.as_slice().eq(other.as_slice())
+        self.as_raw_slice().eq(other.as_raw_slice())
     }
 }
 
@@ -1861,7 +1861,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVecDeque<I, U>) -> bool {
-        let s = self.as_slice();
+        let s = self.as_raw_slice();
         let (s1, s2) = other.as_slices();
         s1.len() + s2.len() == s.len() && &s[0..s1.len()] == s1 && &s[s1.len()..] == s2
     }
@@ -1869,23 +1869,23 @@ where
 
 impl<'a, I, T> From<&'a IndexSlice<I, T>> for &'a [T] {
     fn from(value: &'a IndexSlice<I, T>) -> Self {
-        value.as_slice()
+        value.as_raw_slice()
     }
 }
 impl<'a, I, T> From<&'a mut IndexSlice<I, T>> for &'a mut [T] {
     fn from(value: &'a mut IndexSlice<I, T>) -> Self {
-        value.as_mut_slice()
+        value.as_mut_raw_slice()
     }
 }
 
 impl<'a, I, T> From<&'a [T]> for &'a IndexSlice<I, T> {
     fn from(value: &'a [T]) -> Self {
-        IndexSlice::from_slice(value)
+        IndexSlice::from_raw_slice(value)
     }
 }
 impl<'a, I, T> From<&'a mut [T]> for &'a mut IndexSlice<I, T> {
     fn from(value: &'a mut [T]) -> Self {
-        IndexSlice::from_mut_slice(value)
+        IndexSlice::from_mut_raw_slice(value)
     }
 }
 
@@ -1897,7 +1897,7 @@ where
     type Owned = IndexVec<I, T>;
 
     fn to_owned(&self) -> Self::Owned {
-        IndexVec::from(self.as_slice().to_vec())
+        IndexVec::from(self.as_raw_slice().to_vec())
     }
 }
 

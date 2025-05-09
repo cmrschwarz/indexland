@@ -145,10 +145,10 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
         &mut self.data
     }
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
-        IndexSlice::from_slice(&self.data)
+        IndexSlice::from_raw_slice(&self.data)
     }
     pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_mut_slice(&mut self.data)
+        IndexSlice::from_mut_raw_slice(&mut self.data)
     }
     pub fn each_ref(&self) -> IndexArray<I, &T, N> {
         self.data.each_ref().into()
@@ -463,7 +463,7 @@ impl<'a, I, T, const N: usize> TryFrom<&'a IndexSlice<I, T>> for &'a IndexArray<
 
     fn try_from(value: &'a IndexSlice<I, T>) -> Result<Self, Self::Error> {
         Ok(IndexArray::from_array_ref(<&'a [T; N]>::try_from(
-            value.as_slice(),
+            value.as_raw_slice(),
         )?))
     }
 }
@@ -472,7 +472,7 @@ impl<'a, I, T, const N: usize> TryFrom<&'a mut IndexSlice<I, T>> for &'a mut Ind
 
     fn try_from(value: &'a mut IndexSlice<I, T>) -> Result<Self, Self::Error> {
         Ok(IndexArray::from_mut_array_ref(<&'a mut [T; N]>::try_from(
-            value.as_mut_slice(),
+            value.as_mut_raw_slice(),
         )?))
     }
 }

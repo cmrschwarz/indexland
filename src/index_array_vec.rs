@@ -84,12 +84,12 @@ impl<I, T, const CAP: usize> Deref for IndexArrayVec<I, T, CAP> {
     type Target = IndexSlice<I, T>;
 
     fn deref(&self) -> &Self::Target {
-        IndexSlice::from_slice(self.as_slice())
+        IndexSlice::from_raw_slice(self.as_slice())
     }
 }
 impl<I, T, const CAP: usize> DerefMut for IndexArrayVec<I, T, CAP> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        IndexSlice::from_mut_slice(self.as_mut_slice())
+        IndexSlice::from_mut_raw_slice(self.as_mut_slice())
     }
 }
 
@@ -341,10 +341,10 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
         CAP
     }
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
-        IndexSlice::from_slice(self.as_slice())
+        IndexSlice::from_raw_slice(self.as_slice())
     }
     pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_mut_slice(self.as_mut_slice())
+        IndexSlice::from_mut_raw_slice(self.as_mut_slice())
     }
 
     fn extend_from_slice(&mut self, slice: &[T])
@@ -517,13 +517,13 @@ impl<I, T: PartialEq, const CAP: usize, const N: usize> PartialEq<[T; N]>
 
 impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexSlice<I, T>> for IndexArrayVec<I, T, CAP> {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
-        self.as_slice() == other.as_slice()
+        self.as_slice() == other.as_raw_slice()
     }
 }
 
 impl<I, T: PartialEq, const CAP: usize> PartialEq<IndexArrayVec<I, T, CAP>> for IndexSlice<I, T> {
     fn eq(&self, other: &IndexArrayVec<I, T, CAP>) -> bool {
-        self.as_slice() == other.as_slice()
+        self.as_raw_slice() == other.as_slice()
     }
 }
 

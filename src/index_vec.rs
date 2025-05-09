@@ -1,5 +1,5 @@
 use crate::{
-    index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex, IndexArray,
+    index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex, IdxCompat, IndexArray,
     IndexRangeBounds,
 };
 
@@ -10,7 +10,11 @@ use core::{
     ops::{Deref, DerefMut, Index, IndexMut},
 };
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::{
+    boxed::Box,
+    collections::TryReserveError,
+    vec::{Drain, Vec},
+};
 
 use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 
@@ -67,54 +71,238 @@ impl<I, T> IndexVec<I, T> {
             _phantom: PhantomData,
         }
     }
-    pub fn extend_from_slice(&mut self, slice: &[T])
-    where
-        T: Clone,
-    {
-        self.data.extend_from_slice(slice);
+    /// ## Safety
+    ///  See [`Vec::from_raw_parts`] for the invariants that this has to uphold.
+    pub unsafe fn from_raw_parts(ptr: *mut T, length: usize, capacity: usize) -> Self {
+        Self {
+            data: Vec::from_raw_parts(ptr, length, capacity),
+            _phantom: PhantomData,
+        }
     }
-    pub fn reserve(&mut self, additional: I)
+    pub fn capacity(&self) -> usize {
+        self.data.capacity()
+    }
+    pub fn capacity_idx(&self) -> I
     where
         I: Idx,
     {
-        self.data.reserve(additional.into_usize());
+        I::from_usize(self.data.capacity())
     }
-    pub fn reserve_len(&mut self, additional: usize) {
+    pub fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
-    pub fn push(&mut self, v: T) {
-        self.data.push(v);
-    }
-    pub fn pop(&mut self) -> Option<T> {
-        self.data.pop()
-    }
-    pub fn clear(&mut self) {
-        self.data.clear();
-    }
-    pub fn resize_with(&mut self, new_len: usize, f: impl FnMut() -> T) {
-        self.data.resize_with(new_len, f);
-    }
-    pub fn truncate(&mut self, end: I)
+    pub fn reserve_total(&mut self, cap_idx: I)
     where
         I: Idx,
     {
-        self.data.truncate(end.into_usize());
+        self.data
+            .reserve(self.len().saturating_sub(cap_idx.into_usize()));
     }
+    pub fn reserve_exact(&mut self, additional: usize) {
+        self.data.reserve_exact(additional);
+    }
+    pub fn reserve_exact_total(&mut self, cap_idx: I)
+    where
+        I: Idx,
+    {
+        self.data
+            .reserve_exact(self.len().saturating_sub(cap_idx.into_usize()));
+    }
+    pub fn try_reserve(&mut self, additional: usize) -> Result<(), TryReserveError> {
+        self.data.try_reserve(additional)
+    }
+    pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), TryReserveError> {
+        self.data.try_reserve_exact(additional)
+    }
+    pub fn try_reserve_total(&mut self, cap_idx: I) -> Result<(), TryReserveError>
+    where
+        I: Idx,
+    {
+        self.data
+            .try_reserve(self.len().saturating_sub(cap_idx.into_usize()))
+    }
+    pub fn try_reserve_exact_total(&mut self, cap_idx: I) -> Result<(), TryReserveError>
+    where
+        I: Idx,
+    {
+        self.data
+            .try_reserve_exact(self.len().saturating_sub(cap_idx.into_usize()))
+    }
+
+    pub fn shrink_to_fit(&mut self) {
+        self.data.shrink_to_fit();
+    }
+
+    pub fn shrink_to(&mut self, cap: usize) {
+        self.data.shrink_to(cap);
+    }
+
+    pub fn shrink_to_idx(&mut self, cap_idx: I)
+    where
+        I: Idx,
+    {
+        self.data.shrink_to(cap_idx.into_usize());
+    }
+
+    pub fn into_boxed_slice(self) -> Box<IndexSlice<I, T>> {
+        IndexSlice::from_boxed_raw_slice(self.data.into_boxed_slice())
+    }
+
+    pub fn into_boxed_raw_slice(self) -> Box<[T]> {
+        self.data.into_boxed_slice()
+    }
+
+    pub fn truncate(&mut self, len_idx: I)
+    where
+        I: Idx,
+    {
+        self.data.truncate(len_idx.into_usize());
+    }
+
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
+
+    pub fn as_slice(&self) -> &IndexSlice<I, T> {
+        IndexSlice::from_raw_slice(&self.data)
+    }
+
+    pub fn as_mut_slice(&mut self) -> &mut IndexSlice<I, T> {
+        IndexSlice::from_mut_raw_slice(&mut self.data)
+    }
+
+    pub fn as_raw_slice(&self) -> &[T] {
+        &self.data
+    }
+
+    pub fn as_mut_raw_slice(&mut self) -> &mut [T] {
+        &mut self.data
+    }
+
+    pub fn as_ptr(&self) -> *const T {
+        self.data.as_ptr()
+    }
+
+    pub fn as_mut_ptr(&mut self) -> *mut T {
+        self.data.as_mut_ptr()
+    }
+
+    /// # Safety
+    /// - `len` must be less than or equal to [capacity].
+    /// - The elements at `self.len()`..`len` must be initialized.
+    pub unsafe fn set_len(&mut self, len: usize) {
+        unsafe {
+            self.data.set_len(len);
+        }
+    }
+
+    /// # Safety
+    /// - `len` must be less than or equal to [capacity].
+    /// - The elements at `self.len()`..`len` must be initialized.
+    /// - `len` must map to a valid usize
+    pub unsafe fn set_len_idx(&mut self, len: I)
+    where
+        I: Idx,
+    {
+        unsafe {
+            self.data.set_len(len.into_usize_unchecked());
+        }
+    }
+
+    pub fn swap_remove(&mut self, index: I) -> T
+    where
+        I: Idx,
+    {
+        self.data.swap_remove(index.into_usize())
+    }
+
+    pub fn insert(&mut self, index: I, element: T)
+    where
+        I: Idx,
+    {
+        self.data.insert(index.into_usize(), element);
+    }
+
     pub fn remove(&mut self, index: I) -> T
     where
         I: Idx,
     {
         self.data.remove(index.into_usize())
     }
-    pub fn swap_remove(&mut self, idx: I) -> T
+
+    pub fn retain<F>(&mut self, f: F)
     where
-        I: Idx,
+        F: FnMut(&T) -> bool,
     {
-        self.data.swap_remove(idx.into_usize())
+        self.data.retain(f);
     }
+
+    pub fn retain_mut<F>(&mut self, f: F)
+    where
+        F: FnMut(&mut T) -> bool,
+    {
+        self.data.retain_mut(f);
+    }
+
+    pub fn dedup_by_key<F, K>(&mut self, key: F)
+    where
+        F: FnMut(&mut T) -> K,
+        K: PartialEq,
+    {
+        self.data.dedup_by_key(key);
+    }
+
+    pub fn dedup_by<F>(&mut self, same_bucket: F)
+    where
+        F: FnMut(&mut T, &mut T) -> bool,
+    {
+        self.data.dedup_by(same_bucket);
+    }
+
+    pub fn push(&mut self, v: T) {
+        self.data.push(v);
+    }
+
+    pub fn pop(&mut self) -> Option<T> {
+        self.data.pop()
+    }
+
+    pub fn pop_if(&mut self, predicate: impl FnOnce(&mut T) -> bool) -> Option<T> {
+        // TODO: if we decode to bump MSRV to 1.86, repace with call to `Vec::pop_if`
+        let last = self.last_mut()?;
+        if predicate(last) {
+            self.pop()
+        } else {
+            None
+        }
+    }
+
+    pub fn append<V: AsMut<Vec<T>>>(&mut self, mut other: V) {
+        self.data.append(other.as_mut());
+    }
+
+    pub fn drain<C, R>(&mut self, range: R) -> Drain<'_, T>
+    where
+        C: IdxCompat<I>,
+        R: IndexRangeBounds<I, C>,
+    {
+        self.data.drain(range.canonicalize(self.data.len()))
+    }
+
+    pub fn extend_from_slice<S: AsRef<[T]>>(&mut self, slice: S)
+    where
+        T: Clone,
+    {
+        self.data.extend_from_slice(slice.as_ref());
+    }
+
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
+    pub fn resize_with(&mut self, new_len: usize, f: impl FnMut() -> T) {
+        self.data.resize_with(new_len, f);
+    }
+
     pub fn as_vec(&self) -> &Vec<T> {
         &self.data
     }
@@ -172,14 +360,12 @@ impl<I, T> IndexVec<I, T> {
     {
         IndexRange::new(I::ZERO..self.len_idx())
     }
-    pub fn capacity(&self) -> usize {
-        self.data.capacity()
-    }
+
     pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
-        IndexSlice::from_slice(&self.data)
+        IndexSlice::from_raw_slice(&self.data)
     }
     pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_mut_slice(&mut self.data)
+        IndexSlice::from_mut_raw_slice(&mut self.data)
     }
 
     /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
@@ -192,18 +378,11 @@ impl<I, T> IndexVec<I, T> {
         core::mem::forget(self);
         res
     }
-
-    pub fn into_boxed_slice(self) -> Box<[T]> {
-        self.data.into_boxed_slice()
-    }
-    pub fn into_boxed_index_slice(self) -> Box<IndexSlice<I, T>> {
-        IndexSlice::from_boxed_slice(self.into_boxed_slice())
-    }
 }
 
 impl<I, T> AsRef<[T]> for IndexVec<I, T> {
     fn as_ref(&self) -> &[T] {
-        self.as_slice()
+        self.as_raw_slice()
     }
 }
 impl<I, T> AsRef<IndexSlice<I, T>> for IndexVec<I, T> {
@@ -214,7 +393,7 @@ impl<I, T> AsRef<IndexSlice<I, T>> for IndexVec<I, T> {
 
 impl<I, T> AsMut<[T]> for IndexVec<I, T> {
     fn as_mut(&mut self) -> &mut [T] {
-        self.as_mut_slice()
+        self.as_mut_raw_slice()
     }
 }
 impl<I, T> AsMut<IndexSlice<I, T>> for IndexVec<I, T> {
@@ -225,7 +404,7 @@ impl<I, T> AsMut<IndexSlice<I, T>> for IndexVec<I, T> {
 
 impl<I, T> Borrow<[T]> for IndexVec<I, T> {
     fn borrow(&self) -> &[T] {
-        self.as_slice()
+        self.as_raw_slice()
     }
 }
 impl<I, T> Borrow<IndexSlice<I, T>> for IndexVec<I, T> {
@@ -236,7 +415,7 @@ impl<I, T> Borrow<IndexSlice<I, T>> for IndexVec<I, T> {
 
 impl<I, T> BorrowMut<[T]> for IndexVec<I, T> {
     fn borrow_mut(&mut self) -> &mut [T] {
-        self.as_mut_slice()
+        self.as_mut_raw_slice()
     }
 }
 impl<I, T> BorrowMut<IndexSlice<I, T>> for IndexVec<I, T> {
@@ -249,12 +428,12 @@ impl<I, T> Deref for IndexVec<I, T> {
     type Target = IndexSlice<I, T>;
 
     fn deref(&self) -> &Self::Target {
-        IndexSlice::from_slice(&self.data)
+        IndexSlice::from_raw_slice(&self.data)
     }
 }
 impl<I, T> DerefMut for IndexVec<I, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        IndexSlice::from_mut_slice(&mut self.data)
+        IndexSlice::from_mut_raw_slice(&mut self.data)
     }
 }
 
@@ -342,31 +521,31 @@ impl<I, T> FromIterator<T> for IndexVec<I, T> {
 
 impl<I, T: PartialEq, const N: usize> PartialEq<[T; N]> for IndexVec<I, T> {
     fn eq(&self, other: &[T; N]) -> bool {
-        self.as_slice() == other.as_slice()
+        self.as_raw_slice() == other.as_slice()
     }
 }
 
 impl<I, T: PartialEq, const N: usize> PartialEq<IndexVec<I, T>> for [T; N] {
     fn eq(&self, other: &IndexVec<I, T>) -> bool {
-        self.as_slice() == other.as_slice()
+        self.as_slice() == other.as_raw_slice()
     }
 }
 
 impl<I, T: PartialEq> PartialEq<IndexSlice<I, T>> for IndexVec<I, T> {
     fn eq(&self, other: &IndexSlice<I, T>) -> bool {
-        self.as_slice() == other.as_slice()
+        self.as_raw_slice() == other.as_raw_slice()
     }
 }
 
 impl<I, T: PartialEq> PartialEq<IndexVec<I, T>> for [T] {
     fn eq(&self, other: &IndexVec<I, T>) -> bool {
-        self == other.as_slice()
+        self == other.as_raw_slice()
     }
 }
 
 impl<I, T: PartialEq> PartialEq<[T]> for IndexVec<I, T> {
     fn eq(&self, other: &[T]) -> bool {
-        self.as_slice() == other
+        self.as_raw_slice() == other
     }
 }
 

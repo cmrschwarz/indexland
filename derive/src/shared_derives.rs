@@ -23,7 +23,7 @@ pub fn derive_idx_compat(
             type Output = T;
 
             fn get(self, slice: & #indexland::IndexSlice<#name, T>) -> Option<&Self::Output> {
-                slice.as_slice().get(#indexland::Idx::into_usize(self))
+                slice.as_raw_slice().get(#indexland::Idx::into_usize(self))
             }
 
             fn get_mut(
@@ -31,7 +31,7 @@ pub fn derive_idx_compat(
                 slice: &mut #indexland::IndexSlice<#name, T>,
             ) -> Option<&mut Self::Output> {
                 slice
-                    .as_mut_slice()
+                    .as_mut_raw_slice()
                     .get_mut(#indexland::Idx::into_usize(self))
             }
 
@@ -50,14 +50,14 @@ pub fn derive_idx_compat(
             }
 
             fn index(self, slice: & #indexland::IndexSlice<#name, T>) -> &Self::Output {
-                &slice.as_slice()[#indexland::Idx::into_usize(self)]
+                &slice.as_raw_slice()[#indexland::Idx::into_usize(self)]
             }
 
             fn index_mut(
                 self,
                 slice: &mut #indexland::IndexSlice<#name, T>,
             ) -> &mut Self::Output {
-                &mut slice.as_mut_slice()[#indexland::Idx::into_usize(self)]
+                &mut slice.as_mut_raw_slice()[#indexland::Idx::into_usize(self)]
             }
         }
         #[automatically_derived]

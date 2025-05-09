@@ -259,11 +259,17 @@ impl<I, T> IndexVecDeque<I, T> {
     }
     pub fn as_index_slices(&self) -> (&IndexSlice<I, T>, &IndexSlice<I, T>) {
         let (s1, s2) = self.data.as_slices();
-        (IndexSlice::from_slice(s1), IndexSlice::from_slice(s2))
+        (
+            IndexSlice::from_raw_slice(s1),
+            IndexSlice::from_raw_slice(s2),
+        )
     }
     pub fn as_mut_index_slices(&mut self) -> (&IndexSlice<I, T>, &IndexSlice<I, T>) {
         let (s1, s2) = self.data.as_mut_slices();
-        (IndexSlice::from_slice(s1), IndexSlice::from_slice(s2))
+        (
+            IndexSlice::from_raw_slice(s1),
+            IndexSlice::from_raw_slice(s2),
+        )
     }
     pub fn iter(&self) -> alloc::collections::vec_deque::Iter<T> {
         self.data.iter()
