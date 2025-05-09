@@ -108,7 +108,7 @@ macro_rules! index_slice_partial_range_impl {
             type Output = IndexSlice<I, T>;
             #[inline(always)]
             fn get(self, slice: &IndexSlice<I, T>) -> Option<&IndexSlice<I, T>> {
-                let range = IndexRangeBounds::<I, C>::canonicalize(self, slice.len());
+                let range = IndexRangeBounds::<C>::canonicalize(self, slice.len());
                 Some(IndexSlice::from_raw_slice(
                     slice.as_raw_slice().get(range)?,
                 ))
@@ -118,7 +118,7 @@ macro_rules! index_slice_partial_range_impl {
                 self,
                 slice: &mut IndexSlice<I, T>,
             ) -> Option<&mut IndexSlice<I, T>> {
-                let range = IndexRangeBounds::<I, C>::canonicalize(self, slice.len());
+                let range = IndexRangeBounds::<C>::canonicalize(self, slice.len());
                 Some(IndexSlice::from_mut_raw_slice(
                     slice.as_mut_raw_slice().get_mut(range)?,
                 ))
@@ -129,7 +129,7 @@ macro_rules! index_slice_partial_range_impl {
                 slice: *const IndexSlice<I, T>,
             ) -> *const IndexSlice<I, T> {
                 let slice = slice as *mut [T];
-                let range = IndexRangeBounds::<I, C>::canonicalize(self, slice.len());
+                let range = IndexRangeBounds::<C>::canonicalize(self, slice.len());
                 unsafe {
                     core::ptr::slice_from_raw_parts(
                         slice.cast::<T>().add(range.start),
@@ -143,7 +143,7 @@ macro_rules! index_slice_partial_range_impl {
                 slice: *mut IndexSlice<I, T>,
             ) -> *mut IndexSlice<I, T> {
                 let slice = slice as *mut [T];
-                let range = IndexRangeBounds::<I, C>::canonicalize(self, slice.len());
+                let range = IndexRangeBounds::<C>::canonicalize(self, slice.len());
                 unsafe {
                     core::ptr::slice_from_raw_parts_mut(
                         slice.cast::<T>().add(range.start),
@@ -153,12 +153,12 @@ macro_rules! index_slice_partial_range_impl {
             }
             #[inline(always)]
             fn index(self, slice: &IndexSlice<I, T>) -> &IndexSlice<I, T> {
-                let range = IndexRangeBounds::<I, C>::canonicalize(self, slice.len());
+                let range = IndexRangeBounds::<C>::canonicalize(self, slice.len());
                 IndexSlice::from_raw_slice(&slice.as_raw_slice()[range])
             }
             #[inline(always)]
             fn index_mut(self, slice: &mut IndexSlice<I, T>) -> &mut IndexSlice<I, T> {
-                let range = IndexRangeBounds::<I, C>::canonicalize(self, slice.len());
+                let range = IndexRangeBounds::<C>::canonicalize(self, slice.len());
                 IndexSlice::from_mut_raw_slice(&mut slice.as_mut_raw_slice()[range])
             }
         }

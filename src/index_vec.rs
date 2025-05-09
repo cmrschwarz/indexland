@@ -284,7 +284,7 @@ impl<I, T> IndexVec<I, T> {
     pub fn drain<C, R>(&mut self, range: R) -> Drain<'_, T>
     where
         C: IdxCompat<I>,
-        R: IndexRangeBounds<I, C>,
+        R: IndexRangeBounds<C>,
     {
         self.data.drain(range.canonicalize(self.data.len()))
     }

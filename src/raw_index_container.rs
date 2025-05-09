@@ -251,7 +251,7 @@ macro_rules! index_slice_partial_range_impl {
             where
                 C: RawIndexContainer<Element = E, Slice = S>,
             {
-                let r = IndexRangeBounds::<I, X>::canonicalize(self, container.len());
+                let r = IndexRangeBounds::<X>::canonicalize(self, container.len());
                 C::get_range(container, r)
             }
 
@@ -262,7 +262,7 @@ macro_rules! index_slice_partial_range_impl {
             where
                 C: RawIndexContainer<Element = E, Slice = S>,
             {
-                let r = IndexRangeBounds::<I, X>::canonicalize(self, C::len_from_ptr(container));
+                let r = IndexRangeBounds::<X>::canonicalize(self, C::len_from_ptr(container));
                 C::get_range_unchecked(container, r)
             }
 
@@ -270,7 +270,7 @@ macro_rules! index_slice_partial_range_impl {
             where
                 C: RawIndexContainer<Element = E, Slice = S>,
             {
-                let r = IndexRangeBounds::<I, X>::canonicalize(self, container.len());
+                let r = IndexRangeBounds::<X>::canonicalize(self, container.len());
                 C::index_range(container, r)
             }
 
@@ -278,7 +278,7 @@ macro_rules! index_slice_partial_range_impl {
             where
                 C: RawIndexContainerMut<Element = E, Slice = S>,
             {
-                let r = IndexRangeBounds::<I, X>::canonicalize(self, container.len());
+                let r = IndexRangeBounds::<X>::canonicalize(self, container.len());
                 C::get_range_mut(container, r)
             }
 
@@ -286,7 +286,7 @@ macro_rules! index_slice_partial_range_impl {
             where
                 C: RawIndexContainerMut<Element = E, Slice = S>,
             {
-                let r = IndexRangeBounds::<I, X>::canonicalize(self, C::len_from_ptr(container));
+                let r = IndexRangeBounds::<X>::canonicalize(self, C::len_from_ptr(container));
                 C::get_range_unchecked_mut(container, r)
             }
 
@@ -294,7 +294,7 @@ macro_rules! index_slice_partial_range_impl {
             where
                 C: RawIndexContainerMut<Element = E, Slice = S>,
             {
-                let r = IndexRangeBounds::<I, X>::canonicalize(self, container.len());
+                let r = IndexRangeBounds::<X>::canonicalize(self, container.len());
                 C::index_range_mut(container, r)
             }
         }

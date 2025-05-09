@@ -8,7 +8,7 @@ use core::{
 
 use arrayvec::{ArrayVec, CapacityError};
 
-use crate::{index_enumerate::IndexEnumerate, IndexArray, IndexRange, IndexRangeBounds};
+use crate::{index_enumerate::IndexEnumerate, IdxCompat, IndexArray, IndexRange, IndexRangeBounds};
 
 use super::{idx::Idx, index_slice::IndexSlice};
 
@@ -305,22 +305,24 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     {
         IndexEnumerate::new(I::ZERO, self.as_mut_slice())
     }
-    pub fn iter_enumerated_range<C, R: IndexRangeBounds<I, C>>(
+    pub fn iter_enumerated_range<C, R: IndexRangeBounds<C>>(
         &self,
         range: R,
     ) -> IndexEnumerate<I, core::slice::Iter<T>>
     where
         I: Idx,
+        C: IdxCompat<I>,
     {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &self.as_slice()[range])
     }
-    pub fn iter_enumerated_range_mut<R: IndexRangeBounds<I>>(
+    pub fn iter_enumerated_range_mut<C, R: IndexRangeBounds<C>>(
         &mut self,
         range: R,
     ) -> IndexEnumerate<I, core::slice::IterMut<T>>
     where
         I: Idx,
+        C: IdxCompat<I>,
     {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.as_mut_slice()[range])
