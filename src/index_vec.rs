@@ -3,9 +3,11 @@ use crate::{
     IndexRangeBounds,
 };
 
+use alloc::vec::Splice;
 use core::{
     borrow::{Borrow, BorrowMut},
     fmt::Debug,
+    hash::Hash,
     marker::PhantomData,
     mem::MaybeUninit,
     ops::{Deref, DerefMut, Index, IndexMut},
@@ -53,7 +55,6 @@ macro_rules! index_vec {
     }};
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IndexVec<I, T> {
     data: Vec<T>,
     _phantom: PhantomData<fn(I) -> T>,
@@ -365,6 +366,34 @@ impl<I, T> IndexVec<I, T> {
         self.data
             .extend_from_within(src.canonicalize(self.data.len()));
     }
+}
+impl<I, T, const N: usize> IndexVec<I, [T; N]> {
+    pub fn into_flattened(self) -> Vec<T> {
+        self.data.into_flattened()
+    }
+}
+
+impl<I, T> IndexVec<I, T> {
+    pub fn dedup(&mut self)
+    where
+        T: PartialEq,
+    {
+        self.data.dedup();
+    }
+
+    pub fn splice<C, R, It>(
+        &mut self,
+        range: R,
+        replace_with: It,
+    ) -> Splice<'_, <It as IntoIterator>::IntoIter>
+    where
+        C: IdxCompat<I>,
+        R: IndexRangeBounds<C>,
+        It: IntoIterator<Item = T>,
+    {
+        self.data
+            .splice(range.canonicalize(self.data.len()), replace_with)
+    }
 
     pub fn as_vec(&self) -> &Vec<T> {
         &self.data
@@ -372,6 +401,7 @@ impl<I, T> IndexVec<I, T> {
     pub fn as_mut_vec(&mut self) -> &mut Vec<T> {
         &mut self.data
     }
+
     pub fn push_get_idx(&mut self, v: T) -> I
     where
         I: Idx,
@@ -380,6 +410,9 @@ impl<I, T> IndexVec<I, T> {
         self.data.push(v);
         id
     }
+
+    // We have these because the slice deref version takes an offset parameter.
+    // TODO: get rid of that.
     pub fn iter_enumerated_range(
         &self,
         range: impl IndexRangeBounds<I>,
@@ -411,24 +444,19 @@ impl<I, T> IndexVec<I, T> {
     {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
+
     pub fn into_iter_enumerated(self) -> IndexEnumerate<I, alloc::vec::IntoIter<T>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, self.data)
     }
+
     pub fn indices(&self) -> IndexRange<I>
     where
         I: Idx,
     {
         IndexRange::new(I::ZERO..self.len_idx())
-    }
-
-    pub fn as_index_slice(&self) -> &IndexSlice<I, T> {
-        IndexSlice::from_raw_slice(&self.data)
-    }
-    pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_mut_raw_slice(&mut self.data)
     }
 
     /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
@@ -437,12 +465,23 @@ impl<I, T> IndexVec<I, T> {
     }
 
     pub const fn into_vec(self) -> Vec<T> {
+        // required because this function is const
         let res = unsafe { core::ptr::read(&raw const self.data) };
         core::mem::forget(self);
         res
     }
 }
 
+impl<I, T> AsRef<IndexVec<I, T>> for IndexVec<I, T> {
+    fn as_ref(&self) -> &IndexVec<I, T> {
+        self
+    }
+}
+impl<I, T> AsRef<Vec<T>> for IndexVec<I, T> {
+    fn as_ref(&self) -> &Vec<T> {
+        self.as_vec()
+    }
+}
 impl<I, T> AsRef<[T]> for IndexVec<I, T> {
     fn as_ref(&self) -> &[T] {
         self.as_raw_slice()
@@ -450,10 +489,20 @@ impl<I, T> AsRef<[T]> for IndexVec<I, T> {
 }
 impl<I, T> AsRef<IndexSlice<I, T>> for IndexVec<I, T> {
     fn as_ref(&self) -> &IndexSlice<I, T> {
-        self.as_index_slice()
+        self.as_slice()
     }
 }
 
+impl<I, T> AsMut<IndexVec<I, T>> for IndexVec<I, T> {
+    fn as_mut(&mut self) -> &mut IndexVec<I, T> {
+        self
+    }
+}
+impl<I, T> AsMut<Vec<T>> for IndexVec<I, T> {
+    fn as_mut(&mut self) -> &mut Vec<T> {
+        self.as_mut_vec()
+    }
+}
 impl<I, T> AsMut<[T]> for IndexVec<I, T> {
     fn as_mut(&mut self) -> &mut [T] {
         self.as_mut_raw_slice()
@@ -461,10 +510,15 @@ impl<I, T> AsMut<[T]> for IndexVec<I, T> {
 }
 impl<I, T> AsMut<IndexSlice<I, T>> for IndexVec<I, T> {
     fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
-        self.as_mut_index_slice()
+        self.as_mut_slice()
     }
 }
 
+impl<I, T> Borrow<Vec<T>> for IndexVec<I, T> {
+    fn borrow(&self) -> &Vec<T> {
+        self.as_vec()
+    }
+}
 impl<I, T> Borrow<[T]> for IndexVec<I, T> {
     fn borrow(&self) -> &[T] {
         self.as_raw_slice()
@@ -472,10 +526,15 @@ impl<I, T> Borrow<[T]> for IndexVec<I, T> {
 }
 impl<I, T> Borrow<IndexSlice<I, T>> for IndexVec<I, T> {
     fn borrow(&self) -> &IndexSlice<I, T> {
-        self.as_index_slice()
+        self.as_slice()
     }
 }
 
+impl<I, T> BorrowMut<Vec<T>> for IndexVec<I, T> {
+    fn borrow_mut(&mut self) -> &mut Vec<T> {
+        self.as_mut_vec()
+    }
+}
 impl<I, T> BorrowMut<[T]> for IndexVec<I, T> {
     fn borrow_mut(&mut self) -> &mut [T] {
         self.as_mut_raw_slice()
@@ -483,7 +542,35 @@ impl<I, T> BorrowMut<[T]> for IndexVec<I, T> {
 }
 impl<I, T> BorrowMut<IndexSlice<I, T>> for IndexVec<I, T> {
     fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
-        self.as_mut_index_slice()
+        self.as_mut_slice()
+    }
+}
+
+impl<I, T> Clone for IndexVec<I, T>
+where
+    T: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+            _phantom: PhantomData,
+        }
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        self.data.clone_from(&source.data);
+    }
+}
+
+impl<I, T: Debug> Debug for IndexVec<I, T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(self.as_slice(), f)
+    }
+}
+
+impl<I, T> Default for IndexVec<I, T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -497,6 +584,12 @@ impl<I, T> Deref for IndexVec<I, T> {
 impl<I, T> DerefMut for IndexVec<I, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         IndexSlice::from_mut_raw_slice(&mut self.data)
+    }
+}
+
+impl<I, T> Extend<T> for IndexVec<I, T> {
+    fn extend<It: IntoIterator<Item = T>>(&mut self, iter: It) {
+        self.data.extend(iter);
     }
 }
 
@@ -525,24 +618,12 @@ impl<I, T> From<IndexVec<I, T>> for Vec<T> {
     }
 }
 
-impl<I, T> Default for IndexVec<I, T> {
-    fn default() -> Self {
-        Self {
-            data: Vec::new(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<I, T: Debug> Debug for IndexVec<I, T> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        Debug::fmt(&self.data, f)
-    }
-}
-
-impl<I, T> Extend<T> for IndexVec<I, T> {
-    fn extend<It: IntoIterator<Item = T>>(&mut self, iter: It) {
-        self.data.extend(iter);
+impl<I, T> Hash for IndexVec<I, T>
+where
+    T: Hash,
+{
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.data.hash(state);
     }
 }
 
@@ -582,6 +663,12 @@ impl<I, T> FromIterator<T> for IndexVec<I, T> {
     }
 }
 
+impl<I1, I2, T: PartialEq> PartialEq<IndexVec<I2, T>> for IndexVec<I1, T> {
+    fn eq(&self, other: &IndexVec<I2, T>) -> bool {
+        self.as_raw_slice() == other.as_raw_slice()
+    }
+}
+
 impl<I, T: PartialEq, const N: usize> PartialEq<[T; N]> for IndexVec<I, T> {
     fn eq(&self, other: &[T; N]) -> bool {
         self.as_raw_slice() == other.as_slice()
@@ -612,18 +699,38 @@ impl<I, T: PartialEq> PartialEq<[T]> for IndexVec<I, T> {
     }
 }
 
+impl<I1, I2, T> PartialOrd<IndexVec<I2, T>> for IndexVec<I1, T>
+where
+    T: PartialOrd,
+{
+    fn partial_cmp(&self, other: &IndexVec<I2, T>) -> Option<core::cmp::Ordering> {
+        self.as_raw_slice().partial_cmp(other.as_raw_slice())
+    }
+}
+
+impl<I, T> Ord for IndexVec<I, T>
+where
+    T: Ord,
+{
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        self.as_raw_slice().cmp(other.as_raw_slice())
+    }
+}
+
+impl<I, T> Eq for IndexVec<I, T> where T: Eq {}
+
 impl<I, T, Idx: IndexSliceIndex<I, T>> Index<Idx> for IndexVec<I, T> {
     type Output = Idx::Output;
     #[inline]
     fn index(&self, index: Idx) -> &Self::Output {
-        index.index(self.as_index_slice())
+        index.index(self.as_slice())
     }
 }
 
 impl<I, T, ISI: IndexSliceIndex<I, T>> IndexMut<ISI> for IndexVec<I, T> {
     #[inline]
     fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
-        index.index_mut(self.as_mut_index_slice())
+        index.index_mut(self.as_mut_slice())
     }
 }
 
