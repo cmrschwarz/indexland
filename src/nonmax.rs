@@ -41,6 +41,7 @@ use crate::Idx;
 /// meaning that e.g. [`Option<NonMax<u32>>`] takes up 4 bytes,
 /// whereas [`Option<u32>`] will ususally use 8.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
 pub struct NonMax<P: NonMaxPrimitive>(P::NonMaxInner);
 
 #[derive(Debug, Default, Clone, Copy)]

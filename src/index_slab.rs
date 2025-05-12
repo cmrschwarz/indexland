@@ -9,6 +9,7 @@ use slab::Slab;
 
 use crate::{idx::IdxCompat, Idx};
 
+#[repr(transparent)]
 pub struct IndexSlab<I, T> {
     data: Slab<T>,
     _phantom: PhantomData<fn(I) -> T>,

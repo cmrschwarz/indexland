@@ -1,11 +1,13 @@
 use crate::{
     index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex, IdxCompat, IndexArray,
-    IndexRangeBounds,
+    IndexRangeBounds, IndexVecDeque,
 };
 
 use alloc::{
     borrow::{Cow, ToOwned},
-    collections::BinaryHeap,
+    collections::{BinaryHeap, VecDeque},
+    rc::Rc,
+    sync::Arc,
     vec::Splice,
 };
 use core::{
@@ -59,6 +61,7 @@ macro_rules! index_vec {
     }};
 }
 
+#[repr(transparent)]
 pub struct IndexVec<I, T> {
     data: Vec<T>,
     _phantom: PhantomData<fn(I) -> T>,
@@ -85,6 +88,14 @@ impl<I, T> IndexVec<I, T> {
             _phantom: PhantomData,
         }
     }
+    pub fn into_raw_parts(mut self) -> (*mut T, usize, usize) {
+        let len = self.data.len();
+        let cap = self.data.capacity();
+        let ptr = self.data.as_mut_ptr();
+        core::mem::forget(self);
+        (ptr, len, cap)
+    }
+
     pub fn capacity(&self) -> usize {
         self.data.capacity()
     }
@@ -728,6 +739,91 @@ where
     }
 }
 
+impl<I, T> From<IndexVec<I, T>> for Cow<'_, [T]>
+where
+    T: Clone,
+{
+    fn from(value: IndexVec<I, T>) -> Self {
+        Cow::from(value.data)
+    }
+}
+impl<I, T> From<IndexVec<I, T>> for Cow<'_, IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: IndexVec<I, T>) -> Self {
+        Cow::Owned(value)
+    }
+}
+
+impl<I, T> From<IndexVec<I, T>> for Arc<[T]> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        Arc::from(value.data)
+    }
+}
+impl<I, T> From<IndexVec<I, T>> for Arc<IndexSlice<I, T>> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        let res = Arc::from(value.data);
+        // SAFETY: `IndexSlice<I, T>` is `#[repr(transparent)]`
+        unsafe { core::mem::transmute::<Arc<[T]>, Arc<IndexSlice<I, T>>>(res) }
+    }
+}
+
+impl<I, T> From<IndexVec<I, T>> for BinaryHeap<T>
+where
+    T: Ord,
+{
+    fn from(value: IndexVec<I, T>) -> Self {
+        BinaryHeap::from(value.data)
+    }
+}
+
+impl<I, T> From<IndexVec<I, T>> for Box<[T]> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        value.into_boxed_raw_slice()
+    }
+}
+impl<I, T> From<IndexVec<I, T>> for Box<IndexSlice<I, T>> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        value.into_boxed_slice()
+    }
+}
+
+impl<I, T> From<IndexVec<I, T>> for Rc<[T]> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        Rc::from(value.data)
+    }
+}
+impl<I, T> From<IndexVec<I, T>> for Rc<IndexSlice<I, T>> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        let res = Rc::from(value.data);
+        // SAFETY: `IndexSlice<I, T>` is `#[repr(transparent)]`
+        unsafe { core::mem::transmute::<Rc<[T]>, Rc<IndexSlice<I, T>>>(res) }
+    }
+}
+
+impl<I, T> From<IndexVec<I, T>> for VecDeque<T> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        VecDeque::from(value.data)
+    }
+}
+impl<I, T> From<VecDeque<T>> for IndexVec<I, T> {
+    fn from(value: VecDeque<T>) -> Self {
+        Self::from(Vec::from(value))
+    }
+}
+impl<I, T> From<IndexVecDeque<I, T>> for IndexVec<I, T> {
+    fn from(value: IndexVecDeque<I, T>) -> Self {
+        Self::from(Vec::from(value.into_vec_deque()))
+    }
+}
+
+impl<I, T> FromIterator<T> for IndexVec<I, T> {
+    fn from_iter<ITER: IntoIterator<Item = T>>(iter: ITER) -> Self {
+        Self::from(Vec::from_iter(iter))
+    }
+}
+
 impl<I, T> Hash for IndexVec<I, T>
 where
     T: Hash,
@@ -737,13 +833,23 @@ where
     }
 }
 
-impl<I, T> IntoIterator for IndexVec<I, T> {
-    type Item = T;
+impl<I, ISI, T> Index<ISI> for IndexVec<I, T>
+where
+    ISI: IndexSliceIndex<I, T>,
+{
+    type Output = ISI::Output;
 
-    type IntoIter = alloc::vec::IntoIter<T>;
+    fn index(&self, index: ISI) -> &Self::Output {
+        index.index(self.as_slice())
+    }
+}
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.data.into_iter()
+impl<I, ISI, T> IndexMut<ISI> for IndexVec<I, T>
+where
+    ISI: IndexSliceIndex<I, T>,
+{
+    fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
+        index.index_mut(self.as_mut_slice())
     }
 }
 
@@ -767,54 +873,13 @@ impl<'a, I, T> IntoIterator for &'a mut IndexVec<I, T> {
     }
 }
 
-impl<I, T> FromIterator<T> for IndexVec<I, T> {
-    fn from_iter<ITER: IntoIterator<Item = T>>(iter: ITER) -> Self {
-        Self::from(Vec::from_iter(iter))
-    }
-}
+impl<I, T> IntoIterator for IndexVec<I, T> {
+    type Item = T;
 
-impl<I1, I2, T: PartialEq> PartialEq<IndexVec<I2, T>> for IndexVec<I1, T> {
-    fn eq(&self, other: &IndexVec<I2, T>) -> bool {
-        self.as_raw_slice() == other.as_raw_slice()
-    }
-}
+    type IntoIter = alloc::vec::IntoIter<T>;
 
-impl<I, T: PartialEq, const N: usize> PartialEq<[T; N]> for IndexVec<I, T> {
-    fn eq(&self, other: &[T; N]) -> bool {
-        self.as_raw_slice() == other.as_slice()
-    }
-}
-
-impl<I, T: PartialEq, const N: usize> PartialEq<IndexVec<I, T>> for [T; N] {
-    fn eq(&self, other: &IndexVec<I, T>) -> bool {
-        self.as_slice() == other.as_raw_slice()
-    }
-}
-
-impl<I, T: PartialEq> PartialEq<IndexSlice<I, T>> for IndexVec<I, T> {
-    fn eq(&self, other: &IndexSlice<I, T>) -> bool {
-        self.as_raw_slice() == other.as_raw_slice()
-    }
-}
-
-impl<I, T: PartialEq> PartialEq<IndexVec<I, T>> for [T] {
-    fn eq(&self, other: &IndexVec<I, T>) -> bool {
-        self == other.as_raw_slice()
-    }
-}
-
-impl<I, T: PartialEq> PartialEq<[T]> for IndexVec<I, T> {
-    fn eq(&self, other: &[T]) -> bool {
-        self.as_raw_slice() == other
-    }
-}
-
-impl<I1, I2, T> PartialOrd<IndexVec<I2, T>> for IndexVec<I1, T>
-where
-    T: PartialOrd,
-{
-    fn partial_cmp(&self, other: &IndexVec<I2, T>) -> Option<core::cmp::Ordering> {
-        self.as_raw_slice().partial_cmp(other.as_raw_slice())
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.into_iter()
     }
 }
 
@@ -827,22 +892,257 @@ where
     }
 }
 
+impl<I, T, U> PartialEq<&[U]> for IndexVec<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &&[U]) -> bool {
+        self.as_raw_slice() == *other
+    }
+}
+
+impl<I1, I2, T, U> PartialEq<&IndexSlice<I2, U>> for IndexVec<I1, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &&IndexSlice<I2, U>) -> bool {
+        self.as_raw_slice() == other.as_raw_slice()
+    }
+}
+
+impl<I, T, U> PartialEq<&mut [U]> for IndexVec<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &&mut [U]) -> bool {
+        self.as_raw_slice() == *other
+    }
+}
+
+impl<I1, I2, T, U> PartialEq<&mut IndexSlice<I2, U>> for IndexVec<I1, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &&mut IndexSlice<I2, U>) -> bool {
+        self.as_raw_slice() == other.as_raw_slice()
+    }
+}
+
+impl<I, T, U> PartialEq<[U]> for IndexVec<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &[U]) -> bool {
+        self.as_raw_slice() == other
+    }
+}
+
+impl<I1, I2, T, U> PartialEq<IndexSlice<I2, U>> for IndexVec<I1, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexSlice<I2, U>) -> bool {
+        self.as_raw_slice() == other.as_raw_slice()
+    }
+}
+
+impl<I, T, U, const N: usize> PartialEq<[U; N]> for IndexVec<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &[U; N]) -> bool {
+        self.as_raw_slice() == other.as_slice()
+    }
+}
+
+impl<I1, I2, T, U, const N: usize> PartialEq<IndexArray<I2, U, N>> for IndexVec<I1, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexArray<I2, U, N>) -> bool {
+        self.as_raw_slice() == other.as_slice()
+    }
+}
+
+impl<I, T, U> PartialEq<IndexVec<I, U>> for &[T]
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        *self == other.as_raw_slice()
+    }
+}
+
+impl<I, T, U> PartialEq<IndexVec<I, U>> for &mut [T]
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        *self == other.as_raw_slice()
+    }
+}
+
+impl<I, T, U> PartialEq<IndexVec<I, U>> for [T]
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        self == other.as_raw_slice()
+    }
+}
+
+impl<I, T, U> PartialEq<IndexVec<I, U>> for Cow<'_, [T]>
+where
+    T: PartialEq<U> + Clone,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        *self == other.as_raw_slice()
+    }
+}
+
+impl<I1, I2, T, U> PartialEq<IndexVec<I2, U>> for Cow<'_, IndexSlice<I1, T>>
+where
+    T: PartialEq<U> + Clone,
+{
+    fn eq(&self, other: &IndexVec<I2, U>) -> bool {
+        self.as_raw_slice() == other.as_raw_slice()
+    }
+}
+
+impl<I, T, U> PartialEq<IndexVec<I, U>> for VecDeque<T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        self == other.as_vec()
+    }
+}
+
+// std has no corresponding `PartialEq<VecDeque<U, A>> for Vec<T, A>`, but it just makes sense
+impl<I, T, U> PartialEq<VecDeque<U>> for IndexVec<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &VecDeque<U>) -> bool {
+        self.iter().eq(other.iter())
+    }
+}
+
+impl<I1, I2, T, U> PartialEq<IndexVecDeque<I2, U>> for IndexVec<I1, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVecDeque<I2, U>) -> bool {
+        self.iter().eq(other.iter())
+    }
+}
+
+impl<I1, I2, T, U> PartialEq<IndexVec<I2, U>> for IndexVec<I1, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I2, U>) -> bool {
+        self.as_raw_slice() == other.as_raw_slice()
+    }
+}
+
+impl<I, T, U> PartialEq<Vec<U>> for IndexVec<I, T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &Vec<U>) -> bool {
+        self.as_raw_slice() == other.as_slice()
+    }
+}
+
+impl<I, T, U> PartialEq<IndexVec<I, U>> for Vec<T>
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        self.as_slice() == other.as_raw_slice()
+    }
+}
+
+// std has no corresponding `PartialEq<Vec<U, A>> for [T; N]`, but it just makes sense
+impl<I, T, U, const N: usize> PartialEq<IndexVec<I, U>> for [T; N]
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        self.as_slice() == other.as_raw_slice()
+    }
+}
+
+// std has no corresponding `PartialEq<Vec<U, A>> for &[T; N]`, but it just makes sense
+impl<I, T, U, const N: usize> PartialEq<IndexVec<I, U>> for &[T; N]
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        self.as_slice() == other.as_raw_slice()
+    }
+}
+
+// std has no corresponding `PartialEq<Vec<U, A>> for &mut [T; N]`, but it just makes sense
+impl<I, T, U, const N: usize> PartialEq<IndexVec<I, U>> for &mut [T; N]
+where
+    T: PartialEq<U>,
+{
+    fn eq(&self, other: &IndexVec<I, U>) -> bool {
+        self.as_slice() == other.as_raw_slice()
+    }
+}
+
+impl<I1, I2, T> PartialOrd<IndexVec<I2, T>> for IndexVec<I1, T>
+where
+    T: PartialOrd,
+{
+    fn partial_cmp(&self, other: &IndexVec<I2, T>) -> Option<core::cmp::Ordering> {
+        self.as_raw_slice().partial_cmp(other.as_raw_slice())
+    }
+}
+
+impl<I, T, const N: usize> TryFrom<IndexVec<I, T>> for Box<[T; N]> {
+    type Error = IndexVec<I, T>;
+
+    fn try_from(value: IndexVec<I, T>) -> Result<Self, Self::Error> {
+        Box::try_from(value.into_vec()).map_err(|v: Vec<T>| v.into())
+    }
+}
+
+impl<I, T, const N: usize> TryFrom<IndexVec<I, T>> for [T; N] {
+    type Error = IndexVec<I, T>;
+
+    fn try_from(value: IndexVec<I, T>) -> Result<Self, Self::Error> {
+        <[T; N]>::try_from(value.into_vec()).map_err(|v: Vec<T>| v.into())
+    }
+}
+
+#[cfg(feature = "std")]
+impl<I> std::io::Write for IndexVec<I, u8> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.data.write(buf)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+
+    fn write_vectored(&mut self, bufs: &[std::io::IoSlice<'_>]) -> std::io::Result<usize> {
+        self.data.write_vectored(bufs)
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> {
+        self.data.write_all(buf)
+    }
+
+    fn write_fmt(&mut self, fmt: std::fmt::Arguments<'_>) -> std::io::Result<()> {
+        self.data.write_fmt(fmt)
+    }
+}
+
 impl<I, T> Eq for IndexVec<I, T> where T: Eq {}
-
-impl<I, T, Idx: IndexSliceIndex<I, T>> Index<Idx> for IndexVec<I, T> {
-    type Output = Idx::Output;
-    #[inline]
-    fn index(&self, index: Idx) -> &Self::Output {
-        index.index(self.as_slice())
-    }
-}
-
-impl<I, T, ISI: IndexSliceIndex<I, T>> IndexMut<ISI> for IndexVec<I, T> {
-    #[inline]
-    fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
-        index.index_mut(self.as_mut_slice())
-    }
-}
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

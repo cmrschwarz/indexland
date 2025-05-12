@@ -47,6 +47,7 @@ macro_rules! index_vec_deque {
     }};
 }
 
+#[repr(transparent)]
 pub struct IndexVecDeque<I, T> {
     data: VecDeque<T>,
     _phantom: PhantomData<fn(I) -> T>,
@@ -281,6 +282,13 @@ impl<I, T> IndexVecDeque<I, T> {
     /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
         Self::from_iter(arr.into_inner())
+    }
+
+    pub const fn into_vec_deque(self) -> VecDeque<T> {
+        // required because this function is const
+        let res = unsafe { core::ptr::read(&raw const self.data) };
+        core::mem::forget(self);
+        res
     }
 }
 
