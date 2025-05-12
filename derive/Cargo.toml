@@ -24,7 +24,7 @@ quote = "1.0.40"
 
 [dev-dependencies]
 indexland = { workspace = true, features = ["derive", "arrayvec"] }
-trybuild = "1.0.104"
+trybuild = "1.0.105"
 metamatch = "0.3"
 
 [package.metadata.docs.rs]
