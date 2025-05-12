@@ -12,9 +12,6 @@ use core::{
 #[cfg(feature = "alloc")]
 use alloc::{borrow::Cow, vec::Vec};
 
-#[cfg(feature = "alloc")]
-use crate::IndexVec;
-
 #[repr(transparent)]
 pub struct IndexArray<I, T, const N: usize> {
     data: [T; N],
@@ -326,28 +323,6 @@ where
 {
     fn from(value: &'a IndexArray<I, T, N>) -> Self {
         Cow::Borrowed(value.as_index_slice())
-    }
-}
-
-#[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-impl<I, T, const N: usize> From<&IndexArray<I, T, N>> for IndexVec<I, T>
-where
-    T: Clone,
-{
-    fn from(value: &IndexArray<I, T, N>) -> Self {
-        IndexVec::from(Vec::from(&value.data))
-    }
-}
-
-#[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-impl<I, T, const N: usize> From<&mut IndexArray<I, T, N>> for IndexVec<I, T>
-where
-    T: Clone,
-{
-    fn from(value: &mut IndexArray<I, T, N>) -> Self {
-        IndexVec::from(Vec::from(&value.data))
     }
 }
 

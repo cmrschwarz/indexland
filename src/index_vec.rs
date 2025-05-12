@@ -3,7 +3,11 @@ use crate::{
     IndexRangeBounds,
 };
 
-use alloc::vec::Splice;
+use alloc::{
+    borrow::{Cow, ToOwned},
+    collections::BinaryHeap,
+    vec::Splice,
+};
 use core::{
     borrow::{Borrow, BorrowMut},
     fmt::Debug,
@@ -587,9 +591,96 @@ impl<I, T> DerefMut for IndexVec<I, T> {
     }
 }
 
+impl<'a, I, T> Extend<&'a T> for IndexVec<I, T>
+where
+    T: Copy + 'a,
+{
+    fn extend<It: IntoIterator<Item = &'a T>>(&mut self, iter: It) {
+        self.data.extend(iter);
+    }
+}
 impl<I, T> Extend<T> for IndexVec<I, T> {
     fn extend<It: IntoIterator<Item = T>>(&mut self, iter: It) {
         self.data.extend(iter);
+    }
+}
+
+impl<I, T> From<IndexVec<I, T>> for Vec<T> {
+    fn from(value: IndexVec<I, T>) -> Self {
+        value.data
+    }
+}
+impl<I, T> From<Vec<T>> for IndexVec<I, T> {
+    fn from(value: Vec<T>) -> Self {
+        IndexVec {
+            data: value,
+            _phantom: PhantomData,
+        }
+    }
+}
+impl<I, T> From<&[T]> for IndexVec<I, T>
+where
+    T: Clone,
+{
+    fn from(value: &[T]) -> Self {
+        Self::from(Vec::from(value))
+    }
+}
+impl<I, T, const N: usize> From<&[T; N]> for IndexVec<I, T>
+where
+    T: Clone,
+{
+    fn from(value: &[T; N]) -> Self {
+        Self::from(Vec::from(value))
+    }
+}
+impl<I, T, const N: usize> From<&IndexArray<I, T, N>> for IndexVec<I, T>
+where
+    T: Clone,
+{
+    fn from(value: &IndexArray<I, T, N>) -> Self {
+        Self::from(Vec::from(value))
+    }
+}
+impl<'a, I, T> From<&'a IndexVec<I, T>> for Cow<'a, IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn from(value: &'a IndexVec<I, T>) -> Self {
+        Cow::Borrowed(value.as_slice())
+    }
+}
+impl<'a, I, T> From<&'a IndexVec<I, T>> for Cow<'a, [T]>
+where
+    T: Clone,
+{
+    fn from(value: &'a IndexVec<I, T>) -> Self {
+        Cow::Borrowed(value.as_raw_slice())
+    }
+}
+
+impl<I, T> From<&mut [T]> for IndexVec<I, T>
+where
+    T: Clone,
+{
+    fn from(value: &mut [T]) -> Self {
+        Self::from(Vec::from(value))
+    }
+}
+impl<I, T, const N: usize> From<&mut [T; N]> for IndexVec<I, T>
+where
+    T: Clone,
+{
+    fn from(value: &mut [T; N]) -> Self {
+        Self::from(Vec::from(value))
+    }
+}
+impl<I, T, const N: usize> From<&mut IndexArray<I, T, N>> for IndexVec<I, T>
+where
+    T: Clone,
+{
+    fn from(value: &mut IndexArray<I, T, N>) -> Self {
+        Self::from(Vec::from(value))
     }
 }
 
@@ -603,18 +694,37 @@ impl<I, T, const N: usize> From<IndexArray<I, T, N>> for IndexVec<I, T> {
         IndexVec::from_iter(value)
     }
 }
-impl<I, T> From<Vec<T>> for IndexVec<I, T> {
-    fn from(value: Vec<T>) -> Self {
-        IndexVec {
-            data: value,
-            _phantom: PhantomData,
-        }
+
+impl<I, T> From<BinaryHeap<T>> for IndexVec<I, T> {
+    fn from(value: BinaryHeap<T>) -> Self {
+        Self::from(Vec::from(value))
     }
 }
 
-impl<I, T> From<IndexVec<I, T>> for Vec<T> {
-    fn from(value: IndexVec<I, T>) -> Self {
-        value.data
+impl<I, T> From<Box<[T]>> for IndexVec<I, T> {
+    fn from(value: Box<[T]>) -> Self {
+        Self::from(Vec::from(value))
+    }
+}
+impl<I, T> From<Box<IndexSlice<I, T>>> for IndexVec<I, T> {
+    fn from(value: Box<IndexSlice<I, T>>) -> Self {
+        Self::from(Vec::from(value.into_boxed_raw_slice()))
+    }
+}
+impl<'a, I, T> From<Cow<'a, [T]>> for IndexVec<I, T>
+where
+    [T]: ToOwned<Owned = Vec<T>>,
+{
+    fn from(value: Cow<'a, [T]>) -> Self {
+        Self::from(value.into_owned())
+    }
+}
+impl<'a, I, T> From<Cow<'a, IndexSlice<I, T>>> for IndexVec<I, T>
+where
+    IndexSlice<I, T>: ToOwned<Owned = IndexVec<I, T>>,
+{
+    fn from(value: Cow<'a, IndexSlice<I, T>>) -> Self {
+        value.into_owned()
     }
 }
 
