@@ -487,27 +487,6 @@ impl<I, T> IndexVec<I, T> {
     }
 }
 
-impl<I, T> AsRef<IndexVec<I, T>> for IndexVec<I, T> {
-    fn as_ref(&self) -> &IndexVec<I, T> {
-        self
-    }
-}
-impl<I, T> AsRef<Vec<T>> for IndexVec<I, T> {
-    fn as_ref(&self) -> &Vec<T> {
-        self.as_vec()
-    }
-}
-impl<I, T> AsRef<[T]> for IndexVec<I, T> {
-    fn as_ref(&self) -> &[T] {
-        self.as_raw_slice()
-    }
-}
-impl<I, T> AsRef<IndexSlice<I, T>> for IndexVec<I, T> {
-    fn as_ref(&self) -> &IndexSlice<I, T> {
-        self.as_slice()
-    }
-}
-
 impl<I, T> AsMut<IndexVec<I, T>> for IndexVec<I, T> {
     fn as_mut(&mut self) -> &mut IndexVec<I, T> {
         self
@@ -526,6 +505,27 @@ impl<I, T> AsMut<[T]> for IndexVec<I, T> {
 impl<I, T> AsMut<IndexSlice<I, T>> for IndexVec<I, T> {
     fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
         self.as_mut_slice()
+    }
+}
+
+impl<I, T> AsRef<IndexVec<I, T>> for IndexVec<I, T> {
+    fn as_ref(&self) -> &IndexVec<I, T> {
+        self
+    }
+}
+impl<I, T> AsRef<Vec<T>> for IndexVec<I, T> {
+    fn as_ref(&self) -> &Vec<T> {
+        self.as_vec()
+    }
+}
+impl<I, T> AsRef<[T]> for IndexVec<I, T> {
+    fn as_ref(&self) -> &[T] {
+        self.as_raw_slice()
+    }
+}
+impl<I, T> AsRef<IndexSlice<I, T>> for IndexVec<I, T> {
+    fn as_ref(&self) -> &IndexSlice<I, T> {
+        self.as_slice()
     }
 }
 

@@ -13,6 +13,9 @@ use core::{
     ops::{Index, IndexMut, Range, RangeInclusive},
 };
 
+#[cfg(feature = "std")]
+use std::io::{BufRead, Read};
+
 #[cfg(feature = "alloc")]
 use alloc::{borrow::Cow, borrow::ToOwned, boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 
@@ -192,7 +195,7 @@ impl<I, T> IndexSlice<I, T> {
     ///
     /// Calling this method with an out-of-bounds index is undefined behavior,
     /// even if the resulting reference is not used.
-    pub unsafe fn get_unchechecked(&self, idx: I) -> &T
+    pub unsafe fn get_unchecked(&self, idx: I) -> &T
     where
         I: Idx,
     {
@@ -224,6 +227,40 @@ impl<I, T> IndexSlice<I, T> {
 
     pub fn as_mut_ptr_range(&mut self) -> Range<*mut T> {
         self.data.as_mut_ptr_range()
+    }
+
+    pub const fn as_array<const N: usize>(&self) -> Option<&[T; N]> {
+        //TODO: replace with call once `as_array` stabilizes
+        // feature: slice_as_array, issue: 133508
+        if self.len() == N {
+            let ptr = self.data.as_ptr().cast::<[T; N]>();
+
+            // SAFETY: The underlying array of a slice can be reinterpreted as an actual array
+            // `[T; N]` if `N` is not greater than the slice's length.
+
+            let me = unsafe { &*ptr };
+
+            Some(me)
+        } else {
+            None
+        }
+    }
+
+    pub const fn as_mut_array<const N: usize>(&mut self) -> Option<&mut [T; N]> {
+        // TODO: replace with call once `as_mut_array` stabilizes
+        // feature: slice_as_array, issue: 133508
+        if self.len() == N {
+            let ptr = self.data.as_mut_ptr().cast::<[T; N]>();
+
+            // SAFETY: The underlying array of a slice can be reinterpreted as an actual
+            // array `[T; N]` if `N` is not greater than the slice's length.
+
+            let me = unsafe { &mut *ptr };
+
+            Some(me)
+        } else {
+            None
+        }
     }
 
     pub fn swap(&mut self, a: I, b: I)
@@ -1515,15 +1552,34 @@ wrap_pred_iter_n!(rsplitn, RSplitN, rsplitn_mut, RSplitNMut, FnMut(&T) -> bool);
 
 // ===== traits ======
 
+impl<I, T> AsMut<[T]> for IndexSlice<I, T> {
+    fn as_mut(&mut self) -> &mut [T] {
+        &mut self.data
+    }
+}
+
+impl<I, T> AsMut<IndexSlice<I, T>> for IndexSlice<I, T> {
+    fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
+        self
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> AsMut<[T]> for Box<IndexSlice<I, T>> {
+    fn as_mut(&mut self) -> &mut [T] {
+        &mut self.data
+    }
+}
+
 impl<I, T> AsRef<[T]> for IndexSlice<I, T> {
     fn as_ref(&self) -> &[T] {
         &self.data
     }
 }
 
-impl<I, T> AsMut<[T]> for IndexSlice<I, T> {
-    fn as_mut(&mut self) -> &mut [T] {
-        &mut self.data
+impl<I, T> AsRef<IndexSlice<I, T>> for IndexSlice<I, T> {
+    fn as_ref(&self) -> &IndexSlice<I, T> {
+        self
     }
 }
 
@@ -1533,9 +1589,45 @@ impl<I, T> Borrow<[T]> for IndexSlice<I, T> {
     }
 }
 
+#[cfg(feature = "alloc")]
+impl<I, T> AsRef<[T]> for Box<IndexSlice<I, T>> {
+    fn as_ref(&self) -> &[T] {
+        &self.data
+    }
+}
+
 impl<I, T> BorrowMut<[T]> for IndexSlice<I, T> {
     fn borrow_mut(&mut self) -> &mut [T] {
         &mut self.data
+    }
+}
+
+#[cfg(feature = "std")]
+impl<I> BufRead for &IndexSlice<I, u8> {
+    fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
+        Ok(&self.data)
+    }
+
+    fn consume(&mut self, amt: usize) {
+        *self = IndexSlice::from_raw_slice(&self.data[amt..]);
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<I, T> Clone for alloc::boxed::Box<IndexSlice<I, T>>
+where
+    T: Clone,
+{
+    fn clone(&self) -> Self {
+        self.to_index_vec().into_boxed_slice()
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        if self.len() == source.len() {
+            self.clone_from_slice(&source);
+        } else {
+            *self = source.clone();
+        }
     }
 }
 
@@ -1571,6 +1663,7 @@ where
         IndexSlice::from_boxed_raw_slice(alloc::boxed::Box::from(value))
     }
 }
+
 #[cfg(feature = "alloc")]
 impl<I, T> From<&mut [T]> for alloc::boxed::Box<IndexSlice<I, T>>
 where
@@ -1581,6 +1674,7 @@ where
         IndexSlice::from_boxed_raw_slice(alloc::boxed::Box::from(&*value))
     }
 }
+
 #[cfg(feature = "alloc")]
 impl<I, T> From<&IndexSlice<I, T>> for alloc::boxed::Box<IndexSlice<I, T>>
 where
@@ -1590,6 +1684,7 @@ where
         IndexSlice::from_boxed_raw_slice(alloc::boxed::Box::from(value.as_raw_slice()))
     }
 }
+
 #[cfg(feature = "alloc")]
 impl<I, T> From<&mut IndexSlice<I, T>> for alloc::boxed::Box<IndexSlice<I, T>>
 where
@@ -1798,6 +1893,26 @@ where
         self.as_raw_slice().partial_cmp(other.as_raw_slice())
     }
 }
+
+#[cfg(feature = "std")]
+impl<I> Read for &IndexSlice<I, u8> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        std::io::Read::read(&mut &self.data, buf)
+    }
+
+    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> std::io::Result<usize> {
+        std::io::Read::read_to_end(&mut &self.data, buf)
+    }
+
+    fn read_to_string(&mut self, buf: &mut std::string::String) -> std::io::Result<usize> {
+        std::io::Read::read_to_string(&mut &self.data, buf)
+    }
+
+    fn read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<()> {
+        std::io::Read::read_exact(&mut &self.data, buf)
+    }
+}
+
 impl<I, T> Ord for IndexSlice<I, T>
 where
     T: Ord,
