@@ -158,6 +158,6 @@ fn main() {
 
     println!("List contents:");
     for item in list.iter() {
-        println!("{}", item);
+        println!("{item}");
     }
 }
