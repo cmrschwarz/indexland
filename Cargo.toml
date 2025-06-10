@@ -53,7 +53,7 @@ optional = true
 default-features = false
 
 [dependencies.smallvec]
-version = "1.15.0"
+version = "1.15.1"
 optional = true
 default-features = false
 features = ["const_new"]
@@ -76,7 +76,7 @@ default-features = false
 
 [dev-dependencies]
 trybuild = "1.0.105"
-rustversion = "1.0.20"
+rustversion = "1.0.21"
 indexland = { workspace = true, features = ["derive"] }
 
 [features]
