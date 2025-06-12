@@ -45,7 +45,7 @@ macro_rules! index_vec {
         $crate::IndexVec::new()
     };
     ($value:expr; $count: expr) => {
-        $crate::IndexVec::from([ $value; $count])
+        $crate::IndexVec::from_vec($crate::alloc::vec![$value; $count])
     };
     ($($value:expr),+ $(,)?) => {
         $crate::IndexVec::from([$($value),*])
@@ -477,6 +477,13 @@ impl<I, T> IndexVec<I, T> {
     /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
         Self::from_iter(arr.into_inner())
+    }
+
+    pub const fn from_vec(v: Vec<T>) -> Self {
+        Self {
+            data: v,
+            _phantom: PhantomData,
+        }
     }
 
     pub const fn into_vec(self) -> Vec<T> {

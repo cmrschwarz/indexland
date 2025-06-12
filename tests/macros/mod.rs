@@ -8,6 +8,9 @@ mod idx_newtype;
 #[cfg(feature = "alloc")]
 pub mod index_vec;
 
+#[cfg(feature = "alloc")]
+pub mod index_vec_deque;
+
 #[cfg(feature = "smallvec")]
 mod index_small_vec;
 

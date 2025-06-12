@@ -44,7 +44,7 @@ pub trait Idx: 'static + Copy + Ord + Hash {
     }
 }
 
-pub trait IdxEnum: Idx + 'static {
+pub trait IdxEnum: Idx {
     const COUNT: usize;
     const VARIANTS: &'static [Self];
 

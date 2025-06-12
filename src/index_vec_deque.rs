@@ -31,7 +31,7 @@ macro_rules! index_vec_deque {
         $crate::IndexVecDeque::from([])
     };
     ($value:expr; $count: expr) => {
-        $crate::IndexVecDeque::from([ $value; $count])
+        $crate::IndexVecDeque::from($crate::alloc::vec![$value; $count])
     };
     ($($value:expr),+ $(,)?) => {
         $crate::IndexVecDeque::from([$($value),*])
@@ -282,6 +282,13 @@ impl<I, T> IndexVecDeque<I, T> {
     /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
         Self::from_iter(arr.into_inner())
+    }
+
+    pub const fn from_vec_deque(v: VecDeque<T>) -> Self {
+        Self {
+            data: v,
+            _phantom: PhantomData,
+        }
     }
 
     pub const fn into_vec_deque(self) -> VecDeque<T> {

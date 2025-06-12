@@ -18,7 +18,7 @@
 extern crate std;
 
 #[cfg(feature = "alloc")]
-extern crate alloc;
+pub extern crate alloc;
 
 // allow this crate to refer to itself as ::indexland for macros to work
 // within tests, see https://github.com/rust-lang/rust/issues/54647
