@@ -202,7 +202,7 @@ impl<I, T> IndexVecDeque<I, T> {
         self.data.push_back(v);
         id
     }
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, alloc::collections::vec_deque::Iter<T>>
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, alloc::collections::vec_deque::Iter<'_, T>>
     where
         I: Idx,
     {
@@ -210,7 +210,7 @@ impl<I, T> IndexVecDeque<I, T> {
     }
     pub fn iter_enumerated_mut(
         &mut self,
-    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<T>>
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<'_, T>>
     where
         I: Idx,
     {
@@ -219,7 +219,7 @@ impl<I, T> IndexVecDeque<I, T> {
     pub fn iter_enumerated_range(
         &self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, alloc::collections::vec_deque::Iter<T>>
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::Iter<'_, T>>
     where
         I: Idx,
     {
@@ -228,7 +228,7 @@ impl<I, T> IndexVecDeque<I, T> {
     pub fn iter_enumerated_range_mut(
         &mut self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<T>>
+    ) -> IndexEnumerate<I, alloc::collections::vec_deque::IterMut<'_, T>>
     where
         I: Idx,
     {
@@ -272,10 +272,10 @@ impl<I, T> IndexVecDeque<I, T> {
             IndexSlice::from_raw_slice(s2),
         )
     }
-    pub fn iter(&self) -> alloc::collections::vec_deque::Iter<T> {
+    pub fn iter(&self) -> alloc::collections::vec_deque::Iter<'_, T> {
         self.data.iter()
     }
-    pub fn iter_mut(&mut self) -> alloc::collections::vec_deque::IterMut<T> {
+    pub fn iter_mut(&mut self) -> alloc::collections::vec_deque::IterMut<'_, T> {
         self.data.iter_mut()
     }
 

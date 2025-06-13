@@ -117,7 +117,7 @@ impl<T> LinkedList<T> {
         node.data
     }
 
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             // NOTE: `as_index_slice` is identical to
             // `&*self.nodes` (using IndexVec's Deref to IndexSlice),

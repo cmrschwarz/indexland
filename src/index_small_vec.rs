@@ -157,13 +157,13 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, std::slice::Iter<T>>
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, std::slice::Iter<'_, T>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
-    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, std::slice::IterMut<T>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, std::slice::IterMut<'_, T>>
     where
         I: Idx,
     {
@@ -172,7 +172,7 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn iter_enumerated_range(
         &self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, core::slice::Iter<T>>
+    ) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
     {
@@ -181,7 +181,7 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn iter_enumerated_range_mut(
         &mut self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
     where
         I: Idx,
     {

@@ -431,7 +431,7 @@ impl<I, T> IndexVec<I, T> {
     pub fn iter_enumerated_range(
         &self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, core::slice::Iter<T>>
+    ) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
     {
@@ -440,20 +440,20 @@ impl<I, T> IndexVec<I, T> {
     pub fn iter_enumerated_range_mut(
         &mut self,
         range: impl IndexRangeBounds<I>,
-    ) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
     where
         I: Idx,
     {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
-    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, &mut self.data)
     }
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>>
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
     {

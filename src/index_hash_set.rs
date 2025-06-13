@@ -156,7 +156,7 @@ impl<I, T> IndexSlice<I, T> {
         Some((first, Self::from_slice(rest)))
     }
 
-    pub fn iter(&self) -> indexmap::set::Iter<T> {
+    pub fn iter(&self) -> indexmap::set::Iter<'_, T> {
         self.data.iter()
     }
 
@@ -332,10 +332,10 @@ impl<I, T, S> IndexHashSet<I, T, S> {
     {
         self.len().checked_sub(1).map(I::from_usize)
     }
-    pub fn iter(&self) -> indexmap::set::Iter<T> {
+    pub fn iter(&self) -> indexmap::set::Iter<'_, T> {
         self.data.iter()
     }
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, indexmap::set::Iter<T>>
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, indexmap::set::Iter<'_, T>>
     where
         I: Idx,
     {
@@ -344,7 +344,7 @@ impl<I, T, S> IndexHashSet<I, T, S> {
     pub fn iter_enumerated_range<R: IndexRangeBounds<I>>(
         &self,
         range: R,
-    ) -> IndexEnumerate<I, indexmap::set::Iter<T>>
+    ) -> IndexEnumerate<I, indexmap::set::Iter<'_, T>>
     where
         I: Idx,
     {
@@ -369,13 +369,13 @@ impl<I, T, S> IndexHashSet<I, T, S> {
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
-    pub fn drain<R: IndexRangeBounds<I>>(&mut self, range: R) -> indexmap::set::Drain<T> {
+    pub fn drain<R: IndexRangeBounds<I>>(&mut self, range: R) -> indexmap::set::Drain<'_, T> {
         self.data.drain(range.canonicalize(self.len()))
     }
     pub fn drain_enumerated<R: IndexRangeBounds<I>>(
         &mut self,
         range: R,
-    ) -> IndexEnumerate<I, indexmap::set::Drain<T>>
+    ) -> IndexEnumerate<I, indexmap::set::Drain<'_, T>>
     where
         I: Idx,
     {
@@ -558,7 +558,7 @@ impl<I, T, S> IndexHashSet<I, T, S> {
         &mut self,
         range: R,
         replace_with: II,
-    ) -> Splice<II::IntoIter, T, S>
+    ) -> Splice<'_, II::IntoIter, T, S>
     where
         T: Hash + Eq,
         S: BuildHasher,

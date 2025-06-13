@@ -303,13 +303,13 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     {
         self.truncate_len(new_end_index.into_usize());
     }
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>>
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, self.as_raw_slice())
     }
-    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
     where
         I: Idx,
     {
@@ -318,7 +318,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn iter_enumerated_range<C, R: IndexRangeBounds<C>>(
         &self,
         range: R,
-    ) -> IndexEnumerate<I, core::slice::Iter<T>>
+    ) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
         C: IdxCompat<I>,
@@ -329,7 +329,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     pub fn iter_enumerated_range_mut<C, R: IndexRangeBounds<C>>(
         &mut self,
         range: R,
-    ) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
     where
         I: Idx,
         C: IdxCompat<I>,

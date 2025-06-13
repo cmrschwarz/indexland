@@ -154,13 +154,13 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
         self.data.each_mut().into()
     }
 
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<T>>
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
-    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
     where
         I: Idx,
     {
@@ -169,7 +169,7 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     pub fn iter_enumerated_range<R: IndexRangeBounds<I>>(
         &self,
         range: R,
-    ) -> IndexEnumerate<I, core::slice::Iter<T>>
+    ) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
     {
@@ -178,7 +178,7 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     pub fn iter_enumerated_range_mut<R>(
         &mut self,
         range: R,
-    ) -> IndexEnumerate<I, core::slice::IterMut<T>>
+    ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
     where
         I: Idx,
         R: IndexRangeBounds<I>,

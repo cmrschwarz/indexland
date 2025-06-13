@@ -210,25 +210,28 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
-    pub fn iter(&self) -> indexmap::map::Iter<K, V> {
+    pub fn iter(&self) -> indexmap::map::Iter<'_, K, V> {
         self.data.iter()
     }
-    pub fn iter_mut(&mut self) -> indexmap::map::IterMut<K, V> {
+    pub fn iter_mut(&mut self) -> indexmap::map::IterMut<'_, K, V> {
         self.data.iter_mut()
     }
-    pub fn iter_enumerated(&self) -> IndexEnumerate<I, indexmap::map::Iter<K, V>>
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, indexmap::map::Iter<'_, K, V>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, &self.data)
     }
-    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, indexmap::map::IterMut<'_, K, V>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, &mut self.data)
     }
-    pub fn iter_enumerated_range<R>(&self, range: R) -> IndexEnumerate<I, indexmap::map::Iter<K, V>>
+    pub fn iter_enumerated_range<R>(
+        &self,
+        range: R,
+    ) -> IndexEnumerate<I, indexmap::map::Iter<'_, K, V>>
     where
         I: Idx,
         R: IndexRangeBounds<I>,
@@ -239,7 +242,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn iter_enumerated_range_mut<R>(
         &mut self,
         range: R,
-    ) -> IndexEnumerate<I, indexmap::map::IterMut<K, V>>
+    ) -> IndexEnumerate<I, indexmap::map::IterMut<'_, K, V>>
     where
         I: Idx,
         R: IndexRangeBounds<I>,
@@ -253,10 +256,10 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     {
         IndexEnumerate::new(I::ZERO, self.data)
     }
-    pub fn keys(&self) -> indexmap::map::Keys<K, V> {
+    pub fn keys(&self) -> indexmap::map::Keys<'_, K, V> {
         self.data.keys()
     }
-    pub fn keys_enumerated(&self) -> IndexEnumerate<I, indexmap::map::Keys<K, V>>
+    pub fn keys_enumerated(&self) -> IndexEnumerate<I, indexmap::map::Keys<'_, K, V>>
     where
         I: Idx,
     {
@@ -271,19 +274,19 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     {
         IndexEnumerate::new(I::ZERO, self.data.into_keys())
     }
-    pub fn values(&self) -> indexmap::map::Values<K, V> {
+    pub fn values(&self) -> indexmap::map::Values<'_, K, V> {
         self.data.values()
     }
-    pub fn values_enumerated(&self) -> IndexEnumerate<I, indexmap::map::Values<K, V>>
+    pub fn values_enumerated(&self) -> IndexEnumerate<I, indexmap::map::Values<'_, K, V>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, self.data.values())
     }
-    pub fn values_mut(&mut self) -> indexmap::map::ValuesMut<K, V> {
+    pub fn values_mut(&mut self) -> indexmap::map::ValuesMut<'_, K, V> {
         self.data.values_mut()
     }
-    pub fn values_mut_enumerated(&mut self) -> IndexEnumerate<I, indexmap::map::ValuesMut<K, V>>
+    pub fn values_mut_enumerated(&mut self) -> IndexEnumerate<I, indexmap::map::ValuesMut<'_, K, V>>
     where
         I: Idx,
     {
@@ -310,11 +313,11 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     pub fn truncate_len(&mut self, len: usize) {
         self.data.truncate(len);
     }
-    pub fn drain<R: IndexRangeBounds<I>>(&mut self, range: R) -> indexmap::map::Drain<K, V> {
+    pub fn drain<R: IndexRangeBounds<I>>(&mut self, range: R) -> indexmap::map::Drain<'_, K, V> {
         self.data
             .drain(range.canonicalize(self.len()).usize_range())
     }
-    pub fn drain_len<R: RangeBounds<usize>>(&mut self, range: R) -> indexmap::map::Drain<K, V> {
+    pub fn drain_len<R: RangeBounds<usize>>(&mut self, range: R) -> indexmap::map::Drain<'_, K, V> {
         self.data.drain(range)
     }
     pub fn split_off(&mut self, at: I) -> Self
