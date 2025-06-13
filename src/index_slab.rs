@@ -185,7 +185,7 @@ impl<I, T> IndexSlab<I, T> {
         self.data.remove(key.into_usize())
     }
 
-    pub fn contains(&self, key: usize) -> bool
+    pub fn contains(&self, key: I) -> bool
     where
         I: Idx,
     {
