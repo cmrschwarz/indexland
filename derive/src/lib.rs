@@ -148,20 +148,46 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 /// - `"always"`: Enable bounds checks regardless of build type.
 /// - `"never"`: Disable all bounds checks. Always silently wrap around.
 ///
+/// ### Example
+/// ```should_panic
+/// use indexland::Idx;
+///
+/// #[derive(Idx)]
+/// #[indexland(bounds_checks = "always")]
+/// struct SafeId(u8);
+///
+/// // !!! These will now panic even in release builds, instead of wrapping around.
+/// let _ = SafeId::MAX + SafeId(1);
+/// let _ = SafeId::from(usize::MAX);
+/// ```
+///
 /// ## `#[indexland(arith = "..")]`
-/// - "basic": The default. Implement
+/// - `"basic"`: The default. Implement
 ///   [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign),
 ///   [`Sub<T>`](core::ops::Sub) + [`SubAssign<T>`](core::ops::SubAssign), and
 ///   [`Rem`](core::ops::Rem) + [`RemAssign`](core::ops::RemAssign)
 ///
-/// - "full": Implement [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign) and
+/// - `"full"`: Implement [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign) and
 ///   [`Div`](core::ops::Div) + [`DivAssign`](core::ops::DivAssign) in addition to
 ///   the traits derived by "basic".
 ///
-/// - "disabled": Don't derive any arithmetic traits.
+/// - `"disabled"`: Don't derive any arithmetic traits.
 ///
 /// If [`#[indexland(arith_compat(T))]`](Idx#indexlandarith_compatt) is specified,
 /// also implements the respective versions for `Rhs = T`.
+///
+/// ### Example
+/// ```
+/// use indexland::Idx;
+///
+/// #[derive(Idx)]
+/// #[indexland(arith = "full")]
+/// struct ArithId(u32);
+///
+/// // multiplication and division are now enabled
+/// assert_eq!(ArithId(4) / ArithId(2), ArithId(2));
+/// assert_eq!(ArithId(2) * ArithId(3), ArithId(6));
+/// ```
 ///
 /// ## `#[indexland(arith_compat(T))]`
 /// Implement [`Add<T>`](core::ops::Add) + [`AddAssign<T>`](core::ops::AddAssign),
@@ -174,20 +200,86 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 ///
 /// The primary usecase is `#[indexland(arith_compat(usize))]`.
 ///
+/// ### Example
+/// ```
+/// use indexland::Idx;
+///
+/// #[derive(Idx)]
+/// #[indexland(arith_compat(usize))]
+/// struct FuzzyId(u32);
+///
+/// let id = FuzzyId(5);
+/// // Can now use arithmetic with usize directly
+/// assert_eq!(id + 3, FuzzyId(8));
+/// ```
+///
 /// ## `#[indexland(extra(..))]`
 /// Enable the derivation of optional traits, see
 /// [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
 /// and [`#[derive(IdxEnum)]`](crate::IdxEnum) for options.
 ///
+/// ### Example
+/// ```
+/// use indexland::Idx;
+///
+/// #[derive(Idx)]
+/// #[indexland(extra(Display))]
+/// enum Status {
+///     Active,
+///     Inactive,
+/// }
+///
+/// // The `Display` trait is now available for enums
+/// assert_eq!(format!("{}", Status::Active), "Active");
+/// ```
+///
 /// ## `#[indexland(omit(..))]`
 /// Suppress the derivation of certain traits (blacklist).
+///
+/// ### Example
+/// ```compile_fail
+/// use indexland::Idx;
+///
+/// #[derive(Idx)]
+/// #[indexland(omit(Display))]
+/// struct SecretId(u32);
+///
+/// // Add a custom `Display` impl or don't derive it at all
+/// impl Display for SecretId{
+///     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+///         write!(f, "SecretId(<redacted>)", self.0)
+///     }
+/// }
+/// ```
 ///
 /// ## `#[indexland(only(..))]`
 /// Suppress the derivation of all traits except the specified ones (whitelist).
 ///
-/// ## `#[indexland(compat(..))]`
+/// ### Example
+/// ```
+/// use indexland::Idx;
+///
+/// #[derive(Idx, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// #[indexland(only(Idx))]
+/// struct MinimalId(u32); // Minimal set of traits.
+/// ```
+///
+/// ## `#[indexland(idx_compat(..))]`
 /// Allow other types to be used to index containers of this type.
 ///
+/// ### Example
+/// ```
+/// use indexland::{Idx, IndexVec};
+///
+/// #[derive(Idx)]
+/// #[indexland(idx_compat(usize))]
+/// struct ItemId(usize);
+///
+/// // Can use usize directly to index containers
+/// let items = IndexVec::<ItemId, u8>::from_iter(0..10);
+/// let item_0 = items[0]; // Allowed due to `idx_compat(usize)`.
+/// let item_1 = items[ItemId(1)]; // Still works.
+/// ```
 ///
 /// ### `#[indexland(crate = ..)]`
 /// Change the crate name used within the derive macro,
@@ -202,24 +294,6 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 /// #[derive(foobar::Idx)]
 /// #[indexland(crate = foobar)] // the generated code will use `foobar::` instead of `indexland::`
 /// struct Foo(u32);
-/// ```
-///
-/// # Attributes Examples
-/// ```
-/// use indexland::Idx;
-///
-/// #[derive(Idx, Default)]
-/// #[indexland(omit(Default, From<Self> for usize), extra(Display))]
-/// enum Bar {
-///     A,
-///     B,
-///     // using omit(Default) + derive(Default) allows us to change the default
-///     // to an element other than the first.
-///     #[default]
-///     C,
-/// };
-///
-/// println!("{}", Bar::A);
 /// ```
 #[proc_macro_derive(Idx, attributes(indexland))]
 pub fn derive_idx(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

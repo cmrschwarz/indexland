@@ -139,13 +139,13 @@ fn run_tests() {
     }
 
     println!("\n⚡ Testing doc-tests ⚡");
-    run_cargo_with_features(["test", "--doc", "--workspace"], "full");
+    run_cargo_with_features(["test", "--doc", "--workspace"], "indexland/full");
 
     println!("\n⚡ Testing with full features ⚡");
-    run_cargo_with_features(["test", "--workspace"], "full");
+    run_cargo_with_features(["test", "--workspace"], "indexland/full");
 
     println!("\n⚡ Testing with full features and --release ⚡");
-    run_cargo_with_features(["test", "--workspace", "--release"], "full");
+    run_cargo_with_features(["test", "--workspace", "--release"], "indexland/full");
 
     let examples = std::fs::read_dir("./examples")
         .expect("Failed to read examples directory")

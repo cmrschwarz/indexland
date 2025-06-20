@@ -83,6 +83,7 @@ indexland = { workspace = true, features = ["derive"] }
 default = ["std", "derive"]
 
 full = [
+    "alloc",
     "std",
     "derive",
     "nonmax",

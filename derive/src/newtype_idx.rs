@@ -242,7 +242,7 @@ fn newtype_derive_div(ctx: &NewtypeCtx) -> TokenStream {
         #[automatically_derived]
         impl ::core::ops::Div for #name {
             type Output = Self;
-            fn sub(self, rhs: Self) -> Self::Output {
+            fn div(self, rhs: Self) -> Self::Output {
                 #name(self.0 / rhs.0)
             }
         }
