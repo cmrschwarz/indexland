@@ -298,7 +298,7 @@ fn newtype_derive_partial_eq(ctx: &NewtypeCtx) -> TokenStream {
     }
 }
 
-fn fill_derivation_list(ctx: &mut NewtypeCtx) {
+fn fill_derivation_list(ctx: &mut NewtypeCtx, rich_defaults: bool) {
     let (base_arith, full_arith) = match ctx.base.attrs.arith_mode {
         crate::attrs::ArithMode::Disabled => (false, false),
         crate::attrs::ArithMode::Basic => (true, false),
@@ -306,29 +306,29 @@ fn fill_derivation_list(ctx: &mut NewtypeCtx) {
     };
     ctx.add_deriv_custom(true, "Idx", newtype_derive_idx);
     ctx.add_deriv_custom(true, "IdxEnum", newtype_derive_idx_newtype);
-    ctx.add_deriv_custom(true, "Debug", newtype_derive_debug);
-    ctx.add_deriv_custom(true, "Display", newtype_derive_display);
-    ctx.add_deriv_shared(true, "Default", derive_default);
-    ctx.add_deriv_shared(true, "Clone", derive_clone);
-    ctx.add_deriv_shared(true, "Copy", derive_copy);
-    ctx.add_deriv_custom(true, "Add", newtype_derive_add);
-    ctx.add_deriv_custom(true, "Sub", newtype_derive_sub);
+    ctx.add_deriv_custom(rich_defaults, "Debug", newtype_derive_debug);
+    ctx.add_deriv_custom(rich_defaults, "Display", newtype_derive_display);
+    ctx.add_deriv_shared(rich_defaults, "Default", derive_default);
+    ctx.add_deriv_shared(rich_defaults, "Clone", derive_clone);
+    ctx.add_deriv_shared(rich_defaults, "Copy", derive_copy);
+    ctx.add_deriv_custom(rich_defaults, "Add", newtype_derive_add);
+    ctx.add_deriv_custom(rich_defaults, "Sub", newtype_derive_sub);
     ctx.add_deriv_custom(full_arith, "Mul", newtype_derive_mul);
     ctx.add_deriv_custom(full_arith, "Div", newtype_derive_div);
     ctx.add_deriv_custom(full_arith, "Rem", newtype_derive_rem);
-    ctx.add_deriv_shared(true, "AddAssign", derive_add_assign);
-    ctx.add_deriv_shared(true, "SubAssign", derive_sub_assign);
+    ctx.add_deriv_shared(rich_defaults, "AddAssign", derive_add_assign);
+    ctx.add_deriv_shared(rich_defaults, "SubAssign", derive_sub_assign);
     ctx.add_deriv_shared(full_arith, "MulAssign", derive_mul_assign);
     ctx.add_deriv_shared(full_arith, "DivAssign", derive_div_assign);
     ctx.add_deriv_shared(full_arith, "RemAssign", derive_rem_assign);
-    ctx.add_deriv_custom(true, "Hash", newtype_derive_hash);
-    ctx.add_deriv_custom(true, "PartialOrd", newtype_derive_partial_ord);
-    ctx.add_deriv_custom(true, "Ord", newtype_derive_ord);
-    ctx.add_deriv_custom(true, "PartialEq", newtype_derive_partial_eq);
-    ctx.add_deriv_shared(true, "Eq", derive_eq);
-    ctx.add_deriv_custom(true, "From<usize>", newtype_derive_from_usize);
+    ctx.add_deriv_custom(rich_defaults, "Hash", newtype_derive_hash);
+    ctx.add_deriv_custom(rich_defaults, "PartialOrd", newtype_derive_partial_ord);
+    ctx.add_deriv_custom(rich_defaults, "Ord", newtype_derive_ord);
+    ctx.add_deriv_custom(rich_defaults, "PartialEq", newtype_derive_partial_eq);
+    ctx.add_deriv_shared(rich_defaults, "Eq", derive_eq);
+    ctx.add_deriv_custom(rich_defaults, "From<usize>", newtype_derive_from_usize);
     ctx.add_deriv_custom(
-        true,
+        rich_defaults,
         "From<Self> for usize",
         newtype_derive_from_self_for_usize,
     );
@@ -361,7 +361,10 @@ fn fill_derivation_list(ctx: &mut NewtypeCtx) {
     }
 }
 
-pub fn derive_idx_newtype_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
+pub fn derive_idx_newtype_inner(
+    ast: DeriveInput,
+    rich_defaults: bool,
+) -> Result<TokenStream, syn::Error> {
     let Data::Struct(struct_data) = &ast.data else {
         return Err(syn::Error::new(
             Span::call_site(),
@@ -400,7 +403,7 @@ pub fn derive_idx_newtype_inner(ast: DeriveInput) -> Result<TokenStream, syn::Er
     // we don't derive if the type definition is already borked
     ctx.base.attrs.error_list.check()?;
 
-    fill_derivation_list(&mut ctx);
+    fill_derivation_list(&mut ctx, rich_defaults);
 
     let res = ctx.generate();
 

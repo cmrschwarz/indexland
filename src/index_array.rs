@@ -18,9 +18,9 @@ pub struct IndexArray<I, T, const N: usize> {
     _phantom: PhantomData<fn(I) -> T>,
 }
 
-/// Helper to construct `IndexArray<E, T, { <E as IdxEnum>::COUNT } >`.
+/// Helper to construct `IndexArray<E, T, { <E as IdxEnum>::VARIANT_COUNT } >`.
 ///
-/// Use [`IndexArray`] instead for Arrays that don't have exactly `COUNT` elements.
+/// Use [`IndexArray`] instead for Arrays that don't have exactly `VARIANT_COUNT` elements.
 ///
 /// # Example:
 /// ```
@@ -55,7 +55,7 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 ///     C,
 /// }
 ///
-/// const BAZ: IndexArray<MyId, i32, { MyId::COUNT }> = index_array![
+/// const BAZ: IndexArray<MyId, i32, { MyId::VARIANT_COUNT }> = index_array![
 ///     MyId::A => 1,
 ///     MyId::B => 2,
 ///     MyId::C => 3,
@@ -94,9 +94,9 @@ macro_rules! index_array {
 /// This is an alias for [`index_array!`]
 /// # Examples:
 /// ```
-/// use indexland::{enum_index_array, EnumIndexArray, IdxEnum};
+/// use indexland::{enum_index_array, EnumIndexArray, Idx};
 ///
-/// #[derive(IdxEnum)]
+/// #[derive(Idx)]
 /// enum MyId {
 ///     A,
 ///     B,

@@ -1,8 +1,7 @@
 use std::ops::Add;
 
 use indexland::{
-    enum_index_array, index_array, EnumIndexArray, Idx, IdxEnum, IdxNewtype, IndexArray,
-    IndexArrayVec,
+    enum_index_array, index_array, EnumIndexArray, Idx, IdxNewtype, IndexArray, IndexArrayVec,
 };
 
 #[test]
@@ -28,7 +27,7 @@ fn derive_idx_newtype() {
 
 #[test]
 fn derive_enum_omit() {
-    #[derive(IdxEnum, Default)]
+    #[derive(Idx, Default)]
     #[indexland(omit(Default), omit(Add))]
     pub enum Bar {
         A,
@@ -159,7 +158,7 @@ fn multi_integer_compatible() {
 
 #[test]
 fn enum_idx_array_macro() {
-    #[derive(IdxEnum)]
+    #[derive(Idx)]
     enum Foo {
         A,
         B,
@@ -177,7 +176,7 @@ fn enum_idx_array_macro() {
 
 #[test]
 fn enum_idx_array_macro_non_copy() {
-    #[derive(IdxEnum)]
+    #[derive(Idx)]
     enum Foo {
         A,
         B,
@@ -195,13 +194,13 @@ fn enum_idx_array_macro_non_copy() {
 
 #[test]
 fn nested_enum_idx_array() {
-    #[derive(IdxEnum)]
+    #[derive(Idx)]
     enum Foo {
         A,
         B,
     }
 
-    #[derive(IdxEnum)]
+    #[derive(Idx)]
     enum Bar {
         X,
         Y,

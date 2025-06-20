@@ -17,10 +17,10 @@ Newtype Indices for Rust Collection Types.
 ## Features
 - Strongly typed collection indices for better type safety and readability.
 
-- All array-based `std::collections` wrapped in one place through a single
+- All array-like `std::collections` wrapped in one place through a single
   [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html) trait.
 
-- Optional support for the popular `arrayvec`, `smallvec`, `indexmap` and `slab` crates.
+- Opt-in support for the popular `arrayvec`, `smallvec`, `indexmap` and `slab` crates.
 
 - **All** underlying APIs available and faithfully adapted for `Idx` types.
 
@@ -85,13 +85,13 @@ Use the `full` feature to enable all collections.
   [`#[no_std]`](https://docs.rust-embedded.org/book/intro/no-std.html)
   and optional [`alloc`](https://doc.rust-lang.org/core/alloc/index.html).
 
-- `Idx` compatible
+- Opt-in
   [`NonMax<T>`](https://docs.rs/indexland/latest/indexland/struct.NonMax.html) for
-  [Niche Optimizations](https://doc.rust-lang.org/std/option/index.html#representation).
+  `Idx` compatible [Niche Optimizations](https://doc.rust-lang.org/std/option/index.html#representation).
 
-- Optional [`serde`](::serde) implementations for all Collections.
+- Opt-in [`serde`](::serde) implementations for all Collections.
 
-## Why use `indexland` ?
+## Why ?
 Indexed collections are a powerful alternative to references or smart pointers.
 The pattern was popularized by
 [Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design),

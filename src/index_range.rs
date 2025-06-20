@@ -18,38 +18,26 @@
 //! #[derive(Idx)]
 //! struct MyId(u32);
 //!
-//! // example values
-//! let myvec: IndexVec<MyId, i32> = IndexVec::from_iter(0..10);
-//! let start = MyId(1);
-//! let end = MyId(3);
-//!
 //! // !! Ranged iteration for custom types does **not** compile in stable Rust.
-//! for i in start..end {
-//!     println!("myvec[{i}] = {}", myvec[i]);
+//! for i in MyId(1)..MyId(3) {
+//!     println!("{i}");
 //! }
 //! ```
 //!
 //! ## Fix using [`IndexRangeBounds`]:
 //! ```
-//! // `.index_range()` is provided by `IndexRangeBounds`
 //! use indexland::{Idx, IndexRangeBounds, IndexVec};
 //!
 //! #[derive(Idx)]
 //! struct MyId(u32);
 //!
-//! // example values
-//! let myvec: IndexVec<MyId, i32> = IndexVec::from_iter(0..10);
-//! let start = MyId(1);
-//! let end = MyId(3);
-//!
-//! // This works, and is available if you need it.
-//! // See the example below for a more idiomatic version using enumerate.
-//! for i in (start..end).index_range() {
-//!     println!("myvec[{i}] = {}", myvec[i]);
+//! // `index_range` is provided by the `IndexRangeBounds` extension trait
+//! for i in (MyId(1)..MyId(3)).index_range() {
+//!     println!("{i}");
 //! }
 //! ```
 //!
-//! ## Ergonomic Alternative
+//! ## Alternative for Collections
 //! ```
 //! # #![cfg(feature="derive")]
 //! use indexland::{Idx, IndexVec};

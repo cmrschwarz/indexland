@@ -1,8 +1,6 @@
 #![allow(clippy::inline_always)]
 
-use core::hash::Hash;
-
-pub trait Idx: 'static + Copy + Ord + Hash {
+pub trait Idx: 'static + Copy + Ord {
     const ZERO: Self;
     const ONE: Self;
     const MAX: Self;
@@ -45,14 +43,14 @@ pub trait Idx: 'static + Copy + Ord + Hash {
 }
 
 pub trait IdxEnum: Idx {
-    const COUNT: usize;
+    const VARIANT_COUNT: usize;
     const VARIANTS: &'static [Self];
 
     /// Helper type to construct [`EnumIndexArray`](crate::index_array::EnumIndexArray)
     /// on stable Rust without const generics.
-    /// This should always be equivalent to `IndexArray<Self, T, { Self::COUNT }>`.
+    /// This should always be equivalent to `IndexArray<Self, T, { Self::VARIANT_COUNT }>`.
     /// Please make sure to honor this when implementing this trait manually.
-    type EnumIndexArray<T>; // = `IndexArray<Self, T, { Self::COUNT }>`
+    type EnumIndexArray<T>; // = `IndexArray<Self, T, { Self::VARIANT_COUNT }>`
 
     fn iter() -> core::iter::Copied<core::slice::Iter<'static, Self>> {
         Self::VARIANTS.iter().copied()
@@ -447,9 +445,9 @@ mod test {
             C,
         }
         impl IdxEnum for EnumIdxManual {
-            const COUNT: usize = 3;
+            const VARIANT_COUNT: usize = 3;
             const VARIANTS: &'static [Self] = &[Self::A, Self::B, Self::B];
-            type EnumIndexArray<T> = IndexArray<Self, T, { Self::COUNT }>;
+            type EnumIndexArray<T> = IndexArray<Self, T, { Self::VARIANT_COUNT }>;
         }
         impl Idx for EnumIdxManual {
             const ZERO: Self = Self::A;

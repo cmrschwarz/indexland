@@ -158,7 +158,7 @@ fn enum_derive_idx_enum(ctx: &EnumCtx) -> TokenStream {
     quote! {
         #[automatically_derived]
         impl #impl_generics #indexland::IdxEnum for #name #ty_generics #where_clause {
-            const COUNT: usize = #count;
+            const VARIANT_COUNT: usize = #count;
             type EnumIndexArray<T> = #indexland::index_array::IndexArray<Self, T, #count>;
             const VARIANTS: &'static [Self] = &[ #(#name::#idents),* ];
         }
@@ -221,7 +221,7 @@ fn enum_derive_partial_eq(ctx: &EnumCtx) -> TokenStream {
     }
 }
 
-fn fill_derivation_list(ctx: &mut EnumCtx) {
+fn fill_derivation_list(ctx: &mut EnumCtx, rich_defaults: bool) {
     let (base_arith, full_arith) = match ctx.base.attrs.arith_mode {
         crate::attrs::ArithMode::Disabled => (false, false),
         crate::attrs::ArithMode::Basic => (true, false),
@@ -229,28 +229,32 @@ fn fill_derivation_list(ctx: &mut EnumCtx) {
     };
     ctx.add_deriv_custom(true, "Idx", enum_derive_idx);
     ctx.add_deriv_custom(true, "IdxEnum", enum_derive_idx_enum);
-    ctx.add_deriv_custom(true, "Debug", enum_derive_debug);
+    ctx.add_deriv_custom(rich_defaults, "Debug", enum_derive_debug);
     ctx.add_deriv_custom(false, "Display", enum_derive_display);
-    ctx.add_deriv_shared(true, "Default", derive_default);
-    ctx.add_deriv_shared(true, "Clone", derive_clone);
-    ctx.add_deriv_shared(true, "Copy", derive_copy);
-    ctx.add_deriv_shared(true, "Add", derive_add);
-    ctx.add_deriv_shared(true, "AddAssign", derive_add_assign);
-    ctx.add_deriv_shared(true, "Sub", derive_sub);
-    ctx.add_deriv_shared(true, "SubAssign", derive_sub_assign);
+    ctx.add_deriv_shared(rich_defaults, "Default", derive_default);
+    ctx.add_deriv_shared(rich_defaults, "Clone", derive_clone);
+    ctx.add_deriv_shared(rich_defaults, "Copy", derive_copy);
+    ctx.add_deriv_shared(rich_defaults, "Add", derive_add);
+    ctx.add_deriv_shared(rich_defaults, "AddAssign", derive_add_assign);
+    ctx.add_deriv_shared(rich_defaults, "Sub", derive_sub);
+    ctx.add_deriv_shared(rich_defaults, "SubAssign", derive_sub_assign);
     ctx.add_deriv_shared(full_arith, "Mul", derive_mul);
     ctx.add_deriv_shared(full_arith, "MulAssign", derive_mul_assign);
     ctx.add_deriv_shared(full_arith, "Div", derive_div);
     ctx.add_deriv_shared(full_arith, "DivAssign", derive_div_assign);
     ctx.add_deriv_shared(full_arith, "Rem", derive_rem);
     ctx.add_deriv_shared(full_arith, "RemAssign", derive_rem_assign);
-    ctx.add_deriv_custom(true, "Hash", enum_derive_hash);
-    ctx.add_deriv_shared(true, "PartialOrd", derive_partial_ord);
-    ctx.add_deriv_shared(true, "Ord", derive_ord);
-    ctx.add_deriv_custom(true, "PartialEq", enum_derive_partial_eq);
-    ctx.add_deriv_shared(true, "Eq", derive_eq);
-    ctx.add_deriv_shared(true, "From<usize>", derive_from_usize);
-    ctx.add_deriv_shared(true, "From<Self> for usize", derive_from_self_for_usize);
+    ctx.add_deriv_custom(rich_defaults, "Hash", enum_derive_hash);
+    ctx.add_deriv_shared(rich_defaults, "PartialOrd", derive_partial_ord);
+    ctx.add_deriv_shared(rich_defaults, "Ord", derive_ord);
+    ctx.add_deriv_custom(rich_defaults, "PartialEq", enum_derive_partial_eq);
+    ctx.add_deriv_shared(rich_defaults, "Eq", derive_eq);
+    ctx.add_deriv_shared(rich_defaults, "From<usize>", derive_from_usize);
+    ctx.add_deriv_shared(
+        rich_defaults,
+        "From<Self> for usize",
+        derive_from_self_for_usize,
+    );
 
     for i in 0..ctx.base.attrs.arith_compat_list.len() {
         let ty_tt = ctx.base.attrs.arith_compat_list[i].to_token_stream();
@@ -280,7 +284,10 @@ fn fill_derivation_list(ctx: &mut EnumCtx) {
     }
 }
 
-pub fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error> {
+pub fn derive_idx_enum_inner(
+    ast: DeriveInput,
+    rich_defaults: bool,
+) -> Result<TokenStream, syn::Error> {
     let Data::Enum(enum_data) = &ast.data else {
         return Err(syn::Error::new(
             Span::call_site(),
@@ -328,7 +335,7 @@ pub fn derive_idx_enum_inner(ast: DeriveInput) -> Result<TokenStream, syn::Error
         },
     );
 
-    fill_derivation_list(&mut ctx);
+    fill_derivation_list(&mut ctx, rich_defaults);
 
     let output = ctx.generate();
 
