@@ -159,9 +159,9 @@ impl Attrs {
                     let literal: LitStr = meta.value()?.parse()?;
                     let value = literal.value();
                     match &*value {
-                        "disabled" => arith_mode = ArithMode::Disabled,
                         "basic" => arith_mode = ArithMode::Basic,
                         "full" => arith_mode = ArithMode::Full,
+                        "disabled" => arith_mode = ArithMode::Disabled,
                         _ => errs.push(meta.error(format!(
                             r#"unknown arith mode "{value}", expected {}"#,
                             r#""disabled", "basic", or "full""#

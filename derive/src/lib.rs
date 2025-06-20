@@ -148,23 +148,31 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 /// - `"always"`: Enable bounds checks regardless of build type.
 /// - `"never"`: Disable all bounds checks. Always silently wrap around.
 ///
-/// ## `#[indexland(arith_full)]`
-/// Implement [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign),
-/// [`Div`](core::ops::Div) + [`DivAssign`](core::ops::DivAssign),
-/// and [`Rem`](core::ops::Rem) + [`RemAssign`](core::ops::RemAssign).
+/// ## `#[indexland(arith = "..")]`
+/// - "basic": The default. Implement
+///   [`Add`](core::ops::Add) + [`AddAssign`](core::ops::AddAssign),
+///   [`Sub<T>`](core::ops::Sub) + [`SubAssign<T>`](core::ops::SubAssign), and
+///   [`Rem`](core::ops::Rem) + [`RemAssign`](core::ops::RemAssign)
 ///
-/// If `arith(T)` is specified, also implements the respective versions for `T`.
+/// - "full": Implement [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign) and
+///   [`Div`](core::ops::Div) + [`DivAssign`](core::ops::DivAssign) in addition to
+///   the traits derived by "basic".
 ///
-/// ## `#[indexland(arith(T))]`
+/// - "disabled": Don't derive any arithmetic traits.
+///
+/// If [`#[indexland(arith_compat(T))]`](Idx#indexlandarith_compatt) is specified,
+/// also implements the respective versions for `Rhs = T`.
+///
+/// ## `#[indexland(arith_compat(T))]`
 /// Implement [`Add<T>`](core::ops::Add) + [`AddAssign<T>`](core::ops::AddAssign),
 /// and [`Sub<T>`](core::ops::Sub) + [`SubAssign<T>`](core::ops::SubAssign).
 ///
-/// The primary usecase is `#[indexland(arith(usize))]`.
+/// If [`#[indexland(arith = "full")]`](Idx#indexlandarith) is specified, also implements
+/// [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign),
+/// [`Div`](core::ops::Div) + [`DivAssign`](core::ops::DivAssign),
+/// and [`Rem`](core::ops::Rem) + [`RemAssign`](core::ops::RemAssign).
 ///
-/// If `full_arith` is enabled, also implements
-/// [`Mul<usize>`](core::ops::Mul) + [`MulAssign<usize>`](core::ops::MulAssign),
-/// [`Div<usize>`](core::ops::Div) + [`DivAssign<usize>`](core::ops::DivAssign),
-/// and [`Rem<usize>`](core::ops::Rem) + [`RemAssign<usize>`](core::ops::RemAssign).
+/// The primary usecase is `#[indexland(arith_compat(usize))]`.
 ///
 /// ## `#[indexland(extra(..))]`
 /// Enable the derivation of optional traits, see
