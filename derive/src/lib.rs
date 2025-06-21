@@ -189,30 +189,6 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 /// assert_eq!(ArithId(2) * ArithId(3), ArithId(6));
 /// ```
 ///
-/// ## `#[indexland(arith_compat(T))]`
-/// Implement [`Add<T>`](core::ops::Add) + [`AddAssign<T>`](core::ops::AddAssign),
-/// and [`Sub<T>`](core::ops::Sub) + [`SubAssign<T>`](core::ops::SubAssign).
-///
-/// If [`#[indexland(arith = "full")]`](Idx#indexlandarith) is specified, also implements
-/// [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign),
-/// [`Div`](core::ops::Div) + [`DivAssign`](core::ops::DivAssign),
-/// and [`Rem`](core::ops::Rem) + [`RemAssign`](core::ops::RemAssign).
-///
-/// The primary usecase is `#[indexland(arith_compat(usize))]`.
-///
-/// ### Example
-/// ```
-/// use indexland::Idx;
-///
-/// #[derive(Idx)]
-/// #[indexland(arith_compat(usize))]
-/// struct FuzzyId(u32);
-///
-/// let id = FuzzyId(5);
-/// // Can now use arithmetic with usize directly
-/// assert_eq!(id + 3, FuzzyId(8));
-/// ```
-///
 /// ## `#[indexland(extra(..))]`
 /// Enable the derivation of optional traits, see
 /// [`#[derive(IdxNewtype)]`](crate::IdxNewtype),
@@ -264,7 +240,31 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 /// struct MinimalId(u32); // Minimal set of traits.
 /// ```
 ///
-/// ## `#[indexland(idx_compat(..))]`
+/// ## `#[indexland(arith_compat(T))]`
+/// Implement [`Add<T>`](core::ops::Add) + [`AddAssign<T>`](core::ops::AddAssign),
+/// and [`Sub<T>`](core::ops::Sub) + [`SubAssign<T>`](core::ops::SubAssign).
+///
+/// If [`#[indexland(arith = "full")]`](Idx#indexlandarith) is specified, also implements
+/// [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign),
+/// [`Div`](core::ops::Div) + [`DivAssign`](core::ops::DivAssign),
+/// and [`Rem`](core::ops::Rem) + [`RemAssign`](core::ops::RemAssign).
+///
+/// The primary usecase is `#[indexland(arith_compat(usize))]`.
+///
+/// ### Example
+/// ```
+/// use indexland::Idx;
+///
+/// #[derive(Idx)]
+/// #[indexland(arith_compat(usize))]
+/// struct FuzzyId(u32);
+///
+/// let id = FuzzyId(5);
+/// // Can now use arithmetic with usize directly
+/// assert_eq!(id + 3, FuzzyId(8));
+/// ```
+///
+/// ## `#[indexland(idx_compat(T))]`
 /// Allow other types to be used to index containers of this type.
 ///
 /// ### Example
@@ -279,6 +279,25 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 /// let items = IndexVec::<ItemId, u8>::from_iter(0..10);
 /// let item_0 = items[0]; // Allowed due to `idx_compat(usize)`.
 /// let item_1 = items[ItemId(1)]; // Still works.
+/// ```
+///
+/// ## `#[indexland(compat(T))]`
+/// Shorthand for both [`idx_compat(T)`](Idx#indexlandidx_compat) and [`arith_compat(T)`](Idx#indexlandarith_compatt).
+///
+/// ### Example
+/// ```
+/// use indexland::{Idx, IndexVec};
+///
+/// #[derive(Idx)]
+/// #[indexland(compat(usize))]
+/// struct FuzzyId(usize);
+///
+/// let items = IndexVec::<FuzzyId, u8>::from_iter(0..10);
+/// let id = FuzzyId(5);
+///
+/// // Both arithmetic and indexing work with usize
+/// let new_id = id + 2; // arith_compat
+/// let item = items[7]; // idx_compat
 /// ```
 ///
 /// ### `#[indexland(crate = ..)]`

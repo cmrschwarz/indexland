@@ -3,20 +3,11 @@ use std::{cell::RefCell, fmt::Display};
 use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::ToTokens;
 use syn::{
-    parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput, Ident, LitStr,
-    PathSegment, Token,
+    meta::ParseNestedMeta, parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput,
+    Ident, LitStr, PathSegment, Token,
 };
 
 const INDEXLAND: &str = "indexland";
-const CRATE: &str = "crate";
-const ONLY: &str = "only";
-const OMIT: &str = "omit";
-const EXTRA: &str = "extra";
-const IDX_COMPAT: &str = "idx_compat";
-const BOUNDS_CHECKS: &str = "bounds_checks";
-
-const ARITH_COMPAT: &str = "arith_compat";
-const ARITH_MODE: &str = "arith";
 
 #[derive(Default)]
 pub enum BoundsChecksMode {
@@ -117,6 +108,12 @@ fn split_at_commas(tokens: TokenStream) -> Vec<TokenStream> {
 }
 
 impl Attrs {
+    fn push_err(errs: &ErrorList, meta: ParseNestedMeta) {
+        errs.push(meta.error(format!(
+            "unknown {INDEXLAND} attribute {}",
+            meta.path.to_token_stream()
+        )));
+    }
     pub fn from_input(ast: &DeriveInput) -> Attrs {
         let errs = ErrorList::default();
         let mut indexland_path = None;
@@ -126,7 +123,7 @@ impl Attrs {
         let mut first_whitelist = None;
         let mut extra_list = Vec::new();
         let mut first_extra_list = None;
-        let mut compat_list = Vec::new();
+        let mut idx_compat_list = Vec::new();
         let mut arith_compat_list = Vec::new();
         let mut bounds_checks_mode = BoundsChecksMode::default();
         let mut arith_mode = ArithMode::default();
@@ -136,95 +133,115 @@ impl Attrs {
             }
 
             let res = attr.parse_nested_meta(|meta| {
-                if meta.path.is_ident(CRATE) {
-                    // #[indexland(crate = path::to::indexland)]
-                    let v = meta.value()?;
-                    let path = v.parse()?;
-                    indexland_path = Some(path);
-                } else if meta.path.is_ident(BOUNDS_CHECKS) {
-                    // e.g. #[indexland(bounds_checks = "always")]
-                    let literal: LitStr = meta.value()?.parse()?;
-                    let value = literal.value();
-                    match &*value {
-                        "debug_only" => bounds_checks_mode = BoundsChecksMode::DebugOnly,
-                        "always" => bounds_checks_mode = BoundsChecksMode::Always,
-                        "never" => bounds_checks_mode = BoundsChecksMode::Never,
-                        _ => errs.push(meta.error(format!(
-                            r#"unknown bounds checks mode "{value}", expected {}"#,
-                            r#""debug_only", "always", or "never""#
-                        ))),
+                let Some(ident) = meta.path.get_ident() else {
+                    Self::push_err(&errs, meta);
+                    return Ok(());
+                };
+                match &*ident.to_string() {
+                    "crate" => {
+                        // #[indexland(crate = path::to::indexland)]
+                        let v = meta.value()?;
+                        let path = v.parse()?;
+                        indexland_path = Some(path);
                     }
-                } else if meta.path.is_ident(ARITH_MODE) {
-                    // #[indexland(arith = "full")]
-                    let literal: LitStr = meta.value()?.parse()?;
-                    let value = literal.value();
-                    match &*value {
-                        "basic" => arith_mode = ArithMode::Basic,
-                        "full" => arith_mode = ArithMode::Full,
-                        "disabled" => arith_mode = ArithMode::Disabled,
-                        _ => errs.push(meta.error(format!(
-                            r#"unknown arith mode "{value}", expected {}"#,
-                            r#""disabled", "basic", or "full""#
-                        ))),
+                    "bounds_checks" => {
+                        // e.g. #[indexland(bounds_checks = "always")]
+                        let literal: LitStr = meta.value()?.parse()?;
+                        let value = literal.value();
+                        match &*value {
+                            "debug_only" => bounds_checks_mode = BoundsChecksMode::DebugOnly,
+                            "always" => bounds_checks_mode = BoundsChecksMode::Always,
+                            "never" => bounds_checks_mode = BoundsChecksMode::Never,
+                            _ => errs.push(meta.error(format!(
+                                r#"unknown bounds checks mode "{value}", expected {}"#,
+                                r#""debug_only", "always", or "never""#
+                            ))),
+                        }
                     }
-                } else if meta.path.is_ident(OMIT) {
-                    // e.g. #[indexland(omit(Display))]
-                    let omit;
-                    parenthesized!(omit in meta.input);
-                    let variants = split_at_commas(omit.cursor().token_stream());
-
-                    // the cursor above is a copy
-                    while omit.parse::<TokenTree>().is_ok() {}
-
-                    if first_blacklist.is_none() {
-                        first_blacklist = Some(meta.path.span());
+                    "arith" => {
+                        // #[indexland(arith = "full")]
+                        let literal: LitStr = meta.value()?.parse()?;
+                        let value = literal.value();
+                        match &*value {
+                            "basic" => arith_mode = ArithMode::Basic,
+                            "full" => arith_mode = ArithMode::Full,
+                            "disabled" => arith_mode = ArithMode::Disabled,
+                            _ => errs.push(meta.error(format!(
+                                r#"unknown arith mode "{value}", expected {}"#,
+                                r#""disabled", "basic", or "full""#
+                            ))),
+                        }
                     }
-                    blacklist.extend(variants);
-                } else if meta.path.is_ident(ONLY) {
-                    // e.g. #[indexland(only(Idx))]
-                    let only;
-                    parenthesized!(only in meta.input);
-                    let elements = split_at_commas(only.cursor().token_stream());
+                    "omit" => {
+                        // e.g. #[indexland(omit(Display))]
+                        let omit;
+                        parenthesized!(omit in meta.input);
+                        let variants = split_at_commas(omit.cursor().token_stream());
 
-                    // the cursor above is a copy
-                    while only.parse::<TokenTree>().is_ok() {}
+                        // the cursor above is a copy
+                        while omit.parse::<TokenTree>().is_ok() {}
 
-                    if first_whitelist.is_none() {
-                        first_whitelist = Some(meta.path.span());
+                        if first_blacklist.is_none() {
+                            first_blacklist = Some(meta.path.span());
+                        }
+                        blacklist.extend(variants);
                     }
-                    whitelist.extend(elements);
-                } else if meta.path.is_ident(EXTRA) {
-                    // e.g. #[indexland(extra(Display))]
-                    let extra;
-                    parenthesized!(extra in meta.input);
-                    let elements = split_at_commas(extra.cursor().token_stream());
+                    "only" => {
+                        // e.g. #[indexland(only(Idx))]
+                        let only;
+                        parenthesized!(only in meta.input);
+                        let elements = split_at_commas(only.cursor().token_stream());
 
-                    // the cursor above is a copy
-                    while extra.parse::<TokenTree>().is_ok() {}
+                        // the cursor above is a copy
+                        while only.parse::<TokenTree>().is_ok() {}
 
-                    if first_extra_list.is_none() {
-                        first_extra_list = Some(meta.path.span());
+                        if first_whitelist.is_none() {
+                            first_whitelist = Some(meta.path.span());
+                        }
+                        whitelist.extend(elements);
                     }
-                    extra_list.extend(elements);
-                } else if meta.path.is_ident(ARITH_COMPAT) {
-                    // e.g. #[indexland(arith_compat(usize))]
-                    let arith_compat;
-                    parenthesized!(arith_compat in meta.input);
-                    let elements =
-                        Punctuated::<syn::Path, Token![,]>::parse_terminated(&arith_compat)?;
-                    arith_compat_list.extend(elements);
-                } else if meta.path.is_ident(IDX_COMPAT) {
-                    // e.g. #[indexland(compat(usize))]
-                    let compatible;
-                    parenthesized!(compatible in meta.input);
-                    let elements =
-                        Punctuated::<syn::Path, Token![,]>::parse_terminated(&compatible)?;
-                    compat_list.extend(elements);
-                } else {
-                    errs.push(meta.error(format!(
-                        "unknown {INDEXLAND} attribute {}",
-                        meta.path.to_token_stream()
-                    )));
+                    "extra" => {
+                        // e.g. #[indexland(extra(Display))]
+                        let extra;
+                        parenthesized!(extra in meta.input);
+                        let elements = split_at_commas(extra.cursor().token_stream());
+
+                        // the cursor above is a copy
+                        while extra.parse::<TokenTree>().is_ok() {}
+
+                        if first_extra_list.is_none() {
+                            first_extra_list = Some(meta.path.span());
+                        }
+                        extra_list.extend(elements);
+                    }
+                    "arith_compat" => {
+                        // e.g. #[indexland(arith_compat(usize))]
+                        let arith_compat;
+                        parenthesized!(arith_compat in meta.input);
+                        let elements =
+                            Punctuated::<syn::Path, Token![,]>::parse_terminated(&arith_compat)?;
+                        arith_compat_list.extend(elements);
+                    }
+                    "idx_compat" => {
+                        // e.g. #[indexland(idx_compat(usize))]
+                        let compatible;
+                        parenthesized!(compatible in meta.input);
+                        let elements =
+                            Punctuated::<syn::Path, Token![,]>::parse_terminated(&compatible)?;
+                        idx_compat_list.extend(elements);
+                    }
+                    "compat" => {
+                        // e.g. #[indexland(compat(usize))]
+                        let arith_compat;
+                        parenthesized!(arith_compat in meta.input);
+                        let elements =
+                            Punctuated::<syn::Path, Token![,]>::parse_terminated(&arith_compat)?;
+                        arith_compat_list.extend(elements.clone());
+                        idx_compat_list.extend(elements);
+                    }
+                    _ => {
+                        Self::push_err(&errs, meta);
+                    }
                 }
                 Ok(())
             });
@@ -253,7 +270,7 @@ impl Attrs {
             whitelist,
             blacklist,
             extra_list,
-            idx_compat_list: compat_list,
+            idx_compat_list,
             arith_compat_list,
             whitelist_active: first_whitelist.is_some(),
             bounds_checks_mode,
