@@ -64,7 +64,7 @@ optional = true
 default-features = false
 
 [dependencies.slab]
-version = "0.4.9"
+version = "0.4.10"
 optional = true
 default-features = false
 
