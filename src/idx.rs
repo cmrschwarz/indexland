@@ -363,7 +363,7 @@ mod test {
 
     #[test]
     fn idx_manual() {
-        #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
         pub struct IdxManual(usize);
         impl Idx for IdxManual {
             const ZERO: Self = IdxManual(0);
@@ -394,42 +394,6 @@ mod test {
                 IdxManual(self.0.saturating_sub(other.0))
             }
         }
-        impl core::ops::Add for IdxManual {
-            type Output = Self;
-
-            fn add(self, rhs: Self) -> Self::Output {
-                Idx::from_usize(self.into_usize() + rhs.into_usize())
-            }
-        }
-        impl core::ops::Sub for IdxManual {
-            type Output = Self;
-
-            fn sub(self, rhs: Self) -> Self::Output {
-                Idx::from_usize(self.into_usize() - rhs.into_usize())
-            }
-        }
-        impl core::ops::Rem for IdxManual {
-            type Output = Self;
-
-            fn rem(self, rhs: Self) -> Self::Output {
-                Idx::from_usize(self.into_usize() % rhs.into_usize())
-            }
-        }
-        impl core::ops::AddAssign for IdxManual {
-            fn add_assign(&mut self, rhs: Self) {
-                *self = *self + rhs;
-            }
-        }
-        impl core::ops::SubAssign for IdxManual {
-            fn sub_assign(&mut self, rhs: Self) {
-                *self = *self - rhs;
-            }
-        }
-        impl core::ops::RemAssign for IdxManual {
-            fn rem_assign(&mut self, rhs: Self) {
-                *self = *self % rhs;
-            }
-        }
 
         let x: IndexArray<IdxManual, i32, 3> = index_array![1, 2, 3];
         assert_eq!(x[IdxManual(1)], 2);
@@ -437,9 +401,8 @@ mod test {
 
     #[test]
     fn enum_idx_manual() {
-        #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub enum EnumIdxManual {
-            #[default]
             A,
             B,
             C,
@@ -485,42 +448,6 @@ mod test {
             }
             fn saturating_sub(self, _other: Self) -> Self {
                 unimplemented!()
-            }
-        }
-        impl core::ops::Add for EnumIdxManual {
-            type Output = Self;
-
-            fn add(self, rhs: Self) -> Self::Output {
-                Idx::from_usize(self.into_usize() + rhs.into_usize())
-            }
-        }
-        impl core::ops::Sub for EnumIdxManual {
-            type Output = Self;
-
-            fn sub(self, rhs: Self) -> Self::Output {
-                Idx::from_usize(self.into_usize() - rhs.into_usize())
-            }
-        }
-        impl core::ops::Rem for EnumIdxManual {
-            type Output = Self;
-
-            fn rem(self, rhs: Self) -> Self::Output {
-                Idx::from_usize(self.into_usize() % rhs.into_usize())
-            }
-        }
-        impl core::ops::AddAssign for EnumIdxManual {
-            fn add_assign(&mut self, rhs: Self) {
-                *self = *self + rhs;
-            }
-        }
-        impl core::ops::SubAssign for EnumIdxManual {
-            fn sub_assign(&mut self, rhs: Self) {
-                *self = *self - rhs;
-            }
-        }
-        impl core::ops::RemAssign for EnumIdxManual {
-            fn rem_assign(&mut self, rhs: Self) {
-                *self = *self % rhs;
             }
         }
 

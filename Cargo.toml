@@ -6,9 +6,8 @@ resolver = "2"
 
 package.edition = "2021"
 
-# MSRV 1.83 needed for `&mut` in `const fn`s, which we need for `enum_index_array!`
-# When changing this don't forget to update in CI config.
-package.rust-version = "1.83"
+# MSRV 1.87 needed for const Vec::len
+package.rust-version = "1.87"
 
 # remember to update dependency version on indexland_derive below aswell
 package.version = "0.2.1"
@@ -64,7 +63,7 @@ optional = true
 default-features = false
 
 [dependencies.slab]
-version = "0.4.9"
+version = "0.4.10"
 optional = true
 default-features = false
 

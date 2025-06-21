@@ -196,11 +196,11 @@ impl<I, T> IndexVec<I, T> {
         &mut self.data
     }
 
-    pub fn as_ptr(&self) -> *const T {
+    pub const fn as_ptr(&self) -> *const T {
         self.data.as_ptr()
     }
 
-    pub fn as_mut_ptr(&mut self) -> *mut T {
+    pub const fn as_mut_ptr(&mut self) -> *mut T {
         self.data.as_mut_ptr()
     }
 
@@ -310,7 +310,7 @@ impl<I, T> IndexVec<I, T> {
         self.data.clear();
     }
 
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         // TODO: make this const once that stabilizes
         self.data.len()
     }
