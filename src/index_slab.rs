@@ -5,7 +5,7 @@ use core::{
     ops,
 };
 pub use slab::Drain;
-use slab::Slab;
+use slab::{GetDisjointMutError, Slab};
 
 use crate::{idx::IdxCompat, Idx};
 
@@ -129,7 +129,15 @@ impl<I, T> IndexSlab<I, T> {
         self.data.get_mut(key.into_usize())
     }
 
-    // TODO: wrap get_disjoint_mut once https://github.com/tokio-rs/slab/pull/149 lands
+    pub fn get_disjoint_mut<const N: usize>(
+        &mut self,
+        indices: [I; N],
+    ) -> Result<[&mut T; N], GetDisjointMutError>
+    where
+        I: Idx,
+    {
+        self.data.get_disjoint_mut(indices.map(I::into_usize))
+    }
 
     /// ## Safety
     /// The key must within bounds, and convert to usize.

@@ -17,14 +17,14 @@ name = "indexland_derive"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = { version = "1.0.95" }
-syn = { version = "2.0.104", features = ["parsing"] }
-quote = "1.0.40"
+proc-macro2 = { version = "1.0" }
+syn = { version = "2.0", features = ["parsing"] }
+quote = "1.0"
 
 
 [dev-dependencies]
 indexland = { workspace = true, features = ["derive", "arrayvec"] }
-trybuild = "1.0.105"
+trybuild = "1.0"
 metamatch = "0.3"
 
 [package.metadata.docs.rs]
