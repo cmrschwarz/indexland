@@ -1938,7 +1938,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexArray<I, U, N>) -> bool {
-        self.as_raw_slice().eq(other.as_slice())
+        self.as_raw_slice().eq(other.as_raw_slice())
     }
 }
 
@@ -1980,7 +1980,7 @@ where
 {
     fn eq(&self, other: &IndexVecDeque<I, U>) -> bool {
         let s = self.as_raw_slice();
-        let (s1, s2) = other.as_slices();
+        let (s1, s2) = other.as_raw_slices();
         s1.len() + s2.len() == s.len() && &s[0..s1.len()] == s1 && &s[s1.len()..] == s2
     }
 }

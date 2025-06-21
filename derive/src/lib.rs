@@ -220,7 +220,7 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 /// #[indexland(omit(Display))]
 /// struct SecretId(u32);
 ///
-/// // Add a custom `Display` impl or don't derive it at all
+/// // Add a custom `Display` impl
 /// impl Display for SecretId{
 ///     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 ///         write!(f, "SecretId(<redacted>)", self.0)

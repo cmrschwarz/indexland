@@ -180,12 +180,12 @@ impl<I, T> IndexVec<I, T> {
         self.data.truncate(len);
     }
 
-    pub fn as_slice(&self) -> &IndexSlice<I, T> {
-        IndexSlice::from_raw_slice(&self.data)
+    pub const fn as_slice(&self) -> &IndexSlice<I, T> {
+        IndexSlice::from_raw_slice(self.data.as_slice())
     }
 
-    pub fn as_mut_slice(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_mut_raw_slice(&mut self.data)
+    pub const fn as_mut_slice(&mut self) -> &mut IndexSlice<I, T> {
+        IndexSlice::from_mut_raw_slice(self.data.as_mut_slice())
     }
 
     pub fn as_raw_slice(&self) -> &[T] {
@@ -285,7 +285,7 @@ impl<I, T> IndexVec<I, T> {
     }
 
     pub fn pop_if(&mut self, predicate: impl FnOnce(&mut T) -> bool) -> Option<T> {
-        // TODO: if we decode to bump MSRV to 1.86, repace with call to `Vec::pop_if`
+        // TODO: if we decide to bump MSRV to 1.86, repace with call to `Vec::pop_if`
         let last = self.last_mut()?;
         if predicate(last) {
             self.pop()
@@ -967,7 +967,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexArray<I2, U, N>) -> bool {
-        self.as_raw_slice() == other.as_slice()
+        self.as_raw_slice() == other.as_raw_slice()
     }
 }
 

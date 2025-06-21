@@ -1,8 +1,6 @@
 use std::ops::Add;
 
-use indexland::{
-    enum_index_array, index_array, EnumIndexArray, Idx, IdxNewtype, IndexArray, IndexArrayVec,
-};
+use indexland::{index_array, EnumIndexArray, Idx, IdxNewtype, IndexArray, IndexArrayVec};
 
 #[test]
 fn derive_enum_idx() {
@@ -42,7 +40,7 @@ fn derive_enum_omit() {
         }
     }
 
-    let foo: EnumIndexArray<Bar, i32> = enum_index_array![
+    let foo: EnumIndexArray<Bar, i32> = index_array![
         Bar::A => 1,
         Bar::B => 2,
     ];
@@ -65,7 +63,7 @@ fn derive_enum_omit_from() {
         }
     }
 
-    let foo: EnumIndexArray<Bar, i32> = enum_index_array![
+    let foo: EnumIndexArray<Bar, i32> = index_array![
         Bar::A => 1,
         Bar::B => 2,
     ];

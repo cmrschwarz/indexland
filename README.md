@@ -45,12 +45,13 @@ struct DoublyLinkedList<T> {
 
 ### Enums as Indices
 ```rust
-use indexland::{Idx, EnumIndexArray, enum_index_array};
+use indexland::{Idx, IdxEnum, IndexArray, index_array};
 
 #[derive(Idx)]
 enum Status { Idle, Running, Done }
 
-const STATUS_MESSAGE: EnumIndexArray<Status, &str> = enum_index_array![
+// Alternatively, the `EnumIndexArray` type alias could be used to to avoid specifying the array len
+const STATUS_MESSAGE: IndexArray<Status, &str, { Status::VARIANT_COUNT }> = index_array![
     Status::Idle => "Waiting for input...",
     Status::Running => "Processing your request...",
     Status::Done => "Operation complete!",
@@ -103,18 +104,19 @@ Heavy use of this pattern can cause issues though. The standard approach is to
 use `type NodeId = usize`, but this negatively affects:
 
   1. **Type Safety**: Type aliases are not unique types.
-     This makes it easy to accidentally use the wrong index or container
-     without getting any compiler errors. Rust excells at
-     enabling fearless refactoring where the compiler errors become your todo list.
-     Non-newtype type aliases reduce the robustness and refactorability of your code.
-     Just like `Any` in typescript or `void*` in C, they effectively disable type safety.
+     This makes it easy to accidentally confuse them without getting any compiler errors.
+     An index is essentially a relative pointer.
+     Disabling type checking on all your pointers is a terrible idea.
+     Rust normally excells at enabling fearless refactoring,
+     but non-newtype indices threaten this by severely reducing the robustness of your code.
+     They act similarly to `void*` in C, or `any` in typescript,
+     and effectively turn of the type checker. Newtype indices solve this problem.
 
   2. **Readability**: Container type definitions don't tell us what index
      should be used to access them. When structs contain multiple collections,
-     this becomes hard to read quickly.
+     this becomes hard to read quickly. By forcing you to add the index type
+     as a generic parameter to your container definitions, `indexland` solves this problem.
 
-`indexland` solves both of these issues by making containers generic over
-the index type and preventing implicit index type conversions.
 
 ## Comparison with [index_vec](https://docs.rs/index_vec/latest/index_vec/index.html)
 1.  **Unified API**: `indexland` offers all common collections in one place,

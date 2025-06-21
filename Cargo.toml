@@ -138,7 +138,7 @@ slab = ["alloc", "dep:slab"]
 
 
 # serde Serialize/Deserialize implementations for all containers.
-serde = ["dep:serde", "arrayvec/serde", "smallvec/serde", "indexmap/serde"]
+serde = ["dep:serde", "arrayvec?/serde", "smallvec?/serde", "indexmap?/serde", "slab?/serde"]
 
 [package.metadata.docs.rs]
 features = ["full"]
