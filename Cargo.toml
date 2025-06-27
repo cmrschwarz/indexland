@@ -59,7 +59,7 @@ default-features = false
 features = ["const_new"]
 
 [dependencies.indexmap]
-version = "2.9"
+version = "2.10"
 optional = true
 default-features = false
 
