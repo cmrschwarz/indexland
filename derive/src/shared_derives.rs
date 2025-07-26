@@ -11,103 +11,58 @@ pub fn derive_idx_compat(
     quote! {
         #[automatically_derived]
         impl #indexland::idx::IdxCompat<#name> for #compat {
+            #[inline(always)]
             fn idx_cast(self) -> #name {
                 #name::from_usize(Idx::into_usize(self))
             }
         }
+
+
         #[automatically_derived]
-        unsafe impl<T>
-            #indexland::index_slice_index::IndexSliceIndex<#name, T>
+        unsafe impl<C: #indexland::sequence_container::SequenceContainer + ?Sized>
+            #indexland::sequence_container::SequenceContainerIndex<#name, C>
             for #compat
         {
-            type Output = T;
+            type Output = C::Element;
 
-            fn get(self, slice: & #indexland::IndexSlice<#name, T>) -> Option<&Self::Output> {
-                slice.as_raw_slice().get(#indexland::Idx::into_usize(self))
-            }
-
-            fn get_mut(
-                self,
-                slice: &mut #indexland::IndexSlice<#name, T>,
-            ) -> Option<&mut Self::Output> {
-                slice
-                    .as_mut_raw_slice()
-                    .get_mut(#indexland::Idx::into_usize(self))
-            }
-
-            unsafe fn get_unchecked(
-                self,
-                slice: *const #indexland::IndexSlice<#name, T>,
-            ) -> *const Self::Output {
-                unsafe { slice.cast::<T>().add(self.into_usize_unchecked()) }
-            }
-
-            unsafe fn get_unchecked_mut(
-                self,
-                slice: *mut #indexland::IndexSlice<#name, T>,
-            ) -> *mut Self::Output {
-                unsafe { slice.cast::<T>().add(self.into_usize_unchecked()) }
-            }
-
-            fn index(self, slice: & #indexland::IndexSlice<#name, T>) -> &Self::Output {
-                &slice.as_raw_slice()[#indexland::Idx::into_usize(self)]
-            }
-
-            fn index_mut(
-                self,
-                slice: &mut #indexland::IndexSlice<#name, T>,
-            ) -> &mut Self::Output {
-                &mut slice.as_mut_raw_slice()[#indexland::Idx::into_usize(self)]
-            }
-        }
-        #[automatically_derived]
-        unsafe impl<E: ?Sized, S: ?Sized, C: ?Sized>
-            #indexland::raw_index_container::GenericIndex<#name, E, S, C>
-            for #compat
-        {
-            type Output = E;
-
-            fn get(self, container: &C) -> Option<&Self::Output>
-            where
-                C: #indexland::raw_index_container::RawIndexContainer<Element = E, Slice = S>,
-            {
+            #[inline(always)]
+            fn get(self, container: &C) -> Option<&Self::Output> {
                 C::get(container, self.into_usize())
             }
 
+            #[inline(always)]
             unsafe fn get_unchecked<FS, FR>(
                 self,
                 container: *const C,
-            ) -> *const Self::Output
-            where
-                C: #indexland::raw_index_container::RawIndexContainer<Element = E, Slice = S>,
-            {
+            ) -> *const Self::Output {
                 C::get_unchecked(container, self.into_usize())
             }
 
-            fn index(self, container: &C) -> &Self::Output
-            where
-                C: #indexland::raw_index_container::RawIndexContainer<Element = E, Slice = S>,
-            {
+            #[inline(always)]
+            fn index(self, container: &C) -> &Self::Output {
                 C::index(container, self.into_usize())
             }
 
+            #[inline(always)]
             fn get_mut(self, container: &mut C) -> Option<&mut Self::Output>
             where
-                C: #indexland::raw_index_container::RawIndexContainerMut<Element = E, Slice = S>,
+                C: #indexland::sequence_container::SequenceContainerMut,
             {
                 C::get_mut(container, self.into_usize())
             }
 
+            #[inline(always)]
             unsafe fn get_unchecked_mut(self, container: *mut C) -> *mut Self::Output
             where
-                C: #indexland::raw_index_container::RawIndexContainerMut<Element = E, Slice = S>,
+                C: #indexland::sequence_container::SequenceContainerMut,
             {
                 C::get_unchecked_mut(container, self.into_usize())
             }
 
+            #[inline(always)]
             fn index_mut(self, container: &mut C) -> &mut Self::Output
             where
-                C: #indexland::raw_index_container::RawIndexContainerMut<Element = E, Slice = S>,
+                C: #indexland::sequence_container::SequenceContainerMut,
             {
                 C::index_mut(container, self.into_usize())
             }
@@ -123,6 +78,7 @@ pub fn derive_arith_compat(
     quote! {
         #[automatically_derived]
         impl #indexland::idx::ArithCompat<#name> for #compat {
+            #[inline(always)]
             fn to_idx(self) -> #name {
                 #name::from_usize(Idx::into_usize(self))
             }

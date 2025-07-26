@@ -1,7 +1,8 @@
 use super::Idx;
 use crate::{
-    index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex, IndexArray,
-    IndexRangeBounds,
+    index_enumerate::IndexEnumerate,
+    sequence_container::{SequenceContainer, SequenceContainerIndex, SequenceContainerMut},
+    IndexArray, IndexRangeBounds,
 };
 
 use core::{
@@ -716,16 +717,16 @@ impl<I, T> IndexSlice<I, T> {
     /// Calling this method with overlapping indices is undefined behavior
     /// even if the resulting references are not used.
     #[allow(clippy::needless_pass_by_value)]
-    pub unsafe fn get_disjoint_unchecked_mut<ISI, const N: usize>(
+    pub unsafe fn get_disjoint_unchecked_mut<SCI, const N: usize>(
         &mut self,
-        indices: [ISI; N],
-    ) -> [&mut ISI::Output; N]
+        indices: [SCI; N],
+    ) -> [&mut SCI::Output; N]
     where
         I: Idx,
-        ISI: IndexSliceIndex<I, T> + GetDisjointMutIndex<I>,
+        SCI: SequenceContainerIndex<I, IndexSlice<I, T>> + GetDisjointMutIndex<I>,
     {
         let slice = self as *mut IndexSlice<I, T>;
-        let mut arr: core::mem::MaybeUninit<[&mut ISI::Output; N]> =
+        let mut arr: core::mem::MaybeUninit<[&mut SCI::Output; N]> =
             core::mem::MaybeUninit::uninit();
         let arr_ptr = arr.as_mut_ptr();
 
@@ -734,7 +735,7 @@ impl<I, T> IndexSlice<I, T> {
             for i in 0..N {
                 let idx = indices.get_unchecked(i);
                 arr_ptr
-                    .cast::<&mut ISI::Output>()
+                    .cast::<&mut SCI::Output>()
                     .add(i)
                     .write(&mut *idx.clone().get_unchecked_mut(slice));
             }
@@ -744,13 +745,13 @@ impl<I, T> IndexSlice<I, T> {
 
     /// Get multiple mutable references to elements or subslices of the slice.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn get_disjoint_mut<ISI, const N: usize>(
+    pub fn get_disjoint_mut<SCI, const N: usize>(
         &mut self,
-        indices: [ISI; N],
-    ) -> Result<[&mut ISI::Output; N], GetDisjointMutError>
+        indices: [SCI; N],
+    ) -> Result<[&mut SCI::Output; N], GetDisjointMutError>
     where
         I: Idx,
-        ISI: IndexSliceIndex<I, T> + GetDisjointMutIndex<I>,
+        SCI: SequenceContainerIndex<I, IndexSlice<I, T>> + GetDisjointMutIndex<I>,
     {
         let len = self.len_idx();
         // NB: The optimizer should inline the loops into a sequence
@@ -1810,17 +1811,96 @@ impl<I, T> FromIterator<T> for Box<IndexSlice<I, T>> {
     }
 }
 
-impl<I, T, Idx: IndexSliceIndex<I, T>> Index<Idx> for IndexSlice<I, T> {
-    type Output = Idx::Output;
+unsafe impl<I, T> SequenceContainer for IndexSlice<I, T> {
+    type Element = T;
+
+    type Slice = IndexSlice<I, T>;
+
+    #[inline(always)]
+    unsafe fn len_from_ptr(this: *const Self) -> usize {
+        (this as *const [T]).len()
+    }
+
+    #[inline(always)]
+    fn get(&self, idx: usize) -> Option<&Self::Element> {
+        self.as_raw_slice().get(idx)
+    }
+
+    #[inline(always)]
+    unsafe fn get_unchecked(this: *const Self, idx: usize) -> *const Self::Element {
+        this.cast::<T>().add(idx)
+    }
+
+    #[inline(always)]
+    fn index(&self, idx: usize) -> &Self::Element {
+        core::ops::Index::index(self.as_raw_slice(), idx)
+    }
+
+    #[inline(always)]
+    fn get_range(&self, r: Range<usize>) -> Option<&Self::Slice> {
+        self.as_raw_slice().get(r).map(IndexSlice::from_raw_slice)
+    }
+
+    #[inline(always)]
+    unsafe fn get_range_unchecked(this: *const Self, r: Range<usize>) -> *const Self::Slice {
+        unsafe {
+            core::ptr::slice_from_raw_parts(this.cast::<T>().add(r.start), r.end - r.start) as _
+        }
+    }
+
+    #[inline(always)]
+    fn index_range(&self, r: Range<usize>) -> &Self::Slice {
+        IndexSlice::from_raw_slice(core::ops::Index::index(self.as_raw_slice(), r))
+    }
+}
+
+unsafe impl<I, T> SequenceContainerMut for IndexSlice<I, T> {
+    #[inline(always)]
+    fn get_mut(&mut self, idx: usize) -> Option<&mut Self::Element> {
+        self.as_mut_raw_slice().get_mut(idx)
+    }
+
+    #[inline(always)]
+    unsafe fn get_unchecked_mut(this: *mut Self, idx: usize) -> *mut Self::Element {
+        unsafe { this.cast::<T>().add(idx) }
+    }
+
+    #[inline(always)]
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Element {
+        core::ops::IndexMut::index_mut(self.as_mut_raw_slice(), idx)
+    }
+
+    #[inline(always)]
+    fn get_range_mut(&mut self, r: Range<usize>) -> Option<&mut Self::Slice> {
+        self.as_mut_raw_slice()
+            .get_mut(r)
+            .map(IndexSlice::from_mut_raw_slice)
+    }
+
+    #[inline(always)]
+    unsafe fn get_range_unchecked_mut(this: *mut Self, r: Range<usize>) -> *mut Self::Slice {
+        unsafe {
+            core::ptr::slice_from_raw_parts_mut(this.cast::<T>().add(r.start), r.end - r.start) as _
+        }
+    }
+
+    #[inline(always)]
+    fn index_range_mut(&mut self, r: Range<usize>) -> &mut Self::Slice {
+        IndexSlice::from_mut_raw_slice(core::ops::IndexMut::index_mut(self.as_mut_raw_slice(), r))
+    }
+}
+
+impl<I, T, X: SequenceContainerIndex<I, IndexSlice<I, T>>> Index<X> for IndexSlice<I, T> {
+    type Output = X::Output;
     #[inline]
-    fn index(&self, index: Idx) -> &Self::Output {
+    fn index(&self, index: X) -> &Self::Output {
         index.index(self)
     }
 }
 
-impl<I, T, ISI: IndexSliceIndex<I, T>> IndexMut<ISI> for IndexSlice<I, T> {
+impl<I, T, X: SequenceContainerIndex<I, IndexSlice<I, T>>> IndexMut<X> for IndexSlice<I, T> {
     #[inline]
-    fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
+    fn index_mut(&mut self, index: X) -> &mut Self::Output {
         index.index_mut(self)
     }
 }

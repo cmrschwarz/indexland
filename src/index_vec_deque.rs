@@ -98,45 +98,58 @@ impl<I, T> IndexVecDeque<I, T> {
     pub fn reserve_exact(&mut self, additional: usize) {
         self.data.reserve_exact(additional);
     }
-    pub fn reserve_total(&mut self, cap_idx: I)
+    pub fn reserve_exact_total(&mut self, cap_idx: I)
     where
         I: Idx,
     {
-        let current_len = self.len();
-        let target_cap = cap_idx.into_usize();
-        if target_cap > current_len {
-            self.data.reserve(target_cap - current_len);
-        }
+        self.data
+            .reserve_exact(cap_idx.into_usize().saturating_sub(self.len()));
     }
     pub fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
+    pub fn reserve_total(&mut self, cap_idx: I)
+    where
+        I: Idx,
+    {
+        self.data
+            .reserve(cap_idx.into_usize().saturating_sub(self.len()));
+    }
+
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), TryReserveError> {
         self.data.try_reserve_exact(additional)
+    }
+    pub fn try_reserve_exact_total(&mut self, cap_idx: I) -> Result<(), TryReserveError>
+    where
+        I: Idx,
+    {
+        self.data
+            .try_reserve_exact(cap_idx.into_usize().saturating_sub(self.len()))
     }
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), TryReserveError> {
         self.data.try_reserve(additional)
     }
-    pub fn shrink_to_fit(&mut self) {
-        self.data.shrink_to_fit();
-    }
-    pub fn shrink_to(&mut self, min_capacity: usize) {
-        self.data.shrink_to(min_capacity);
-    }
-    pub fn shrink_to_idx(&mut self, cap_idx: I)
+    pub fn try_reserve_total(&mut self, cap_idx: I) -> Result<(), TryReserveError>
     where
         I: Idx,
     {
-        self.data.shrink_to(cap_idx.into_usize());
+        self.data
+            .try_reserve(cap_idx.into_usize().saturating_sub(self.len()))
+    }
+    pub fn shrink_to_fit(&mut self) {
+        self.data.shrink_to_fit();
+    }
+    pub fn shrink_to(&mut self, idx: I)
+    where
+        I: Idx,
+    {
+        self.data.shrink_to(idx.into_usize());
     }
     pub fn truncate(&mut self, end: I)
     where
         I: Idx,
     {
         self.data.truncate(end.into_usize());
-    }
-    pub fn truncate_len(&mut self, len: usize) {
-        self.data.truncate(len);
     }
     pub fn iter(&self) -> alloc::collections::vec_deque::Iter<'_, T> {
         self.data.iter()

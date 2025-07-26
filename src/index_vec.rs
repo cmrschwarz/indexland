@@ -1,6 +1,6 @@
 use crate::{
-    index_enumerate::IndexEnumerate, index_slice_index::IndexSliceIndex, IdxCompat, IndexArray,
-    IndexRangeBounds, IndexVecDeque,
+    index_enumerate::IndexEnumerate, sequence_container::SequenceContainerIndex, IdxCompat,
+    IndexArray, IndexRangeBounds, IndexVecDeque,
 };
 
 use alloc::{
@@ -150,15 +150,11 @@ impl<I, T> IndexVec<I, T> {
         self.data.shrink_to_fit();
     }
 
-    pub fn shrink_to(&mut self, cap: usize) {
-        self.data.shrink_to(cap);
-    }
-
-    pub fn shrink_to_idx(&mut self, cap_idx: I)
+    pub fn shrink_to(&mut self, cap: I)
     where
         I: Idx,
     {
-        self.data.shrink_to(cap_idx.into_usize());
+        self.data.shrink_to(cap.into_usize());
     }
 
     pub fn into_boxed_slice(self) -> Box<IndexSlice<I, T>> {
@@ -169,15 +165,11 @@ impl<I, T> IndexVec<I, T> {
         self.data.into_boxed_slice()
     }
 
-    pub fn truncate(&mut self, len_idx: I)
+    pub fn truncate(&mut self, len: I)
     where
         I: Idx,
     {
-        self.data.truncate(len_idx.into_usize());
-    }
-
-    pub fn truncate_len(&mut self, len: usize) {
-        self.data.truncate(len);
+        self.data.truncate(len.into_usize());
     }
 
     pub const fn as_slice(&self) -> &IndexSlice<I, T> {
@@ -207,17 +199,8 @@ impl<I, T> IndexVec<I, T> {
     /// # Safety
     /// - `len` must be less than or equal to [`Vec::capacity()`].
     /// - The elements at [`Vec::len()`]..`len` must be initialized.
-    pub unsafe fn set_len(&mut self, len: usize) {
-        unsafe {
-            self.data.set_len(len);
-        }
-    }
-
-    /// # Safety
-    /// - `len` must be less than or equal to [`Vec::capacity`].
-    /// - The elements at [`Vec::len()`]..`len` must be initialized.
     /// - `len` must map to a valid usize
-    pub unsafe fn set_len_idx(&mut self, len: I)
+    pub unsafe fn set_len(&mut self, len: I)
     where
         I: Idx,
     {
@@ -327,19 +310,12 @@ impl<I, T> IndexVec<I, T> {
         IndexVec::from(self.data.split_off(at.into_usize()))
     }
 
-    pub fn resize_with<F>(&mut self, new_len: usize, f: F)
-    where
-        F: FnMut() -> T,
-    {
-        self.data.resize_with(new_len, f);
-    }
-
-    pub fn resize_to_idx_with<F>(&mut self, new_len_idx: I, f: F)
+    pub fn resize_with<F>(&mut self, new_len: I, f: F)
     where
         I: Idx,
         F: FnMut() -> T,
     {
-        self.data.resize_with(new_len_idx.into_usize(), f);
+        self.data.resize_with(new_len.into_usize(), f);
     }
 
     pub fn leak<'a>(self) -> &'a mut IndexSlice<I, T> {
@@ -350,19 +326,12 @@ impl<I, T> IndexVec<I, T> {
         self.data.spare_capacity_mut().into()
     }
 
-    pub fn resize(&mut self, new_len: usize, value: T)
-    where
-        T: Clone,
-    {
-        self.data.resize(new_len, value);
-    }
-
-    pub fn resize_to_idx(&mut self, len_idx: I, value: T)
+    pub fn resize(&mut self, len: I, value: T)
     where
         I: Idx,
         T: Clone,
     {
-        self.data.resize(len_idx.into_usize(), value);
+        self.data.resize(len.into_usize(), value);
     }
 
     pub fn extend_from_slice<S: AsRef<[T]>>(&mut self, slice: S)
@@ -840,22 +809,22 @@ where
     }
 }
 
-impl<I, ISI, T> Index<ISI> for IndexVec<I, T>
+impl<I, SCI, T> Index<SCI> for IndexVec<I, T>
 where
-    ISI: IndexSliceIndex<I, T>,
+    SCI: SequenceContainerIndex<I, IndexSlice<I, T>>,
 {
-    type Output = ISI::Output;
+    type Output = SCI::Output;
 
-    fn index(&self, index: ISI) -> &Self::Output {
+    fn index(&self, index: SCI) -> &Self::Output {
         index.index(self.as_slice())
     }
 }
 
-impl<I, ISI, T> IndexMut<ISI> for IndexVec<I, T>
+impl<I, SCI, T> IndexMut<SCI> for IndexVec<I, T>
 where
-    ISI: IndexSliceIndex<I, T>,
+    SCI: SequenceContainerIndex<I, IndexSlice<I, T>>,
 {
-    fn index_mut(&mut self, index: ISI) -> &mut Self::Output {
+    fn index_mut(&mut self, index: SCI) -> &mut Self::Output {
         index.index_mut(self.as_mut_slice())
     }
 }

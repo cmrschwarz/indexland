@@ -1,7 +1,7 @@
 use super::{idx::Idx, index_range::IndexRange};
 use crate::{
     index_enumerate::IndexEnumerate,
-    raw_index_container::{GenericIndex, RawIndexContainer},
+    sequence_container::{SequenceContainer, SequenceContainerIndex},
     IndexArray, IndexRangeBounds,
 };
 use alloc::boxed::Box;
@@ -221,7 +221,7 @@ impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
     }
 }
 
-unsafe impl<I, T> RawIndexContainer for IndexSlice<I, T> {
+unsafe impl<I, T> SequenceContainer for IndexSlice<I, T> {
     type Element = T;
     type Slice = IndexSlice<I, T>;
 
@@ -262,7 +262,7 @@ unsafe impl<I, T> RawIndexContainer for IndexSlice<I, T> {
 
 impl<I, T, X> Index<X> for IndexSlice<I, T>
 where
-    X: GenericIndex<I, T, IndexSlice<I, T>, IndexSlice<I, T>>,
+    X: SequenceContainerIndex<I, IndexSlice<I, T>>,
 {
     type Output = X::Output;
     fn index(&self, index: X) -> &Self::Output {

@@ -129,14 +129,14 @@ impl<I, T> IndexSlab<I, T> {
         self.data.get_mut(key.into_usize())
     }
 
-    pub fn get_disjoint_mut<const N: usize>(
+    pub fn get_disjoint_mut<const N: usize, C>(
         &mut self,
-        indices: [I; N],
+        indices: [C; N],
     ) -> Result<[&mut T; N], GetDisjointMutError>
     where
-        I: Idx,
+        C: IdxCompat<I>,
     {
-        self.data.get_disjoint_mut(indices.map(I::into_usize))
+        self.data.get_disjoint_mut(indices.map(C::into_usize))
     }
 
     /// ## Safety
