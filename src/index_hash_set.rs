@@ -221,14 +221,11 @@ impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
     }
 }
 
-unsafe impl<I, T> Sequence for IndexSlice<I, T> {
+impl<I, T> Sequence for IndexSlice<I, T> {
     type Index = I;
     type Element = T;
     type Slice<X: IdxCompat<I>> = IndexSlice<X, T>;
 
-    unsafe fn len_from_ptr(this: *const Self) -> usize {
-        unsafe { &*this }.len()
-    }
     fn len(&self) -> usize {
         self.len()
     }
@@ -237,23 +234,11 @@ unsafe impl<I, T> Sequence for IndexSlice<I, T> {
         self.data.get_index(idx)
     }
 
-    unsafe fn get_unchecked(this: *const Self, idx: usize) -> *const Self::Element {
-        // not ideal, but the best we can do with their api
-        unsafe { &*this }.data.index(idx)
-    }
-
     fn index(&self, idx: usize) -> &Self::Element {
         &self.data[idx]
     }
     fn get_range<X: IdxCompat<I>>(&self, r: core::ops::Range<usize>) -> Option<&Self::Slice<X>> {
         Some(IndexSlice::from_slice(self.data.get_range(r)?))
-    }
-
-    unsafe fn get_range_unchecked<X: IdxCompat<I>>(
-        this: *const Self,
-        r: core::ops::Range<usize>,
-    ) -> *const Self::Slice<X> {
-        &raw const unsafe { &*this }.data[r] as *const IndexSlice<X, T>
     }
 
     fn index_range<X: IdxCompat<I>>(&self, r: core::ops::Range<usize>) -> &Self::Slice<X> {

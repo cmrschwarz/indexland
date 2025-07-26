@@ -809,22 +809,22 @@ where
     }
 }
 
-impl<I, SCI, T> Index<SCI> for IndexVec<I, T>
+impl<I, S, T> Index<S> for IndexVec<I, T>
 where
-    SCI: SequenceIndex<I, IndexSlice<I, T>>,
+    S: SequenceIndex<I, IndexSlice<I, T>>,
 {
-    type Output = SCI::Output;
+    type Output = S::Output;
 
-    fn index(&self, index: SCI) -> &Self::Output {
+    fn index(&self, index: S) -> &Self::Output {
         index.index(self.as_slice())
     }
 }
 
-impl<I, SCI, T> IndexMut<SCI> for IndexVec<I, T>
+impl<I, S, T> IndexMut<S> for IndexVec<I, T>
 where
-    SCI: SequenceIndex<I, IndexSlice<I, T>>,
+    S: SequenceIndex<I, IndexSlice<I, T>>,
 {
-    fn index_mut(&mut self, index: SCI) -> &mut Self::Output {
+    fn index_mut(&mut self, index: S) -> &mut Self::Output {
         index.index_mut(self.as_mut_slice())
     }
 }

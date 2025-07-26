@@ -1,10 +1,15 @@
-use crate::{index_enumerate::IndexEnumerate, index_range::IndexRangeBounds};
+use crate::{
+    index_enumerate::IndexEnumerate,
+    index_range::IndexRangeBounds,
+    sequence::{Sequence, SequenceIndex, SequenceMut},
+    IdxCompat,
+};
 use alloc::boxed::Box;
 use core::{
     fmt::Debug,
     hash::{BuildHasher, Hash},
     marker::PhantomData,
-    ops::{Index, RangeBounds},
+    ops::{Index, IndexMut, RangeBounds},
 };
 
 use indexmap::{map::Slice, Equivalent, IndexMap};
@@ -73,7 +78,7 @@ impl<I, K, V> IndexSlice<I, K, V> {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
     #[inline]
-    pub fn from_slice_mut(s: &mut Slice<K, V>) -> &mut Self {
+    pub fn from_mut_slice(s: &mut Slice<K, V>) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
     #[inline]
@@ -81,7 +86,7 @@ impl<I, K, V> IndexSlice<I, K, V> {
         unsafe { &*(core::ptr::from_ref(s) as *const Slice<K, V>) }
     }
     #[inline]
-    pub fn into_slice_mut(s: &mut Self) -> &mut Slice<K, V> {
+    pub fn into_mut_slice(s: &mut Self) -> &mut Slice<K, V> {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Slice<K, V>) }
     }
     pub fn from_boxed_slice(slice_box: Box<Slice<K, V>>) -> Box<Self> {
@@ -104,12 +109,12 @@ impl<'a, I, K, V> From<&'a IndexSlice<I, K, V>> for &'a Slice<K, V> {
 }
 impl<'a, I, K, V> From<&'a mut Slice<K, V>> for &'a mut IndexSlice<I, K, V> {
     fn from(data: &'a mut Slice<K, V>) -> Self {
-        IndexSlice::from_slice_mut(data)
+        IndexSlice::from_mut_slice(data)
     }
 }
 impl<'a, I, K, V> From<&'a mut IndexSlice<I, K, V>> for &'a mut Slice<K, V> {
     fn from(data: &'a mut IndexSlice<I, K, V>) -> Self {
-        IndexSlice::into_slice_mut(data)
+        IndexSlice::into_mut_slice(data)
     }
 }
 
@@ -124,6 +129,75 @@ impl<I, K, V, S> From<IndexMap<K, V, S>> for IndexHashMap<I, K, V, S> {
 impl<I, K, V, S> From<IndexHashMap<I, K, V, S>> for IndexMap<K, V, S> {
     fn from(v: IndexHashMap<I, K, V, S>) -> Self {
         v.data
+    }
+}
+
+impl<I, K, V> Sequence for IndexSlice<I, K, V> {
+    type Index = I;
+    type Element = V;
+    type Slice<X: IdxCompat<I>> = IndexSlice<X, K, V>;
+
+    fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    fn get(&self, idx: usize) -> Option<&Self::Element> {
+        self.data.get_index(idx).map(|(_k, v)| v)
+    }
+
+    fn index(&self, idx: usize) -> &Self::Element {
+        &self.data[idx]
+    }
+    fn get_range<X: IdxCompat<I>>(&self, r: core::ops::Range<usize>) -> Option<&Self::Slice<X>> {
+        Some(IndexSlice::from_slice(self.data.get_range(r)?))
+    }
+
+    fn index_range<X: IdxCompat<I>>(&self, r: core::ops::Range<usize>) -> &Self::Slice<X> {
+        IndexSlice::from_slice(&self.data[r])
+    }
+}
+
+impl<I, K, V> SequenceMut for IndexSlice<I, K, V> {
+    fn get_mut(&mut self, idx: usize) -> Option<&mut Self::Element> {
+        self.data.get_index_mut(idx).map(|(_k, v)| v)
+    }
+
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Element {
+        &mut self.data[idx]
+    }
+
+    fn get_range_mut<X: IdxCompat<Self::Index>>(
+        &mut self,
+        r: core::ops::Range<usize>,
+    ) -> Option<&mut Self::Slice<X>> {
+        Some(IndexSlice::from_mut_slice(self.data.get_range_mut(r)?))
+    }
+
+    fn index_range_mut<X: IdxCompat<Self::Index>>(
+        &mut self,
+        r: core::ops::Range<usize>,
+    ) -> &mut Self::Slice<X> {
+        IndexSlice::from_mut_slice(&mut self.data[r])
+    }
+}
+
+impl<I, K, V, X> Index<X> for IndexSlice<I, K, V>
+where
+    X: SequenceIndex<I, IndexSlice<I, K, V>>,
+{
+    type Output = X::Output;
+
+    fn index(&self, index: X) -> &Self::Output {
+        index.index(self)
+    }
+}
+
+impl<I, K, V, X> IndexMut<X> for IndexSlice<I, K, V>
+where
+    X: SequenceIndex<I, IndexSlice<I, K, V>>,
+{
+    fn index_mut(&mut self, index: X) -> &mut Self::Output {
+        index.index_mut(self)
     }
 }
 

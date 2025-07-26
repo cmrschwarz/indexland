@@ -1,7 +1,7 @@
 use super::Idx;
 use crate::{
     index_enumerate::IndexEnumerate,
-    sequence::{Sequence, SequenceIndex, SequenceMut},
+    sequence::{Sequence, SequenceIndex, SequenceMut, UnsafeSequence, UnsafeSequenceMut},
     IdxCompat, IndexArray, IndexRangeBounds,
 };
 
@@ -1811,34 +1811,45 @@ impl<I, T> FromIterator<T> for Box<IndexSlice<I, T>> {
     }
 }
 
-unsafe impl<I, T> Sequence for IndexSlice<I, T> {
+impl<I, T> Sequence for IndexSlice<I, T> {
     type Index = I;
     type Element = T;
     type Slice<X: IdxCompat<I>> = IndexSlice<X, T>;
 
+    fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    #[inline(always)]
+    fn get(&self, idx: usize) -> Option<&Self::Element> {
+        self.data.get(idx)
+    }
+
+    #[inline(always)]
+    fn index(&self, idx: usize) -> &Self::Element {
+        core::ops::Index::index(&self.data, idx)
+    }
+
+    #[inline(always)]
+    fn get_range<X: IdxCompat<I>>(&self, r: Range<usize>) -> Option<&Self::Slice<X>> {
+        self.data.get(r).map(IndexSlice::from_raw_slice)
+    }
+
+    #[inline(always)]
+    fn index_range<X: IdxCompat<I>>(&self, r: Range<usize>) -> &Self::Slice<X> {
+        IndexSlice::from_raw_slice(core::ops::Index::index(&self.data, r))
+    }
+}
+
+unsafe impl<I, T> UnsafeSequence for IndexSlice<I, T> {
     #[inline(always)]
     unsafe fn len_from_ptr(this: *const Self) -> usize {
         (this as *const [T]).len()
     }
 
     #[inline(always)]
-    fn get(&self, idx: usize) -> Option<&Self::Element> {
-        self.as_raw_slice().get(idx)
-    }
-
-    #[inline(always)]
     unsafe fn get_unchecked(this: *const Self, idx: usize) -> *const Self::Element {
         this.cast::<T>().add(idx)
-    }
-
-    #[inline(always)]
-    fn index(&self, idx: usize) -> &Self::Element {
-        core::ops::Index::index(self.as_raw_slice(), idx)
-    }
-
-    #[inline(always)]
-    fn get_range<X: IdxCompat<I>>(&self, r: Range<usize>) -> Option<&Self::Slice<X>> {
-        self.as_raw_slice().get(r).map(IndexSlice::from_raw_slice)
     }
 
     #[inline(always)]
@@ -1850,22 +1861,12 @@ unsafe impl<I, T> Sequence for IndexSlice<I, T> {
             core::ptr::slice_from_raw_parts(this.cast::<T>().add(r.start), r.end - r.start) as _
         }
     }
-
-    #[inline(always)]
-    fn index_range<X: IdxCompat<I>>(&self, r: Range<usize>) -> &Self::Slice<X> {
-        IndexSlice::from_raw_slice(core::ops::Index::index(self.as_raw_slice(), r))
-    }
 }
 
-unsafe impl<I, T> SequenceMut for IndexSlice<I, T> {
+impl<I, T> SequenceMut for IndexSlice<I, T> {
     #[inline(always)]
     fn get_mut(&mut self, idx: usize) -> Option<&mut Self::Element> {
         self.as_mut_raw_slice().get_mut(idx)
-    }
-
-    #[inline(always)]
-    unsafe fn get_unchecked_mut(this: *mut Self, idx: usize) -> *mut Self::Element {
-        unsafe { this.cast::<T>().add(idx) }
     }
 
     #[inline(always)]
@@ -1881,6 +1882,18 @@ unsafe impl<I, T> SequenceMut for IndexSlice<I, T> {
     }
 
     #[inline(always)]
+    fn index_range_mut<X: IdxCompat<I>>(&mut self, r: Range<usize>) -> &mut Self::Slice<X> {
+        IndexSlice::from_mut_raw_slice(core::ops::IndexMut::index_mut(self.as_mut_raw_slice(), r))
+    }
+}
+
+unsafe impl<I, T> UnsafeSequenceMut for IndexSlice<I, T> {
+    #[inline(always)]
+    unsafe fn get_unchecked_mut(this: *mut Self, idx: usize) -> *mut Self::Element {
+        unsafe { this.cast::<T>().add(idx) }
+    }
+
+    #[inline(always)]
     unsafe fn get_range_unchecked_mut<X: IdxCompat<I>>(
         this: *mut Self,
         r: Range<usize>,
@@ -1889,14 +1902,12 @@ unsafe impl<I, T> SequenceMut for IndexSlice<I, T> {
             core::ptr::slice_from_raw_parts_mut(this.cast::<T>().add(r.start), r.end - r.start) as _
         }
     }
-
-    #[inline(always)]
-    fn index_range_mut<X: IdxCompat<I>>(&mut self, r: Range<usize>) -> &mut Self::Slice<X> {
-        IndexSlice::from_mut_raw_slice(core::ops::IndexMut::index_mut(self.as_mut_raw_slice(), r))
-    }
 }
 
-impl<I, T, X: SequenceIndex<I, IndexSlice<I, T>>> Index<X> for IndexSlice<I, T> {
+impl<I, T, X> Index<X> for IndexSlice<I, T>
+where
+    X: SequenceIndex<I, IndexSlice<I, T>>,
+{
     type Output = X::Output;
     #[inline]
     fn index(&self, index: X) -> &Self::Output {
@@ -1904,7 +1915,10 @@ impl<I, T, X: SequenceIndex<I, IndexSlice<I, T>>> Index<X> for IndexSlice<I, T> 
     }
 }
 
-impl<I, T, X: SequenceIndex<I, IndexSlice<I, T>>> IndexMut<X> for IndexSlice<I, T> {
+impl<I, T, X> IndexMut<X> for IndexSlice<I, T>
+where
+    X: SequenceIndex<I, IndexSlice<I, T>>,
+{
     #[inline]
     fn index_mut(&mut self, index: X) -> &mut Self::Output {
         index.index_mut(self)
