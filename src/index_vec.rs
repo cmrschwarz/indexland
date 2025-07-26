@@ -1151,9 +1151,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use alloc::vec::Vec;
-
     use indexland::Idx;
+
+    use crate::{IndexSlice, IndexVec};
 
     #[test]
     fn index() {
@@ -1163,21 +1163,42 @@ mod test {
         let v = index_vec![0, 1, 2, 3];
 
         assert_eq!(v[Foo(1)], 1);
+        assert_eq!(&v[..], IndexSlice::from_raw_slice(&[0, 1, 2, 3]));
+        assert_eq!(&v[Foo(1)..], IndexSlice::from_raw_slice(&[1, 2, 3]));
+        assert_eq!(&v[..Foo(2)], IndexSlice::from_raw_slice(&[0, 1]));
+        assert_eq!(&v[..=Foo(2)], IndexSlice::from_raw_slice(&[0, 1, 2]));
+        assert_eq!(&v[Foo(1)..Foo(3)], IndexSlice::from_raw_slice(&[1, 2]));
+        assert_eq!(&v[Foo(1)..=Foo(3)], IndexSlice::from_raw_slice(&[1, 2, 3]));
+    }
 
-        assert_eq!(&v[..].iter().copied().collect::<Vec<_>>(), &[0, 1, 2, 3]);
-        assert_eq!(&v[Foo(1)..].iter().copied().collect::<Vec<_>>(), &[1, 2, 3]);
-        assert_eq!(&v[..Foo(2)].iter().copied().collect::<Vec<_>>(), &[0, 1]);
+    #[test]
+    fn index_compat() {
+        #[derive(Idx)]
+        struct Foo2(usize);
+
+        #[derive(Idx)]
+        #[indexland(idx_compat(Foo2, usize))]
+        struct Foo(usize);
+
+        let v: IndexVec<Foo, u32> = index_vec![0, 1, 2, 3];
+
+        assert_eq!(v[Foo2(1)], 1);
+        assert_eq!(&v[..], IndexSlice::from_raw_slice(&[0, 1, 2, 3]));
+        assert_eq!(&v[Foo2(1)..], IndexSlice::from_raw_slice(&[1, 2, 3]));
+        assert_eq!(&v[..Foo2(2)], IndexSlice::from_raw_slice(&[0, 1]));
+        assert_eq!(&v[..=Foo2(2)], IndexSlice::from_raw_slice(&[0, 1, 2]));
+        assert_eq!(&v[Foo2(1)..Foo2(3)], IndexSlice::from_raw_slice(&[1, 2]));
         assert_eq!(
-            &v[..=Foo(2)].iter().copied().collect::<Vec<_>>(),
-            &[0, 1, 2]
+            &v[Foo2(1)..=Foo2(3)],
+            IndexSlice::from_raw_slice(&[1, 2, 3])
         );
-        assert_eq!(
-            &v[Foo(1)..Foo(3)].iter().copied().collect::<Vec<_>>(),
-            &[1, 2]
-        );
-        assert_eq!(
-            &v[Foo(1)..=Foo(3)].iter().copied().collect::<Vec<_>>(),
-            &[1, 2, 3]
-        );
+
+        assert_eq!(v[1], 1);
+        assert_eq!(&v[..], IndexSlice::from_raw_slice(&[0, 1, 2, 3]));
+        assert_eq!(&v[1..], IndexSlice::from_raw_slice(&[1, 2, 3]));
+        assert_eq!(&v[..2], IndexSlice::from_raw_slice(&[0, 1]));
+        assert_eq!(&v[..=2], IndexSlice::from_raw_slice(&[0, 1, 2]));
+        assert_eq!(&v[1..3], IndexSlice::from_raw_slice(&[1, 2]));
+        assert_eq!(&v[1..=3], IndexSlice::from_raw_slice(&[1, 2, 3]));
     }
 }
