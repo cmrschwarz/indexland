@@ -16,57 +16,6 @@ pub fn derive_idx_compat(
                 #name::from_usize(Idx::into_usize(self))
             }
         }
-
-
-        #[automatically_derived]
-        unsafe impl<C: #indexland::sequence_container::SequenceContainer<Index = #name> + ?Sized>
-            #indexland::sequence_container::SequenceContainerIndex<#name, C>
-            for #compat
-        {
-            type Output = C::Element;
-
-            #[inline(always)]
-            fn get(self, container: &C) -> Option<&Self::Output> {
-                C::get(container, self.into_usize())
-            }
-
-            #[inline(always)]
-            unsafe fn get_unchecked<FS, FR>(
-                self,
-                container: *const C,
-            ) -> *const Self::Output {
-                C::get_unchecked(container, self.into_usize())
-            }
-
-            #[inline(always)]
-            fn index(self, container: &C) -> &Self::Output {
-                C::index(container, self.into_usize())
-            }
-
-            #[inline(always)]
-            fn get_mut(self, container: &mut C) -> Option<&mut Self::Output>
-            where
-                C: #indexland::sequence_container::SequenceContainerMut,
-            {
-                C::get_mut(container, self.into_usize())
-            }
-
-            #[inline(always)]
-            unsafe fn get_unchecked_mut(self, container: *mut C) -> *mut Self::Output
-            where
-                C: #indexland::sequence_container::SequenceContainerMut,
-            {
-                C::get_unchecked_mut(container, self.into_usize())
-            }
-
-            #[inline(always)]
-            fn index_mut(self, container: &mut C) -> &mut Self::Output
-            where
-                C: #indexland::sequence_container::SequenceContainerMut,
-            {
-                C::index_mut(container, self.into_usize())
-            }
-        }
     }
 }
 

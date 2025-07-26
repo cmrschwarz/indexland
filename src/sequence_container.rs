@@ -195,7 +195,9 @@ pub unsafe trait SequenceContainerIndex<I, C: ?Sized>: Sized {
         C: SequenceContainerMut;
 }
 
-unsafe impl<I: Idx, C: SequenceContainer + ?Sized> SequenceContainerIndex<I, C> for I {
+unsafe impl<I: Idx, X: IdxCompat<I>, C: SequenceContainer<Index = I> + ?Sized>
+    SequenceContainerIndex<I, C> for X
+{
     type Output = C::Element;
 
     fn get(self, container: &C) -> Option<&Self::Output> {
