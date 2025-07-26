@@ -2,7 +2,7 @@ use super::Idx;
 use crate::{
     index_enumerate::IndexEnumerate,
     sequence_container::{SequenceContainer, SequenceContainerIndex, SequenceContainerMut},
-    IndexArray, IndexRangeBounds,
+    IdxCompat, IndexArray, IndexRangeBounds,
 };
 
 use core::{
@@ -1811,10 +1811,10 @@ impl<I, T> FromIterator<T> for Box<IndexSlice<I, T>> {
     }
 }
 
-unsafe impl<I, T> SequenceContainer for IndexSlice<I, T> {
+unsafe impl<I, T> SequenceContainer<I> for IndexSlice<I, T> {
     type Element = T;
 
-    type Slice = IndexSlice<I, T>;
+    type Slice<X: IdxCompat<I>> = IndexSlice<X, T>;
 
     #[inline(always)]
     unsafe fn len_from_ptr(this: *const Self) -> usize {
@@ -1837,24 +1837,27 @@ unsafe impl<I, T> SequenceContainer for IndexSlice<I, T> {
     }
 
     #[inline(always)]
-    fn get_range(&self, r: Range<usize>) -> Option<&Self::Slice> {
+    fn get_range<X: IdxCompat<I>>(&self, r: Range<usize>) -> Option<&Self::Slice<X>> {
         self.as_raw_slice().get(r).map(IndexSlice::from_raw_slice)
     }
 
     #[inline(always)]
-    unsafe fn get_range_unchecked(this: *const Self, r: Range<usize>) -> *const Self::Slice {
+    unsafe fn get_range_unchecked<X: IdxCompat<I>>(
+        this: *const Self,
+        r: Range<usize>,
+    ) -> *const Self::Slice<X> {
         unsafe {
             core::ptr::slice_from_raw_parts(this.cast::<T>().add(r.start), r.end - r.start) as _
         }
     }
 
     #[inline(always)]
-    fn index_range(&self, r: Range<usize>) -> &Self::Slice {
+    fn index_range<X: IdxCompat<I>>(&self, r: Range<usize>) -> &Self::Slice<X> {
         IndexSlice::from_raw_slice(core::ops::Index::index(self.as_raw_slice(), r))
     }
 }
 
-unsafe impl<I, T> SequenceContainerMut for IndexSlice<I, T> {
+unsafe impl<I, T> SequenceContainerMut<I> for IndexSlice<I, T> {
     #[inline(always)]
     fn get_mut(&mut self, idx: usize) -> Option<&mut Self::Element> {
         self.as_mut_raw_slice().get_mut(idx)
@@ -1871,21 +1874,24 @@ unsafe impl<I, T> SequenceContainerMut for IndexSlice<I, T> {
     }
 
     #[inline(always)]
-    fn get_range_mut(&mut self, r: Range<usize>) -> Option<&mut Self::Slice> {
+    fn get_range_mut<X: IdxCompat<I>>(&mut self, r: Range<usize>) -> Option<&mut Self::Slice<X>> {
         self.as_mut_raw_slice()
             .get_mut(r)
             .map(IndexSlice::from_mut_raw_slice)
     }
 
     #[inline(always)]
-    unsafe fn get_range_unchecked_mut(this: *mut Self, r: Range<usize>) -> *mut Self::Slice {
+    unsafe fn get_range_unchecked_mut<X: IdxCompat<I>>(
+        this: *mut Self,
+        r: Range<usize>,
+    ) -> *mut Self::Slice<X> {
         unsafe {
             core::ptr::slice_from_raw_parts_mut(this.cast::<T>().add(r.start), r.end - r.start) as _
         }
     }
 
     #[inline(always)]
-    fn index_range_mut(&mut self, r: Range<usize>) -> &mut Self::Slice {
+    fn index_range_mut<X: IdxCompat<I>>(&mut self, r: Range<usize>) -> &mut Self::Slice<X> {
         IndexSlice::from_mut_raw_slice(core::ops::IndexMut::index_mut(self.as_mut_raw_slice(), r))
     }
 }

@@ -1163,12 +1163,24 @@ mod test {
         let v = index_vec![0, 1, 2, 3];
 
         assert_eq!(v[Foo(1)], 1);
-        assert_eq!(&v[..], IndexSlice::from_raw_slice(&[0, 1, 2, 3]));
-        assert_eq!(&v[Foo(1)..], IndexSlice::from_raw_slice(&[1, 2, 3]));
-        assert_eq!(&v[..Foo(2)], IndexSlice::from_raw_slice(&[0, 1]));
-        assert_eq!(&v[..=Foo(2)], IndexSlice::from_raw_slice(&[0, 1, 2]));
-        assert_eq!(&v[Foo(1)..Foo(3)], IndexSlice::from_raw_slice(&[1, 2]));
-        assert_eq!(&v[Foo(1)..=Foo(3)], IndexSlice::from_raw_slice(&[1, 2, 3]));
+        assert_eq!(&v[..], IndexSlice::<Foo, _>::from_raw_slice(&[0, 1, 2, 3]));
+        assert_eq!(
+            &v[Foo(1)..],
+            IndexSlice::<Foo, _>::from_raw_slice(&[1, 2, 3])
+        );
+        assert_eq!(&v[..Foo(2)], IndexSlice::<Foo, _>::from_raw_slice(&[0, 1]));
+        assert_eq!(
+            &v[..=Foo(2)],
+            IndexSlice::<Foo, _>::from_raw_slice(&[0, 1, 2])
+        );
+        assert_eq!(
+            &v[Foo(1)..Foo(3)],
+            IndexSlice::<Foo, _>::from_raw_slice(&[1, 2])
+        );
+        assert_eq!(
+            &v[Foo(1)..=Foo(3)],
+            IndexSlice::<Foo, _>::from_raw_slice(&[1, 2, 3])
+        );
     }
 
     #[test]
@@ -1182,23 +1194,38 @@ mod test {
 
         let v: IndexVec<Foo, u32> = index_vec![0, 1, 2, 3];
 
+        assert_eq!(&v[..], IndexSlice::<Foo, _>::from_raw_slice(&[0, 1, 2, 3]));
+
         assert_eq!(v[Foo2(1)], 1);
-        assert_eq!(&v[..], IndexSlice::from_raw_slice(&[0, 1, 2, 3]));
-        assert_eq!(&v[Foo2(1)..], IndexSlice::from_raw_slice(&[1, 2, 3]));
-        assert_eq!(&v[..Foo2(2)], IndexSlice::from_raw_slice(&[0, 1]));
-        assert_eq!(&v[..=Foo2(2)], IndexSlice::from_raw_slice(&[0, 1, 2]));
-        assert_eq!(&v[Foo2(1)..Foo2(3)], IndexSlice::from_raw_slice(&[1, 2]));
+        assert_eq!(
+            &v[Foo2(1)..],
+            IndexSlice::<Foo2, _>::from_raw_slice(&[1, 2, 3])
+        );
+        assert_eq!(
+            &v[..Foo2(2)],
+            IndexSlice::<Foo2, _>::from_raw_slice(&[0, 1])
+        );
+        assert_eq!(
+            &v[..=Foo2(2)],
+            IndexSlice::<Foo2, _>::from_raw_slice(&[0, 1, 2])
+        );
+        assert_eq!(
+            &v[Foo2(1)..Foo2(3)],
+            IndexSlice::<Foo2, _>::from_raw_slice(&[1, 2])
+        );
         assert_eq!(
             &v[Foo2(1)..=Foo2(3)],
-            IndexSlice::from_raw_slice(&[1, 2, 3])
+            IndexSlice::<Foo2, _>::from_raw_slice(&[1, 2, 3])
         );
 
         assert_eq!(v[1], 1);
-        assert_eq!(&v[..], IndexSlice::from_raw_slice(&[0, 1, 2, 3]));
-        assert_eq!(&v[1..], IndexSlice::from_raw_slice(&[1, 2, 3]));
-        assert_eq!(&v[..2], IndexSlice::from_raw_slice(&[0, 1]));
-        assert_eq!(&v[..=2], IndexSlice::from_raw_slice(&[0, 1, 2]));
-        assert_eq!(&v[1..3], IndexSlice::from_raw_slice(&[1, 2]));
-        assert_eq!(&v[1..=3], IndexSlice::from_raw_slice(&[1, 2, 3]));
+        assert_eq!(&v[1..], IndexSlice::<usize, _>::from_raw_slice(&[1, 2, 3]));
+        assert_eq!(&v[..2], IndexSlice::<usize, _>::from_raw_slice(&[0, 1]));
+        assert_eq!(&v[..=2], IndexSlice::<usize, _>::from_raw_slice(&[0, 1, 2]));
+        assert_eq!(&v[1..3], IndexSlice::<usize, _>::from_raw_slice(&[1, 2]));
+        assert_eq!(
+            &v[1..=3],
+            IndexSlice::<usize, _>::from_raw_slice(&[1, 2, 3])
+        );
     }
 }

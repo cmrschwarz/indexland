@@ -8,9 +8,9 @@ use crate::{
 /// `get_unchecked` and `get_range_unchecked` are trusted to return valid pointers
 /// into the container if they received valid input
 #[allow(clippy::len_without_is_empty)]
-pub unsafe trait SequenceContainer {
+pub unsafe trait SequenceContainer<I> {
     type Element: ?Sized;
-    type Slice: ?Sized;
+    type Slice<X: IdxCompat<I>>: ?Sized;
 
     /// ## Safety
     /// `this` must be a valid container pointer
@@ -32,19 +32,22 @@ pub unsafe trait SequenceContainer {
 
     fn index(&self, idx: usize) -> &Self::Element;
 
-    fn get_range(&self, r: Range<usize>) -> Option<&Self::Slice>;
+    fn get_range<X: IdxCompat<I>>(&self, r: Range<usize>) -> Option<&Self::Slice<X>>;
 
     /// ## Safety
     /// `this` must be a valid container pointer
-    unsafe fn get_range_unchecked(this: *const Self, r: Range<usize>) -> *const Self::Slice;
+    unsafe fn get_range_unchecked<X: IdxCompat<I>>(
+        this: *const Self,
+        r: Range<usize>,
+    ) -> *const Self::Slice<X>;
 
-    fn index_range(&self, r: Range<usize>) -> &Self::Slice;
+    fn index_range<X: IdxCompat<I>>(&self, r: Range<usize>) -> &Self::Slice<X>;
 }
 
 /// ## Safety
 /// `get_unchecked_mut` and `get_range_unchecked_mut` are trusted to return valid pointers
 /// into the container if they received valid input
-pub unsafe trait SequenceContainerMut: SequenceContainer {
+pub unsafe trait SequenceContainerMut<I>: SequenceContainer<I> {
     fn get_mut(&mut self, idx: usize) -> Option<&mut Self::Element>;
 
     /// ## Safety
@@ -53,19 +56,21 @@ pub unsafe trait SequenceContainerMut: SequenceContainer {
 
     fn index_mut(&mut self, idx: usize) -> &mut Self::Element;
 
-    fn get_range_mut(&mut self, r: Range<usize>) -> Option<&mut Self::Slice>;
+    fn get_range_mut<X: IdxCompat<I>>(&mut self, r: Range<usize>) -> Option<&mut Self::Slice<X>>;
 
     /// ## Safety
     /// `this` must be a valid container pointer
-    unsafe fn get_range_unchecked_mut(this: *mut Self, r: Range<usize>) -> *mut Self::Slice;
+    unsafe fn get_range_unchecked_mut<X: IdxCompat<I>>(
+        this: *mut Self,
+        r: Range<usize>,
+    ) -> *mut Self::Slice<X>;
 
-    fn index_range_mut(&mut self, r: Range<usize>) -> &mut Self::Slice;
+    fn index_range_mut<X: IdxCompat<I>>(&mut self, r: Range<usize>) -> &mut Self::Slice<X>;
 }
 
-unsafe impl<T> SequenceContainer for [T] {
+unsafe impl<T> SequenceContainer<usize> for [T] {
     type Element = T;
-
-    type Slice = [T];
+    type Slice<I: IdxCompat<usize>> = [T];
 
     #[inline(always)]
     unsafe fn len_from_ptr(this: *const Self) -> usize {
@@ -88,24 +93,27 @@ unsafe impl<T> SequenceContainer for [T] {
     }
 
     #[inline(always)]
-    fn get_range(&self, r: Range<usize>) -> Option<&Self::Slice> {
+    fn get_range<X: IdxCompat<usize>>(&self, r: Range<usize>) -> Option<&Self::Slice<X>> {
         <[T]>::get(self, r)
     }
 
     #[inline(always)]
-    unsafe fn get_range_unchecked(this: *const Self, r: Range<usize>) -> *const Self::Slice {
+    unsafe fn get_range_unchecked<X: IdxCompat<usize>>(
+        this: *const Self,
+        r: Range<usize>,
+    ) -> *const Self::Slice<X> {
         unsafe {
             core::ptr::slice_from_raw_parts(this.cast::<T>().add(r.start), r.end - r.start) as _
         }
     }
 
     #[inline(always)]
-    fn index_range(&self, r: Range<usize>) -> &Self::Slice {
+    fn index_range<X: IdxCompat<usize>>(&self, r: Range<usize>) -> &Self::Slice<X> {
         core::ops::Index::index(self, r)
     }
 }
 
-unsafe impl<T> SequenceContainerMut for [T] {
+unsafe impl<T> SequenceContainerMut<usize> for [T] {
     #[inline(always)]
     fn get_mut(&mut self, idx: usize) -> Option<&mut Self::Element> {
         <[T]>::get_mut(self, idx)
@@ -122,19 +130,25 @@ unsafe impl<T> SequenceContainerMut for [T] {
     }
 
     #[inline(always)]
-    fn get_range_mut(&mut self, r: Range<usize>) -> Option<&mut Self::Slice> {
+    fn get_range_mut<X: IdxCompat<usize>>(
+        &mut self,
+        r: Range<usize>,
+    ) -> Option<&mut Self::Slice<X>> {
         <[T]>::get_mut(self, r)
     }
 
     #[inline(always)]
-    unsafe fn get_range_unchecked_mut(this: *mut Self, r: Range<usize>) -> *mut Self::Slice {
+    unsafe fn get_range_unchecked_mut<X: IdxCompat<usize>>(
+        this: *mut Self,
+        r: Range<usize>,
+    ) -> *mut Self::Slice<X> {
         unsafe {
             core::ptr::slice_from_raw_parts_mut(this.cast::<T>().add(r.start), r.end - r.start) as _
         }
     }
 
     #[inline(always)]
-    fn index_range_mut(&mut self, r: Range<usize>) -> &mut Self::Slice {
+    fn index_range_mut<X: IdxCompat<usize>>(&mut self, r: Range<usize>) -> &mut Self::Slice<X> {
         core::ops::IndexMut::index_mut(self, r)
     }
 }
@@ -146,34 +160,34 @@ pub unsafe trait SequenceContainerIndex<I, C: ?Sized>: Sized {
     type Output: ?Sized;
     fn get(self, container: &C) -> Option<&Self::Output>
     where
-        C: SequenceContainer;
+        C: SequenceContainer<I>;
 
     /// ## Safety
     /// the container pointer must be valid
     unsafe fn get_unchecked<FS, FR>(self, container: *const C) -> *const Self::Output
     where
-        C: SequenceContainer;
+        C: SequenceContainer<I>;
 
     fn index(self, container: &C) -> &Self::Output
     where
-        C: SequenceContainer;
+        C: SequenceContainer<I>;
 
     fn get_mut(self, container: &mut C) -> Option<&mut Self::Output>
     where
-        C: SequenceContainerMut;
+        C: SequenceContainerMut<I>;
 
     /// ## Safety
     /// the container pointer must be valid
     unsafe fn get_unchecked_mut(self, container: *mut C) -> *mut Self::Output
     where
-        C: SequenceContainerMut;
+        C: SequenceContainerMut<I>;
 
     fn index_mut(self, container: &mut C) -> &mut Self::Output
     where
-        C: SequenceContainerMut;
+        C: SequenceContainerMut<I>;
 }
 
-unsafe impl<I: Idx, C: SequenceContainer + ?Sized> SequenceContainerIndex<I, C> for I {
+unsafe impl<I: Idx, C: SequenceContainer<I> + ?Sized> SequenceContainerIndex<I, C> for I {
     type Output = C::Element;
 
     fn get(self, container: &C) -> Option<&Self::Output> {
@@ -190,30 +204,30 @@ unsafe impl<I: Idx, C: SequenceContainer + ?Sized> SequenceContainerIndex<I, C> 
 
     fn get_mut(self, container: &mut C) -> Option<&mut Self::Output>
     where
-        C: SequenceContainerMut,
+        C: SequenceContainerMut<I>,
     {
         C::get_mut(container, self.into_usize())
     }
 
     unsafe fn get_unchecked_mut(self, container: *mut C) -> *mut Self::Output
     where
-        C: SequenceContainerMut,
+        C: SequenceContainerMut<I>,
     {
         C::get_unchecked_mut(container, self.into_usize())
     }
 
     fn index_mut(self, container: &mut C) -> &mut Self::Output
     where
-        C: SequenceContainerMut,
+        C: SequenceContainerMut<I>,
     {
         C::index_mut(container, self.into_usize())
     }
 }
 
-unsafe impl<I: Idx, C: SequenceContainer + ?Sized, X: IdxCompat<I>> SequenceContainerIndex<I, C>
+unsafe impl<I: Idx, C: SequenceContainer<I> + ?Sized, X: IdxCompat<I>> SequenceContainerIndex<I, C>
     for Range<X>
 {
-    type Output = C::Slice;
+    type Output = C::Slice<X>;
 
     fn get(self, container: &C) -> Option<&Self::Output> {
         C::get_range(container, self.usize_range())
@@ -229,28 +243,28 @@ unsafe impl<I: Idx, C: SequenceContainer + ?Sized, X: IdxCompat<I>> SequenceCont
 
     fn get_mut(self, container: &mut C) -> Option<&mut Self::Output>
     where
-        C: SequenceContainerMut,
+        C: SequenceContainerMut<I>,
     {
         C::get_range_mut(container, self.usize_range())
     }
 
     unsafe fn get_unchecked_mut(self, container: *mut C) -> *mut Self::Output
     where
-        C: SequenceContainerMut,
+        C: SequenceContainerMut<I>,
     {
         C::get_range_unchecked_mut(container, self.usize_range())
     }
 
     fn index_mut(self, container: &mut C) -> &mut Self::Output
     where
-        C: SequenceContainerMut,
+        C: SequenceContainerMut<I>,
     {
         C::index_range_mut(container, self.usize_range())
     }
 }
 
-unsafe impl<I: Idx, C: SequenceContainer + ?Sized> SequenceContainerIndex<I, C> for RangeFull {
-    type Output = C::Slice;
+unsafe impl<I: Idx, C: SequenceContainer<I> + ?Sized> SequenceContainerIndex<I, C> for RangeFull {
+    type Output = C::Slice<I>;
 
     fn get(self, container: &C) -> Option<&Self::Output> {
         C::get_range(container, 0..container.len())
@@ -266,21 +280,21 @@ unsafe impl<I: Idx, C: SequenceContainer + ?Sized> SequenceContainerIndex<I, C> 
 
     fn get_mut(self, container: &mut C) -> Option<&mut Self::Output>
     where
-        C: SequenceContainerMut,
+        C: SequenceContainerMut<I>,
     {
         C::get_range_mut(container, 0..container.len())
     }
 
     unsafe fn get_unchecked_mut(self, container: *mut C) -> *mut Self::Output
     where
-        C: SequenceContainerMut,
+        C: SequenceContainerMut<I>,
     {
         C::get_range_unchecked_mut(container, 0..C::len_from_ptr(container))
     }
 
     fn index_mut(self, container: &mut C) -> &mut Self::Output
     where
-        C: SequenceContainerMut,
+        C: SequenceContainerMut<I>,
     {
         C::index_range_mut(container, 0..container.len())
     }
@@ -290,12 +304,12 @@ macro_rules! index_slice_partial_range_impl {
     ($($range: path),*) => {$(
         unsafe impl<
             I: Idx,
-            C: SequenceContainer + ?Sized,
+            C: SequenceContainer<I> + ?Sized,
             X: IdxCompat<I>
         >
             SequenceContainerIndex<I, C> for $range
         {
-            type Output = C::Slice;
+            type Output = C::Slice<X>;
 
             fn get(self, container: &C) -> Option<&Self::Output> {
                 let r = IndexRangeBounds::<X>::canonicalize(self, container.len());
@@ -317,7 +331,7 @@ macro_rules! index_slice_partial_range_impl {
 
             fn get_mut(self, container: &mut C) -> Option<&mut Self::Output>
             where
-                C: SequenceContainerMut,
+                C: SequenceContainerMut<I>,
             {
                 let r = IndexRangeBounds::<X>::canonicalize(self, container.len());
                 C::get_range_mut(container, r)
@@ -325,7 +339,7 @@ macro_rules! index_slice_partial_range_impl {
 
             unsafe fn get_unchecked_mut(self, container: *mut C) -> *mut Self::Output
             where
-                C: SequenceContainerMut,
+                C: SequenceContainerMut<I>,
             {
                 let r = IndexRangeBounds::<X>::canonicalize(self, C::len_from_ptr(container));
                 C::get_range_unchecked_mut(container, r)
@@ -333,7 +347,7 @@ macro_rules! index_slice_partial_range_impl {
 
             fn index_mut(self, container: &mut C) -> &mut Self::Output
             where
-                C: SequenceContainerMut,
+                C: SequenceContainerMut<I>,
             {
                 let r = IndexRangeBounds::<X>::canonicalize(self, container.len());
                 C::index_range_mut(container, r)
