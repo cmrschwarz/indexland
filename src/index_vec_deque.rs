@@ -10,7 +10,7 @@ use alloc::{
     vec::Vec,
 };
 
-use crate::{index_enumerate::IndexEnumerate, IdxCompat, IndexArray, IndexRangeBounds, IndexVec};
+use crate::{IdxCompat, IndexArray, IndexRangeBounds, IndexVec, index_enumerate::IndexEnumerate};
 
 use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 
@@ -23,7 +23,7 @@ use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 ///
 /// # Example
 /// ```
-/// use indexland::{index_vec_deque, IndexVecDeque};
+/// use indexland::{IndexVecDeque, index_vec_deque};
 ///
 /// let vd: IndexVecDeque<u32, _> = index_vec_deque![-1, 2, 3];
 /// ```

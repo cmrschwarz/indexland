@@ -11,7 +11,7 @@
 //! The implementation details are mostly irrelevant, this is just meant to
 //! show a few indexland features, each highlighted with `// NOTE`.
 
-use indexland::{index_vec, Idx, IndexSlice, IndexVec, NonMax};
+use indexland::{Idx, IndexSlice, IndexVec, NonMax, index_vec};
 use std::{cmp::Ordering, collections::BinaryHeap};
 
 #[derive(Idx)]

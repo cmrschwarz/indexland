@@ -1,5 +1,5 @@
 use super::Idx;
-use crate::{index_enumerate::IndexEnumerate, index_slice::IndexSlice, IdxEnum, IndexRangeBounds};
+use crate::{IdxEnum, IndexRangeBounds, index_enumerate::IndexEnumerate, index_slice::IndexSlice};
 
 use core::{
     borrow::{Borrow, BorrowMut},
@@ -42,7 +42,7 @@ pub type EnumIndexArray<E, T> = <E as IdxEnum>::EnumIndexArray<T>;
 /// # Examples:
 /// ```
 /// # #![cfg(feature="derive")]
-/// use indexland::{index_array, Idx, IdxEnum, IndexArray};
+/// use indexland::{Idx, IdxEnum, IndexArray, index_array};
 ///
 /// const FOO: IndexArray<u8, i32, 3> = index_array![1, 2, 3];
 ///
@@ -94,7 +94,7 @@ macro_rules! index_array {
 /// This is an alias for [`index_array!`]
 /// # Examples:
 /// ```
-/// use indexland::{enum_index_array, EnumIndexArray, Idx};
+/// use indexland::{EnumIndexArray, Idx, enum_index_array};
 ///
 /// #[derive(Idx)]
 /// enum MyId {

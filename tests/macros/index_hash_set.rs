@@ -1,4 +1,4 @@
-use indexland::{identity_hasher::IdentityHasher, index_hash_set, Idx, IndexHashSet};
+use indexland::{Idx, IndexHashSet, identity_hasher::IdentityHasher, index_hash_set};
 #[test]
 fn macro_works() {
     let ihs: IndexHashSet<u32, _, IdentityHasher> = index_hash_set![42, 17];

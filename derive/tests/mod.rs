@@ -1,6 +1,6 @@
 use std::ops::Add;
 
-use indexland::{index_array, EnumIndexArray, Idx, IdxNewtype, IndexArray, IndexArrayVec};
+use indexland::{EnumIndexArray, Idx, IdxNewtype, IndexArray, IndexArrayVec, index_array};
 
 #[test]
 fn derive_enum_idx() {

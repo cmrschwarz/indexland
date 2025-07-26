@@ -1,7 +1,7 @@
 use core::ops::{Range, RangeFull};
 
 use crate::{
-    idx::IdxCompat, Idx, IndexRange, IndexRangeBounds, IndexRangeFrom, IndexRangeInclusive,
+    Idx, IndexRange, IndexRangeBounds, IndexRangeFrom, IndexRangeInclusive, idx::IdxCompat,
 };
 
 #[allow(clippy::len_without_is_empty)]
@@ -115,7 +115,7 @@ unsafe impl<T> UnsafeSequence for [T] {
 
     #[inline(always)]
     unsafe fn get_unchecked(this: *const Self, idx: usize) -> *const Self::Element {
-        this.cast::<T>().add(idx)
+        unsafe { this.cast::<T>().add(idx) }
     }
 
     #[inline(always)]
@@ -240,14 +240,14 @@ where
     where
         S: UnsafeSequence,
     {
-        S::get_unchecked(container, self.into_usize())
+        unsafe { S::get_unchecked(container, self.into_usize()) }
     }
 
     unsafe fn get_unchecked_mut(self, container: *mut S) -> *mut Self::Output
     where
         S: UnsafeSequenceMut,
     {
-        S::get_unchecked_mut(container, self.into_usize())
+        unsafe { S::get_unchecked_mut(container, self.into_usize()) }
     }
 }
 
@@ -285,14 +285,14 @@ where
     where
         S: UnsafeSequence,
     {
-        S::get_range_unchecked(container, self.usize_range())
+        unsafe { S::get_range_unchecked(container, self.usize_range()) }
     }
 
     unsafe fn get_unchecked_mut(self, container: *mut S) -> *mut Self::Output
     where
         S: UnsafeSequenceMut,
     {
-        S::get_range_unchecked_mut(container, self.usize_range())
+        unsafe { S::get_range_unchecked_mut(container, self.usize_range()) }
     }
 }
 
@@ -329,14 +329,14 @@ where
     where
         S: UnsafeSequence,
     {
-        S::get_range_unchecked(seq, 0..S::len_from_ptr(seq))
+        unsafe { S::get_range_unchecked(seq, 0..S::len_from_ptr(seq)) }
     }
 
     unsafe fn get_unchecked_mut(self, seq: *mut S) -> *mut Self::Output
     where
         S: UnsafeSequenceMut,
     {
-        S::get_range_unchecked_mut(seq, 0..S::len_from_ptr(seq))
+        unsafe { S::get_range_unchecked_mut(seq, 0..S::len_from_ptr(seq)) }
     }
 }
 
@@ -384,16 +384,20 @@ macro_rules! index_slice_partial_range_impl {
             where
                 S: UnsafeSequence
             {
-                let r = IndexRangeBounds::<X>::canonicalize(self, S::len_from_ptr(seq));
-                S::get_range_unchecked(seq, r)
+                unsafe {
+                    let r = IndexRangeBounds::<X>::canonicalize(self, S::len_from_ptr(seq));
+                    S::get_range_unchecked(seq, r)
+                }
             }
 
             unsafe fn get_unchecked_mut(self, seq: *mut S) -> *mut Self::Output
             where
                 S: UnsafeSequenceMut,
             {
-                let r = IndexRangeBounds::<X>::canonicalize(self, S::len_from_ptr(seq));
-                S::get_range_unchecked_mut(seq, r)
+                unsafe {
+                    let r = IndexRangeBounds::<X>::canonicalize(self, S::len_from_ptr(seq));
+                    S::get_range_unchecked_mut(seq, r)
+                }
             }
 
         }

@@ -1,8 +1,8 @@
 use super::{idx::Idx, index_range::IndexRange};
 use crate::{
+    IdxCompat, IndexArray, IndexRangeBounds,
     index_enumerate::IndexEnumerate,
     sequence::{Sequence, SequenceIndex},
-    IdxCompat, IndexArray, IndexRangeBounds,
 };
 use alloc::boxed::Box;
 use core::{
@@ -14,8 +14,8 @@ use core::{
 };
 
 use indexmap::{
-    set::{Difference, Intersection, Slice, Splice, SymmetricDifference, Union},
     Equivalent, IndexSet, TryReserveError,
+    set::{Difference, Intersection, Slice, Splice, SymmetricDifference, Union},
 };
 
 #[cfg(feature = "std")]
@@ -27,7 +27,7 @@ use std::hash::RandomState;
 ///
 /// # Example
 /// ```
-/// use indexland::{index_hash_set, IndexHashSet};
+/// use indexland::{IndexHashSet, index_hash_set};
 /// let set: IndexHashSet<u32, _> = index_hash_set! {
 ///     "a",
 ///     "b",

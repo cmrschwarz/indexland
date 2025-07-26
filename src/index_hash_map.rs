@@ -1,8 +1,8 @@
 use crate::{
+    IdxCompat,
     index_enumerate::IndexEnumerate,
     index_range::IndexRangeBounds,
     sequence::{Sequence, SequenceIndex, SequenceMut},
-    IdxCompat,
 };
 use alloc::boxed::Box;
 use core::{
@@ -12,7 +12,7 @@ use core::{
     ops::{Index, IndexMut, RangeBounds},
 };
 
-use indexmap::{map::Slice, Equivalent, IndexMap};
+use indexmap::{Equivalent, IndexMap, map::Slice};
 
 use super::{idx::Idx, index_range::IndexRange};
 
@@ -25,7 +25,7 @@ use super::{idx::Idx, index_range::IndexRange};
 ///
 /// # Example
 /// ```
-/// use indexland::{index_hash_map, IndexHashMap};
+/// use indexland::{IndexHashMap, index_hash_map};
 /// let map: IndexHashMap<u32, _, _> = index_hash_map! {
 ///     "a" => 17,
 ///     "b" => 42,

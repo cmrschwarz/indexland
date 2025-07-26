@@ -1,8 +1,8 @@
 use super::Idx;
 use crate::{
+    IdxCompat, IndexArray, IndexRangeBounds,
     index_enumerate::IndexEnumerate,
     sequence::{Sequence, SequenceIndex, SequenceMut, UnsafeSequence, UnsafeSequenceMut},
-    IdxCompat, IndexArray, IndexRangeBounds,
 };
 
 use core::{
@@ -355,7 +355,7 @@ impl<I, T> IndexSlice<I, T> {
     where
         I: Idx,
     {
-        let (a, b) = self.data.split_at_unchecked(mid.into_usize_unchecked());
+        let (a, b) = unsafe { self.data.split_at_unchecked(mid.into_usize_unchecked()) };
         (a.into(), b.into())
     }
 
@@ -370,7 +370,7 @@ impl<I, T> IndexSlice<I, T> {
     where
         I: Idx,
     {
-        let (a, b) = self.data.split_at_mut_unchecked(mid.into_usize_unchecked());
+        let (a, b) = unsafe { self.data.split_at_mut_unchecked(mid.into_usize_unchecked()) };
         (a.into(), b.into())
     }
 
@@ -1849,7 +1849,7 @@ unsafe impl<I, T> UnsafeSequence for IndexSlice<I, T> {
 
     #[inline(always)]
     unsafe fn get_unchecked(this: *const Self, idx: usize) -> *const Self::Element {
-        this.cast::<T>().add(idx)
+        unsafe { this.cast::<T>().add(idx) }
     }
 
     #[inline(always)]
@@ -2137,7 +2137,7 @@ where
 mod test {
     #[test]
     fn get_disjoint_mut() {
-        use crate::{index_array, Idx, IndexArray};
+        use crate::{Idx, IndexArray, index_array};
 
         #[derive(Idx)]
         enum I {

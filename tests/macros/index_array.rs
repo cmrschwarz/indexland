@@ -1,6 +1,6 @@
 use std::boxed::Box;
 
-use indexland::{enum_index_array, index_array, EnumIndexArray, Idx};
+use indexland::{EnumIndexArray, Idx, enum_index_array, index_array};
 
 #[derive(Idx)]
 enum EnumAB {

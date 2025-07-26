@@ -1,4 +1,4 @@
-use indexland::{index_vec, Idx, IndexVec};
+use indexland::{Idx, IndexVec, index_vec};
 
 #[derive(Idx)]
 struct MyIdx(u32);

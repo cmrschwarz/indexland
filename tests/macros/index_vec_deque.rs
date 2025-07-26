@@ -1,4 +1,4 @@
-use indexland::{index_vec_deque, IndexVecDeque};
+use indexland::{IndexVecDeque, index_vec_deque};
 
 #[test]
 fn basic() {

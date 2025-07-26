@@ -1,4 +1,4 @@
-use indexland::{idx_newtype, Idx, IndexArray};
+use indexland::{Idx, IndexArray, idx_newtype};
 
 #[test]
 fn declarative_idx_newtype() {

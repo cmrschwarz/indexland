@@ -357,7 +357,7 @@ macro_rules! idx_newtype {
 
 #[cfg(test)]
 mod test {
-    use crate::{enum_index_array, index_array, EnumIndexArray, IndexArray};
+    use crate::{EnumIndexArray, IndexArray, enum_index_array, index_array};
 
     use super::{Idx, IdxEnum};
 

@@ -9,7 +9,7 @@ use core::{
 
 use arrayvec::{ArrayVec, CapacityError};
 
-use crate::{index_enumerate::IndexEnumerate, IdxCompat, IndexArray, IndexRange, IndexRangeBounds};
+use crate::{IdxCompat, IndexArray, IndexRange, IndexRangeBounds, index_enumerate::IndexEnumerate};
 
 use super::{idx::Idx, index_slice::IndexSlice};
 

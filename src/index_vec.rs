@@ -1,6 +1,6 @@
 use crate::{
-    index_enumerate::IndexEnumerate, sequence::SequenceIndex, IdxCompat, IndexArray,
-    IndexRangeBounds, IndexVecDeque,
+    IdxCompat, IndexArray, IndexRangeBounds, IndexVecDeque, index_enumerate::IndexEnumerate,
+    sequence::SequenceIndex,
 };
 
 use alloc::{
@@ -35,7 +35,7 @@ use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 ///
 /// # Example
 /// ```
-/// use indexland::{index_vec, IndexVec};
+/// use indexland::{IndexVec, index_vec};
 ///
 /// let v: IndexVec<u32, _> = index_vec![-1, 2, 3];
 /// ```
@@ -84,7 +84,7 @@ impl<I, T> IndexVec<I, T> {
     ///  See [`Vec::from_raw_parts`] for the invariants that this has to uphold.
     pub unsafe fn from_raw_parts(ptr: *mut T, length: usize, capacity: usize) -> Self {
         Self {
-            data: Vec::from_raw_parts(ptr, length, capacity),
+            data: unsafe { Vec::from_raw_parts(ptr, length, capacity) },
             _phantom: PhantomData,
         }
     }
@@ -270,11 +270,7 @@ impl<I, T> IndexVec<I, T> {
     pub fn pop_if(&mut self, predicate: impl FnOnce(&mut T) -> bool) -> Option<T> {
         // TODO: if we decide to bump MSRV to 1.86, repace with call to `Vec::pop_if`
         let last = self.last_mut()?;
-        if predicate(last) {
-            self.pop()
-        } else {
-            None
-        }
+        if predicate(last) { self.pop() } else { None }
     }
 
     pub fn append<V: AsMut<Vec<T>>>(&mut self, mut other: V) {

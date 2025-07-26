@@ -3,8 +3,8 @@ use std::{cell::RefCell, fmt::Display};
 use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::ToTokens;
 use syn::{
-    meta::ParseNestedMeta, parenthesized, punctuated::Punctuated, spanned::Spanned, DeriveInput,
-    Ident, LitStr, PathSegment, Token,
+    DeriveInput, Ident, LitStr, PathSegment, Token, meta::ParseNestedMeta, parenthesized,
+    punctuated::Punctuated, spanned::Spanned,
 };
 
 const INDEXLAND: &str = "indexland";

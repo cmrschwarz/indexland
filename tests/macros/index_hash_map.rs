@@ -1,4 +1,4 @@
-use indexland::{identity_hasher::IdentityHasher, index_hash_map, Idx, IndexHashMap};
+use indexland::{Idx, IndexHashMap, identity_hasher::IdentityHasher, index_hash_map};
 
 #[test]
 fn macro_works() {

@@ -2,9 +2,9 @@
 
 members = ["derive", "xtask"]
 
-resolver = "2"
+resolver = "3"
 
-package.edition = "2021"
+package.edition = "2024"
 
 # MSRV 1.87 needed for const Vec::len
 # Remember to adjust `.github/workflows/ci.yml` and `tests/integration.rs` when changing this

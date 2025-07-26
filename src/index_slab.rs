@@ -7,7 +7,7 @@ use core::{
 pub use slab::Drain;
 use slab::{GetDisjointMutError, Slab};
 
-use crate::{idx::IdxCompat, Idx};
+use crate::{Idx, idx::IdxCompat};
 
 #[repr(transparent)]
 pub struct IndexSlab<I, T> {

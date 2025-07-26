@@ -1,4 +1,4 @@
-use indexland::{index_hash_map, Idx, IndexHashMap, IndexRangeBounds, IndexVec};
+use indexland::{Idx, IndexHashMap, IndexRangeBounds, IndexVec, index_hash_map};
 
 #[derive(Idx)]
 struct MyId(u32);

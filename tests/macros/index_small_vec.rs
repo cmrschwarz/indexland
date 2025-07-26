@@ -1,4 +1,4 @@
-use indexland::{index_small_vec, IndexSmallVec};
+use indexland::{IndexSmallVec, index_small_vec};
 
 #[test]
 fn macro_works() {

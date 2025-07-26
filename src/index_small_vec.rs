@@ -10,7 +10,7 @@ use std::{
 };
 
 use super::{idx::Idx, index_slice::IndexSlice};
-use crate::{index_enumerate::IndexEnumerate, IndexArray, IndexRange, IndexRangeBounds};
+use crate::{IndexArray, IndexRange, IndexRangeBounds, index_enumerate::IndexEnumerate};
 
 use smallvec::SmallVec;
 
@@ -23,7 +23,7 @@ use smallvec::SmallVec;
 ///
 /// # Example
 /// ```
-/// use indexland::{index_small_vec, IndexSmallVec};
+/// use indexland::{IndexSmallVec, index_small_vec};
 ///
 /// let v: IndexSmallVec<u32, _, 3> = index_small_vec![-1, 2, 3];
 /// ```
