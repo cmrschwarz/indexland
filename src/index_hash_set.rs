@@ -221,7 +221,8 @@ impl<'a, I, T> IntoIterator for &'a IndexSlice<I, T> {
     }
 }
 
-unsafe impl<I, T> SequenceContainer<I> for IndexSlice<I, T> {
+unsafe impl<I, T> SequenceContainer for IndexSlice<I, T> {
+    type Index = I;
     type Element = T;
     type Slice<X: IdxCompat<I>> = IndexSlice<X, T>;
 

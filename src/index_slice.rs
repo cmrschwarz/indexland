@@ -1811,9 +1811,9 @@ impl<I, T> FromIterator<T> for Box<IndexSlice<I, T>> {
     }
 }
 
-unsafe impl<I, T> SequenceContainer<I> for IndexSlice<I, T> {
+unsafe impl<I, T> SequenceContainer for IndexSlice<I, T> {
+    type Index = I;
     type Element = T;
-
     type Slice<X: IdxCompat<I>> = IndexSlice<X, T>;
 
     #[inline(always)]
@@ -1857,7 +1857,7 @@ unsafe impl<I, T> SequenceContainer<I> for IndexSlice<I, T> {
     }
 }
 
-unsafe impl<I, T> SequenceContainerMut<I> for IndexSlice<I, T> {
+unsafe impl<I, T> SequenceContainerMut for IndexSlice<I, T> {
     #[inline(always)]
     fn get_mut(&mut self, idx: usize) -> Option<&mut Self::Element> {
         self.as_mut_raw_slice().get_mut(idx)
