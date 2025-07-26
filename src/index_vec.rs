@@ -281,10 +281,10 @@ impl<I, T> IndexVec<I, T> {
         self.data.append(other.as_mut());
     }
 
-    pub fn drain<C, R>(&mut self, range: R) -> Drain<'_, T>
+    pub fn drain<X, R>(&mut self, range: R) -> Drain<'_, T>
     where
-        C: IdxCompat<I>,
-        R: IndexRangeBounds<C>,
+        X: IdxCompat<I>,
+        R: IndexRangeBounds<X>,
     {
         self.data.drain(range.canonicalize(self.data.len()))
     }
@@ -341,10 +341,10 @@ impl<I, T> IndexVec<I, T> {
         self.data.extend_from_slice(slice.as_ref());
     }
 
-    pub fn extend_from_within<C, R>(&mut self, src: R)
+    pub fn extend_from_within<X, R>(&mut self, src: R)
     where
-        C: IdxCompat<I>,
-        R: IndexRangeBounds<C>,
+        X: IdxCompat<I>,
+        R: IndexRangeBounds<X>,
         T: Clone,
     {
         self.data
@@ -365,14 +365,14 @@ impl<I, T> IndexVec<I, T> {
         self.data.dedup();
     }
 
-    pub fn splice<C, R, It>(
+    pub fn splice<X, R, It>(
         &mut self,
         range: R,
         replace_with: It,
     ) -> Splice<'_, <It as IntoIterator>::IntoIter>
     where
-        C: IdxCompat<I>,
-        R: IndexRangeBounds<C>,
+        X: IdxCompat<I>,
+        R: IndexRangeBounds<X>,
         It: IntoIterator<Item = T>,
     {
         self.data

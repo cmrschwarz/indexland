@@ -315,24 +315,24 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
     {
         IndexEnumerate::new(I::ZERO, self.as_mut_raw_slice())
     }
-    pub fn iter_enumerated_range<C, R: IndexRangeBounds<C>>(
+    pub fn iter_enumerated_range<X, R: IndexRangeBounds<X>>(
         &self,
         range: R,
     ) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
-        C: IdxCompat<I>,
+        X: IdxCompat<I>,
     {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &self.as_raw_slice()[range])
     }
-    pub fn iter_enumerated_range_mut<C, R: IndexRangeBounds<C>>(
+    pub fn iter_enumerated_range_mut<X, R: IndexRangeBounds<X>>(
         &mut self,
         range: R,
     ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
     where
         I: Idx,
-        C: IdxCompat<I>,
+        X: IdxCompat<I>,
     {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.as_mut_raw_slice()[range])

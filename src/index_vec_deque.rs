@@ -68,15 +68,15 @@ impl<I, T> IndexVecDeque<I, T> {
             _phantom: PhantomData,
         }
     }
-    pub fn get<C>(&self, index: C) -> Option<&T>
+    pub fn get<X>(&self, index: X) -> Option<&T>
     where
-        C: IdxCompat<I>,
+        X: IdxCompat<I>,
     {
         self.data.get(index.into_usize())
     }
-    pub fn get_mut<C>(&mut self, index: C) -> Option<&mut T>
+    pub fn get_mut<X>(&mut self, index: X) -> Option<&mut T>
     where
-        C: IdxCompat<I>,
+        X: IdxCompat<I>,
     {
         self.data.get_mut(index.into_usize())
     }
@@ -595,23 +595,23 @@ where
     }
 }
 
-impl<I, C, T> Index<C> for IndexVecDeque<I, T>
+impl<I, X, T> Index<X> for IndexVecDeque<I, T>
 where
-    C: IdxCompat<I>,
+    X: IdxCompat<I>,
 {
     type Output = T;
     #[inline]
-    fn index(&self, index: C) -> &Self::Output {
+    fn index(&self, index: X) -> &Self::Output {
         &self.data[index.into_usize()]
     }
 }
 
-impl<I, C, T> IndexMut<C> for IndexVecDeque<I, T>
+impl<I, X, T> IndexMut<X> for IndexVecDeque<I, T>
 where
-    C: IdxCompat<I>,
+    X: IdxCompat<I>,
 {
     #[inline]
-    fn index_mut(&mut self, index: C) -> &mut Self::Output {
+    fn index_mut(&mut self, index: X) -> &mut Self::Output {
         &mut self.data[index.into_usize()]
     }
 }

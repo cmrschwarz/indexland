@@ -129,14 +129,14 @@ impl<I, T> IndexSlab<I, T> {
         self.data.get_mut(key.into_usize())
     }
 
-    pub fn get_disjoint_mut<const N: usize, C>(
+    pub fn get_disjoint_mut<const N: usize, X>(
         &mut self,
-        indices: [C; N],
+        indices: [X; N],
     ) -> Result<[&mut T; N], GetDisjointMutError>
     where
-        C: IdxCompat<I>,
+        X: IdxCompat<I>,
     {
-        self.data.get_disjoint_mut(indices.map(C::into_usize))
+        self.data.get_disjoint_mut(indices.map(X::into_usize))
     }
 
     /// ## Safety
@@ -213,22 +213,22 @@ impl<I, T> IndexSlab<I, T> {
     }
 }
 
-impl<I, C, T> ops::Index<C> for IndexSlab<I, T>
+impl<I, X, T> ops::Index<X> for IndexSlab<I, T>
 where
-    C: IdxCompat<I>,
+    X: IdxCompat<I>,
 {
     type Output = T;
 
-    fn index(&self, key: C) -> &T {
+    fn index(&self, key: X) -> &T {
         self.data.index(key.into_usize())
     }
 }
 
-impl<I, C, T> ops::IndexMut<C> for IndexSlab<I, T>
+impl<I, X, T> ops::IndexMut<X> for IndexSlab<I, T>
 where
-    C: IdxCompat<I>,
+    X: IdxCompat<I>,
 {
-    fn index_mut(&mut self, key: C) -> &mut T {
+    fn index_mut(&mut self, key: X) -> &mut T {
         self.data.index_mut(key.into_usize())
     }
 }
