@@ -32,7 +32,7 @@ pub mod index_enumerate;
 
 pub mod identity_hasher;
 pub mod index_slice;
-pub mod sequence_container;
+pub mod sequence;
 
 pub mod index_array;
 

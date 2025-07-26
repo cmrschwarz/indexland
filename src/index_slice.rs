@@ -1,7 +1,7 @@
 use super::Idx;
 use crate::{
     index_enumerate::IndexEnumerate,
-    sequence_container::{SequenceContainer, SequenceContainerIndex, SequenceContainerMut},
+    sequence::{Sequence, SequenceIndex, SequenceMut},
     IdxCompat, IndexArray, IndexRangeBounds,
 };
 
@@ -723,7 +723,7 @@ impl<I, T> IndexSlice<I, T> {
     ) -> [&mut SCI::Output; N]
     where
         I: Idx,
-        SCI: SequenceContainerIndex<I, IndexSlice<I, T>> + GetDisjointMutIndex<I>,
+        SCI: SequenceIndex<I, IndexSlice<I, T>> + GetDisjointMutIndex<I>,
     {
         let slice = self as *mut IndexSlice<I, T>;
         let mut arr: core::mem::MaybeUninit<[&mut SCI::Output; N]> =
@@ -751,7 +751,7 @@ impl<I, T> IndexSlice<I, T> {
     ) -> Result<[&mut SCI::Output; N], GetDisjointMutError>
     where
         I: Idx,
-        SCI: SequenceContainerIndex<I, IndexSlice<I, T>> + GetDisjointMutIndex<I>,
+        SCI: SequenceIndex<I, IndexSlice<I, T>> + GetDisjointMutIndex<I>,
     {
         let len = self.len_idx();
         // NB: The optimizer should inline the loops into a sequence
@@ -1811,7 +1811,7 @@ impl<I, T> FromIterator<T> for Box<IndexSlice<I, T>> {
     }
 }
 
-unsafe impl<I, T> SequenceContainer for IndexSlice<I, T> {
+unsafe impl<I, T> Sequence for IndexSlice<I, T> {
     type Index = I;
     type Element = T;
     type Slice<X: IdxCompat<I>> = IndexSlice<X, T>;
@@ -1857,7 +1857,7 @@ unsafe impl<I, T> SequenceContainer for IndexSlice<I, T> {
     }
 }
 
-unsafe impl<I, T> SequenceContainerMut for IndexSlice<I, T> {
+unsafe impl<I, T> SequenceMut for IndexSlice<I, T> {
     #[inline(always)]
     fn get_mut(&mut self, idx: usize) -> Option<&mut Self::Element> {
         self.as_mut_raw_slice().get_mut(idx)
@@ -1896,7 +1896,7 @@ unsafe impl<I, T> SequenceContainerMut for IndexSlice<I, T> {
     }
 }
 
-impl<I, T, X: SequenceContainerIndex<I, IndexSlice<I, T>>> Index<X> for IndexSlice<I, T> {
+impl<I, T, X: SequenceIndex<I, IndexSlice<I, T>>> Index<X> for IndexSlice<I, T> {
     type Output = X::Output;
     #[inline]
     fn index(&self, index: X) -> &Self::Output {
@@ -1904,7 +1904,7 @@ impl<I, T, X: SequenceContainerIndex<I, IndexSlice<I, T>>> Index<X> for IndexSli
     }
 }
 
-impl<I, T, X: SequenceContainerIndex<I, IndexSlice<I, T>>> IndexMut<X> for IndexSlice<I, T> {
+impl<I, T, X: SequenceIndex<I, IndexSlice<I, T>>> IndexMut<X> for IndexSlice<I, T> {
     #[inline]
     fn index_mut(&mut self, index: X) -> &mut Self::Output {
         index.index_mut(self)

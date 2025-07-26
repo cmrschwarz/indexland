@@ -1,6 +1,6 @@
 use crate::{
-    index_enumerate::IndexEnumerate, sequence_container::SequenceContainerIndex, IdxCompat,
-    IndexArray, IndexRangeBounds, IndexVecDeque,
+    index_enumerate::IndexEnumerate, sequence::SequenceIndex, IdxCompat, IndexArray,
+    IndexRangeBounds, IndexVecDeque,
 };
 
 use alloc::{
@@ -811,7 +811,7 @@ where
 
 impl<I, SCI, T> Index<SCI> for IndexVec<I, T>
 where
-    SCI: SequenceContainerIndex<I, IndexSlice<I, T>>,
+    SCI: SequenceIndex<I, IndexSlice<I, T>>,
 {
     type Output = SCI::Output;
 
@@ -822,7 +822,7 @@ where
 
 impl<I, SCI, T> IndexMut<SCI> for IndexVec<I, T>
 where
-    SCI: SequenceContainerIndex<I, IndexSlice<I, T>>,
+    SCI: SequenceIndex<I, IndexSlice<I, T>>,
 {
     fn index_mut(&mut self, index: SCI) -> &mut Self::Output {
         index.index_mut(self.as_mut_slice())

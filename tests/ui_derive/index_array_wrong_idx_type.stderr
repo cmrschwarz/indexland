@@ -1,8 +1,8 @@
-error[E0277]: the trait bound `MyIdx2: SequenceContainerIndex<MyIdx, indexland::IndexSlice<MyIdx, u8>>` is not satisfied
+error[E0277]: the trait bound `MyIdx2: SequenceIndex<MyIdx, indexland::IndexSlice<MyIdx, u8>>` is not satisfied
   --> tests/ui_derive/index_array_wrong_idx_type.rs:12:20
    |
 12 |     println!("{}", arr[MyIdx2(42)]);
    |                    ^^^^^^^^^^^^^^^ the trait `IdxCompat<MyIdx>` is not implemented for `MyIdx2`
    |
-   = note: required for `MyIdx2` to implement `SequenceContainerIndex<MyIdx, indexland::IndexSlice<MyIdx, u8>>`
+   = note: required for `MyIdx2` to implement `SequenceIndex<MyIdx, indexland::IndexSlice<MyIdx, u8>>`
    = note: required for `indexland::IndexSlice<MyIdx, u8>` to implement `Index<MyIdx2>`

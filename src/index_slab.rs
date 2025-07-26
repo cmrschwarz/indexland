@@ -140,7 +140,7 @@ impl<I, T> IndexSlab<I, T> {
     }
 
     /// ## Safety
-    /// The key must within bounds, and convert to usize.
+    /// The key must be within bounds, and convert to usize.
     pub unsafe fn get_unchecked(&self, key: I) -> &T
     where
         I: Idx,
@@ -149,7 +149,7 @@ impl<I, T> IndexSlab<I, T> {
     }
 
     /// ## Safety
-    /// The key must within bounds, and convert to usize.
+    /// The key must be within bounds, and convert to usize.
     pub unsafe fn get_unchecked_mut(&mut self, key: usize) -> &mut T {
         unsafe { self.data.get_unchecked_mut(key.into_usize_unchecked()) }
     }
