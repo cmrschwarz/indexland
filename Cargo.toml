@@ -7,9 +7,10 @@ resolver = "2"
 package.edition = "2021"
 
 # MSRV 1.87 needed for const Vec::len
+# Remember to adjust `.github/workflows/ci.yml` and `tests/integration.rs` when changing this
 package.rust-version = "1.87"
 
-# remember to update workspace.dependencies versions below aswell
+# Remember to update `[workspace.dependencies]` versions below aswell
 package.version = "0.2.1"
 
 package.license = "MIT OR Apache-2.0"
