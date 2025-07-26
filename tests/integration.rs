@@ -11,10 +11,10 @@ fn ui() {
     t.compile_fail("tests/ui/*.rs");
 }
 
-#[cfg(feature = "full")]
+#[cfg(feature = "derive")]
 #[rustversion::attr(not(nightly), ignore)]
 #[test]
-fn ui_full() {
+fn ui_derive() {
     let t = trybuild::TestCases::new();
-    t.compile_fail("tests/ui_full/*.rs");
+    t.compile_fail("tests/ui_derive/*.rs");
 }
