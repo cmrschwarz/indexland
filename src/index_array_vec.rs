@@ -204,7 +204,7 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
 
     /// unlike `From<IndexArray<I, T, N>::from`, this is a `const fn`
     pub const fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
-        Self::from_array(arr.into_inner())
+        Self::from_array(arr.into_array())
     }
 
     pub fn try_extend_from_slice(&mut self, slice: &[T]) -> Result<(), arrayvec::CapacityError>

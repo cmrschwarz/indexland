@@ -441,7 +441,7 @@ impl<I, T> IndexVec<I, T> {
 
     /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
-        Self::from_iter(arr.into_inner())
+        Self::from_iter(arr.into_array())
     }
 
     pub const fn from_vec(v: Vec<T>) -> Self {

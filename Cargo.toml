@@ -38,7 +38,7 @@ repository.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
-description = "Rust Collections with Newtype Indices"
+description = "Newtype Indices for Rust Collection Types"
 
 [lib]
 name = "indexland"

@@ -148,10 +148,9 @@ pub mod __private {
     /// Essentially [`std::mem::MaybeUninit::transpose`] in stable Rust. Will
     /// be removed once [maybe_uninit_uninit_array_transpose](https://github.com/rust-lang/rust/issues/96097)
     /// is stabilized.
+    /// LLVM is able to detect this as an implementation of memcpy and optimize it away.
     #[allow(clippy::needless_pass_by_value)]
-    pub const unsafe fn transpose_assume_uninit<T, const N: usize>(
-        v: [MaybeUninit<T>; N],
-    ) -> [T; N] {
+    pub const unsafe fn transpose_assume_init<T, const N: usize>(v: [MaybeUninit<T>; N]) -> [T; N] {
         let mut res = MaybeUninit::<[T; N]>::uninit();
         let mut i = 0;
         while i < v.len() {
@@ -166,27 +165,28 @@ pub mod __private {
         unsafe { res.assume_init() }
     }
 
-    const fn usize_to_ascii(mut n: usize, buf: &mut [u8]) -> usize {
-        let digits = if n == 0 { 1 } else { n.ilog10() as usize + 1 };
-        let mut i = digits;
-        #[allow(clippy::cast_possible_truncation)]
-        while i > 0 {
-            i -= 1;
-            buf[i] = b'0' + (n % 10) as u8;
-            n /= 10;
-        }
-        digits
-    }
-
+    // Since const contexts don't support formatting macros, we have to construc the panic message
+    // string ourselves. This is a giant pain, but worth it to give nice errors for users in the
+    // index_array! family of macros.
     #[track_caller]
     const fn panic_index_initialized_twice(index: usize) {
+        const fn usize_to_ascii(mut n: usize, buf: &mut [u8]) -> usize {
+            let digits = if n == 0 { 1 } else { n.ilog10() as usize + 1 };
+            let mut i = digits;
+            #[allow(clippy::cast_possible_truncation)]
+            while i > 0 {
+                i -= 1;
+                buf[i] = b'0' + (n % 10) as u8;
+                n /= 10;
+            }
+            digits
+        }
+
         unsafe {
             const MSG_PART_1: &str = "index `";
-            const MSG_PART_2: &str = "` was initialized twice";
-            const MSG_BUF_LEN: usize = 100;
-            const _: () = assert!(
-                MSG_PART_1.len() + (usize::MAX.ilog10() as usize) + MSG_PART_2.len() < MSG_BUF_LEN
-            );
+            const USIZE_MAX_DIGITS: usize = usize::MAX.ilog10() as usize + 1;
+            const MSG_PART_3: &str = "` was initialized twice";
+            const MSG_BUF_LEN: usize = MSG_PART_1.len() + USIZE_MAX_DIGITS + MSG_PART_3.len();
 
             let mut msg_buf = [0u8; MSG_BUF_LEN];
 
@@ -205,16 +205,16 @@ pub mod __private {
             );
 
             core::ptr::copy_nonoverlapping(
-                MSG_PART_2.as_ptr(),
+                MSG_PART_3.as_ptr(),
                 msg_buf.as_mut_ptr().add(MSG_PART_1.len() + digits),
-                MSG_PART_2.len(),
+                MSG_PART_3.len(),
             );
 
             panic!(
                 "{}",
                 core::str::from_utf8_unchecked(core::slice::from_raw_parts(
                     msg_buf.as_ptr(),
-                    MSG_PART_1.len() + digits + MSG_PART_2.len()
+                    MSG_PART_1.len() + digits + MSG_PART_3.len()
                 ))
             );
         }
@@ -242,7 +242,7 @@ pub mod __private {
         // SAFETY: we just successfully initialized `N` distinct slots in an
         // array of `N` elements so we must have initialized all slots
         core::mem::forget(values); // this is empty now
-        unsafe { transpose_assume_uninit(data) }
+        unsafe { transpose_assume_init(data) }
     }
 
     // NOTE: this is unfortunately not const because `Idx::into_usize` is
@@ -277,7 +277,7 @@ pub mod __private {
         // SAFETY: we just successfully initialized `N` distinct slots in an
         // array of `N` elements so we must have initialized all slots
         core::mem::forget(values); // this is empty now
-        IndexArray::from(unsafe { transpose_assume_uninit(data) })
+        IndexArray::from(unsafe { transpose_assume_init(data) })
     }
 
     #[cfg(test)]

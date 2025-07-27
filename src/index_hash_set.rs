@@ -873,7 +873,7 @@ impl<I, T, S> IndexHashSet<I, T, S> {
         S: BuildHasher + Default,
         T: Eq + Hash,
     {
-        Self::from(arr.into_inner())
+        Self::from(arr.into_array())
     }
 }
 

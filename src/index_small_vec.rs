@@ -212,7 +212,7 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
 
     /// same as [`From<IndexArray<I, T, N>>::from`], useful for better type inference
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
-        Self::from_iter(arr.into_inner())
+        Self::from_iter(arr.into_array())
     }
 }
 
