@@ -123,7 +123,7 @@ impl<T> LinkedList<T> {
             // `&*self.nodes` (using IndexVec's Deref to IndexSlice),
             // but a bit more clear. we offer `.as_slice()` aswell to get
             // a non index aware slice. We don't judge :).
-            nodes: self.nodes.as_slice(),
+            nodes: self.nodes.as_index_slice(),
             current: self.head,
         }
     }

@@ -135,18 +135,18 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     pub fn as_mut_array(&mut self) -> &mut [T; N] {
         &mut self.data
     }
-    pub const fn as_raw_slice(&self) -> &[T] {
+    pub const fn as_slice(&self) -> &[T] {
         &self.data
     }
-    pub const fn as_mut_raw_slice(&mut self) -> &mut [T] {
+    pub const fn as_mut_slice(&mut self) -> &mut [T] {
         &mut self.data
     }
-    pub const fn as_slice(&self) -> &IndexSlice<I, T> {
-        IndexSlice::from_raw_slice(self.data.as_slice())
+    pub const fn as_index_slice(&self) -> &IndexSlice<I, T> {
+        IndexSlice::from_slice(self.data.as_slice())
     }
     // TODO: const once https://github.com/rust-lang/rust/issues/133333 lands
-    pub fn as_mut_slice(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_mut_raw_slice(self.data.as_mut_slice())
+    pub fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
+        IndexSlice::from_mut_slice(self.data.as_mut_slice())
     }
     pub fn each_ref(&self) -> IndexArray<I, &T, N> {
         self.data.each_ref().into()
@@ -217,45 +217,45 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
 
 impl<I, T, const N: usize> AsRef<[T]> for IndexArray<I, T, N> {
     fn as_ref(&self) -> &[T] {
-        self.as_raw_slice()
+        self.as_slice()
     }
 }
 impl<I, T, const N: usize> AsRef<IndexSlice<I, T>> for IndexArray<I, T, N> {
     fn as_ref(&self) -> &IndexSlice<I, T> {
-        self.as_slice()
+        self.as_index_slice()
     }
 }
 
 impl<I, T, const N: usize> AsMut<[T]> for IndexArray<I, T, N> {
     fn as_mut(&mut self) -> &mut [T] {
-        self.as_mut_raw_slice()
+        self.as_mut_slice()
     }
 }
 impl<I, T, const N: usize> AsMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
     fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
-        self.as_mut_slice()
+        self.as_mut_index_slice()
     }
 }
 
 impl<I, T, const N: usize> Borrow<[T]> for IndexArray<I, T, N> {
     fn borrow(&self) -> &[T] {
-        self.as_raw_slice()
+        self.as_slice()
     }
 }
 impl<I, T, const N: usize> Borrow<IndexSlice<I, T>> for IndexArray<I, T, N> {
     fn borrow(&self) -> &IndexSlice<I, T> {
-        self.as_slice()
+        self.as_index_slice()
     }
 }
 
 impl<I, T, const N: usize> BorrowMut<[T]> for IndexArray<I, T, N> {
     fn borrow_mut(&mut self) -> &mut [T] {
-        self.as_mut_raw_slice()
+        self.as_mut_slice()
     }
 }
 impl<I, T, const N: usize> BorrowMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
     fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
-        self.as_mut_slice()
+        self.as_mut_index_slice()
     }
 }
 
@@ -276,13 +276,13 @@ impl<I, T, const N: usize> Deref for IndexArray<I, T, N> {
     type Target = IndexSlice<I, T>;
 
     fn deref(&self) -> &Self::Target {
-        self.as_slice()
+        self.as_index_slice()
     }
 }
 
 impl<I, T, const N: usize> DerefMut for IndexArray<I, T, N> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.as_mut_slice()
+        self.as_mut_index_slice()
     }
 }
 
@@ -323,7 +323,7 @@ where
     T: Clone,
 {
     fn from(value: &'a IndexArray<I, T, N>) -> Self {
-        Cow::Borrowed(value.as_slice())
+        Cow::Borrowed(value.as_index_slice())
     }
 }
 
@@ -439,7 +439,7 @@ impl<'a, I, T, const N: usize> TryFrom<&'a IndexSlice<I, T>> for &'a IndexArray<
 
     fn try_from(value: &'a IndexSlice<I, T>) -> Result<Self, Self::Error> {
         Ok(IndexArray::from_array_ref(<&'a [T; N]>::try_from(
-            value.as_raw_slice(),
+            value.as_slice(),
         )?))
     }
 }
@@ -448,7 +448,7 @@ impl<'a, I, T, const N: usize> TryFrom<&'a mut IndexSlice<I, T>> for &'a mut Ind
 
     fn try_from(value: &'a mut IndexSlice<I, T>) -> Result<Self, Self::Error> {
         Ok(IndexArray::from_mut_array_ref(<&'a mut [T; N]>::try_from(
-            value.as_mut_raw_slice(),
+            value.as_mut_slice(),
         )?))
     }
 }

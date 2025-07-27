@@ -157,11 +157,11 @@ impl<I, T> IndexVec<I, T> {
         self.data.shrink_to(cap.into_usize());
     }
 
-    pub fn into_boxed_slice(self) -> Box<IndexSlice<I, T>> {
-        IndexSlice::from_boxed_raw_slice(self.data.into_boxed_slice())
+    pub fn into_boxed_index_slice(self) -> Box<IndexSlice<I, T>> {
+        IndexSlice::from_boxed_slice(self.data.into_boxed_slice())
     }
 
-    pub fn into_boxed_raw_slice(self) -> Box<[T]> {
+    pub fn into_boxed_slice(self) -> Box<[T]> {
         self.data.into_boxed_slice()
     }
 
@@ -172,19 +172,19 @@ impl<I, T> IndexVec<I, T> {
         self.data.truncate(len.into_usize());
     }
 
-    pub const fn as_slice(&self) -> &IndexSlice<I, T> {
-        IndexSlice::from_raw_slice(self.data.as_slice())
+    pub const fn as_index_slice(&self) -> &IndexSlice<I, T> {
+        IndexSlice::from_slice(self.data.as_slice())
     }
 
-    pub const fn as_mut_slice(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_mut_raw_slice(self.data.as_mut_slice())
+    pub const fn as_mut_index_slice(&mut self) -> &mut IndexSlice<I, T> {
+        IndexSlice::from_mut_slice(self.data.as_mut_slice())
     }
 
-    pub fn as_raw_slice(&self) -> &[T] {
+    pub fn as_slice(&self) -> &[T] {
         &self.data
     }
 
-    pub fn as_mut_raw_slice(&mut self) -> &mut [T] {
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
         &mut self.data
     }
 
@@ -471,12 +471,12 @@ impl<I, T> AsMut<Vec<T>> for IndexVec<I, T> {
 }
 impl<I, T> AsMut<[T]> for IndexVec<I, T> {
     fn as_mut(&mut self) -> &mut [T] {
-        self.as_mut_raw_slice()
+        self.as_mut_slice()
     }
 }
 impl<I, T> AsMut<IndexSlice<I, T>> for IndexVec<I, T> {
     fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
-        self.as_mut_slice()
+        self.as_mut_index_slice()
     }
 }
 
@@ -492,12 +492,12 @@ impl<I, T> AsRef<Vec<T>> for IndexVec<I, T> {
 }
 impl<I, T> AsRef<[T]> for IndexVec<I, T> {
     fn as_ref(&self) -> &[T] {
-        self.as_raw_slice()
+        self.as_slice()
     }
 }
 impl<I, T> AsRef<IndexSlice<I, T>> for IndexVec<I, T> {
     fn as_ref(&self) -> &IndexSlice<I, T> {
-        self.as_slice()
+        self.as_index_slice()
     }
 }
 
@@ -508,12 +508,12 @@ impl<I, T> Borrow<Vec<T>> for IndexVec<I, T> {
 }
 impl<I, T> Borrow<[T]> for IndexVec<I, T> {
     fn borrow(&self) -> &[T] {
-        self.as_raw_slice()
+        self.as_slice()
     }
 }
 impl<I, T> Borrow<IndexSlice<I, T>> for IndexVec<I, T> {
     fn borrow(&self) -> &IndexSlice<I, T> {
-        self.as_slice()
+        self.as_index_slice()
     }
 }
 
@@ -524,12 +524,12 @@ impl<I, T> BorrowMut<Vec<T>> for IndexVec<I, T> {
 }
 impl<I, T> BorrowMut<[T]> for IndexVec<I, T> {
     fn borrow_mut(&mut self) -> &mut [T] {
-        self.as_mut_raw_slice()
+        self.as_mut_slice()
     }
 }
 impl<I, T> BorrowMut<IndexSlice<I, T>> for IndexVec<I, T> {
     fn borrow_mut(&mut self) -> &mut IndexSlice<I, T> {
-        self.as_mut_slice()
+        self.as_mut_index_slice()
     }
 }
 
@@ -551,7 +551,7 @@ where
 
 impl<I, T: Debug> Debug for IndexVec<I, T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        Debug::fmt(self.as_slice(), f)
+        Debug::fmt(self.as_index_slice(), f)
     }
 }
 
@@ -565,12 +565,12 @@ impl<I, T> Deref for IndexVec<I, T> {
     type Target = IndexSlice<I, T>;
 
     fn deref(&self) -> &Self::Target {
-        IndexSlice::from_raw_slice(&self.data)
+        IndexSlice::from_slice(&self.data)
     }
 }
 impl<I, T> DerefMut for IndexVec<I, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        IndexSlice::from_mut_raw_slice(&mut self.data)
+        IndexSlice::from_mut_slice(&mut self.data)
     }
 }
 
@@ -630,7 +630,7 @@ where
     T: Clone,
 {
     fn from(value: &'a IndexVec<I, T>) -> Self {
-        Cow::Borrowed(value.as_slice())
+        Cow::Borrowed(value.as_index_slice())
     }
 }
 impl<'a, I, T> From<&'a IndexVec<I, T>> for Cow<'a, [T]>
@@ -638,7 +638,7 @@ where
     T: Clone,
 {
     fn from(value: &'a IndexVec<I, T>) -> Self {
-        Cow::Borrowed(value.as_raw_slice())
+        Cow::Borrowed(value.as_slice())
     }
 }
 
@@ -691,7 +691,7 @@ impl<I, T> From<Box<[T]>> for IndexVec<I, T> {
 }
 impl<I, T> From<Box<IndexSlice<I, T>>> for IndexVec<I, T> {
     fn from(value: Box<IndexSlice<I, T>>) -> Self {
-        Self::from(Vec::from(value.into_boxed_raw_slice()))
+        Self::from(Vec::from(value.into_boxed_slice()))
     }
 }
 impl<'a, I, T> From<Cow<'a, [T]>> for IndexVec<I, T>
@@ -752,12 +752,12 @@ where
 
 impl<I, T> From<IndexVec<I, T>> for Box<[T]> {
     fn from(value: IndexVec<I, T>) -> Self {
-        value.into_boxed_raw_slice()
+        value.into_boxed_slice()
     }
 }
 impl<I, T> From<IndexVec<I, T>> for Box<IndexSlice<I, T>> {
     fn from(value: IndexVec<I, T>) -> Self {
-        value.into_boxed_slice()
+        value.into_boxed_index_slice()
     }
 }
 
@@ -812,7 +812,7 @@ where
     type Output = S::Output;
 
     fn index(&self, index: S) -> &Self::Output {
-        index.index(self.as_slice())
+        index.index(self.as_index_slice())
     }
 }
 
@@ -821,7 +821,7 @@ where
     S: SequenceIndex<I, IndexSlice<I, T>>,
 {
     fn index_mut(&mut self, index: S) -> &mut Self::Output {
-        index.index_mut(self.as_mut_slice())
+        index.index_mut(self.as_mut_index_slice())
     }
 }
 
@@ -860,7 +860,7 @@ where
     T: Ord,
 {
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        self.as_raw_slice().cmp(other.as_raw_slice())
+        self.as_slice().cmp(other.as_slice())
     }
 }
 
@@ -869,7 +869,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &&[U]) -> bool {
-        self.as_raw_slice() == *other
+        self.as_slice() == *other
     }
 }
 
@@ -878,7 +878,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &&IndexSlice<I2, U>) -> bool {
-        self.as_raw_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -887,7 +887,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &&mut [U]) -> bool {
-        self.as_raw_slice() == *other
+        self.as_slice() == *other
     }
 }
 
@@ -896,7 +896,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &&mut IndexSlice<I2, U>) -> bool {
-        self.as_raw_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -905,7 +905,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &[U]) -> bool {
-        self.as_raw_slice() == other
+        self.as_slice() == other
     }
 }
 
@@ -914,7 +914,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexSlice<I2, U>) -> bool {
-        self.as_raw_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -923,7 +923,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &[U; N]) -> bool {
-        self.as_raw_slice() == other.as_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -932,7 +932,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexArray<I2, U, N>) -> bool {
-        self.as_raw_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -941,7 +941,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVec<I, U>) -> bool {
-        *self == other.as_raw_slice()
+        *self == other.as_slice()
     }
 }
 
@@ -950,7 +950,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVec<I, U>) -> bool {
-        *self == other.as_raw_slice()
+        *self == other.as_slice()
     }
 }
 
@@ -959,7 +959,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVec<I, U>) -> bool {
-        self == other.as_raw_slice()
+        self == other.as_slice()
     }
 }
 
@@ -968,7 +968,7 @@ where
     T: PartialEq<U> + Clone,
 {
     fn eq(&self, other: &IndexVec<I, U>) -> bool {
-        *self == other.as_raw_slice()
+        *self == other.as_slice()
     }
 }
 
@@ -977,7 +977,7 @@ where
     T: PartialEq<U> + Clone,
 {
     fn eq(&self, other: &IndexVec<I2, U>) -> bool {
-        self.as_raw_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -1014,7 +1014,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVec<I2, U>) -> bool {
-        self.as_raw_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -1023,7 +1023,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &Vec<U>) -> bool {
-        self.as_raw_slice() == other.as_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -1032,7 +1032,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVec<I, U>) -> bool {
-        self.as_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -1042,7 +1042,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVec<I, U>) -> bool {
-        self.as_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -1052,7 +1052,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVec<I, U>) -> bool {
-        self.as_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -1062,7 +1062,7 @@ where
     T: PartialEq<U>,
 {
     fn eq(&self, other: &IndexVec<I, U>) -> bool {
-        self.as_slice() == other.as_raw_slice()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -1071,7 +1071,7 @@ where
     T: PartialOrd,
 {
     fn partial_cmp(&self, other: &IndexVec<I2, T>) -> Option<core::cmp::Ordering> {
-        self.as_raw_slice().partial_cmp(other.as_raw_slice())
+        self.as_slice().partial_cmp(other.as_slice())
     }
 }
 
@@ -1159,23 +1159,17 @@ mod test {
         let v = index_vec![0, 1, 2, 3];
 
         assert_eq!(v[Foo(1)], 1);
-        assert_eq!(&v[..], IndexSlice::<Foo, _>::from_raw_slice(&[0, 1, 2, 3]));
-        assert_eq!(
-            &v[Foo(1)..],
-            IndexSlice::<Foo, _>::from_raw_slice(&[1, 2, 3])
-        );
-        assert_eq!(&v[..Foo(2)], IndexSlice::<Foo, _>::from_raw_slice(&[0, 1]));
-        assert_eq!(
-            &v[..=Foo(2)],
-            IndexSlice::<Foo, _>::from_raw_slice(&[0, 1, 2])
-        );
+        assert_eq!(&v[..], IndexSlice::<Foo, _>::from_slice(&[0, 1, 2, 3]));
+        assert_eq!(&v[Foo(1)..], IndexSlice::<Foo, _>::from_slice(&[1, 2, 3]));
+        assert_eq!(&v[..Foo(2)], IndexSlice::<Foo, _>::from_slice(&[0, 1]));
+        assert_eq!(&v[..=Foo(2)], IndexSlice::<Foo, _>::from_slice(&[0, 1, 2]));
         assert_eq!(
             &v[Foo(1)..Foo(3)],
-            IndexSlice::<Foo, _>::from_raw_slice(&[1, 2])
+            IndexSlice::<Foo, _>::from_slice(&[1, 2])
         );
         assert_eq!(
             &v[Foo(1)..=Foo(3)],
-            IndexSlice::<Foo, _>::from_raw_slice(&[1, 2, 3])
+            IndexSlice::<Foo, _>::from_slice(&[1, 2, 3])
         );
     }
 
@@ -1190,38 +1184,29 @@ mod test {
 
         let v: IndexVec<Foo, u32> = index_vec![0, 1, 2, 3];
 
-        assert_eq!(&v[..], IndexSlice::<Foo, _>::from_raw_slice(&[0, 1, 2, 3]));
+        assert_eq!(&v[..], IndexSlice::<Foo, _>::from_slice(&[0, 1, 2, 3]));
 
         assert_eq!(v[Foo2(1)], 1);
-        assert_eq!(
-            &v[Foo2(1)..],
-            IndexSlice::<Foo2, _>::from_raw_slice(&[1, 2, 3])
-        );
-        assert_eq!(
-            &v[..Foo2(2)],
-            IndexSlice::<Foo2, _>::from_raw_slice(&[0, 1])
-        );
+        assert_eq!(&v[Foo2(1)..], IndexSlice::<Foo2, _>::from_slice(&[1, 2, 3]));
+        assert_eq!(&v[..Foo2(2)], IndexSlice::<Foo2, _>::from_slice(&[0, 1]));
         assert_eq!(
             &v[..=Foo2(2)],
-            IndexSlice::<Foo2, _>::from_raw_slice(&[0, 1, 2])
+            IndexSlice::<Foo2, _>::from_slice(&[0, 1, 2])
         );
         assert_eq!(
             &v[Foo2(1)..Foo2(3)],
-            IndexSlice::<Foo2, _>::from_raw_slice(&[1, 2])
+            IndexSlice::<Foo2, _>::from_slice(&[1, 2])
         );
         assert_eq!(
             &v[Foo2(1)..=Foo2(3)],
-            IndexSlice::<Foo2, _>::from_raw_slice(&[1, 2, 3])
+            IndexSlice::<Foo2, _>::from_slice(&[1, 2, 3])
         );
 
         assert_eq!(v[1], 1);
-        assert_eq!(&v[1..], IndexSlice::<usize, _>::from_raw_slice(&[1, 2, 3]));
-        assert_eq!(&v[..2], IndexSlice::<usize, _>::from_raw_slice(&[0, 1]));
-        assert_eq!(&v[..=2], IndexSlice::<usize, _>::from_raw_slice(&[0, 1, 2]));
-        assert_eq!(&v[1..3], IndexSlice::<usize, _>::from_raw_slice(&[1, 2]));
-        assert_eq!(
-            &v[1..=3],
-            IndexSlice::<usize, _>::from_raw_slice(&[1, 2, 3])
-        );
+        assert_eq!(&v[1..], IndexSlice::<usize, _>::from_slice(&[1, 2, 3]));
+        assert_eq!(&v[..2], IndexSlice::<usize, _>::from_slice(&[0, 1]));
+        assert_eq!(&v[..=2], IndexSlice::<usize, _>::from_slice(&[0, 1, 2]));
+        assert_eq!(&v[1..3], IndexSlice::<usize, _>::from_slice(&[1, 2]));
+        assert_eq!(&v[1..=3], IndexSlice::<usize, _>::from_slice(&[1, 2, 3]));
     }
 }

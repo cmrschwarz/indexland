@@ -26,16 +26,16 @@ fn derive_idx_inner(ast: DeriveInput, rich_defaults: bool) -> Result<TokenStream
 }
 
 /// Derives
-/// [`indexland::IdxNewtype`](https://docs.rs/indexland/latest/indexland/trait.IdxNewtype.html)
-/// and [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
-///
-/// This macro supports the same attributes as [`#[derive[Idx]]`](crate::Idx).
+/// [`IdxNewtype`](https://docs.rs/indexland/latest/indexland/trait.IdxNewtype.html)
+/// and [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html).
 ///
 /// In order for `Idx` to be satisfied, the type must implement `Copy` and `Ord`.
 ///
-/// It is generally preferred to use [`#[derive[Idx]]`](crate::Idx) which derives all required
-/// traits for you (aswell as some additional ones for convenience).
-/// See it's documentation for details.
+/// This macro supports the same attributes as [`#[derive[Idx]]`](crate::Idx).
+///
+/// Use this macro for more explicit control over the derived traits.
+/// For oppinionated defaults, use [`#[derive[Idx]]`](crate::Idx) instead,
+/// which derives all required supertraits aswell as arithmetic etc. for you.
 ///
 /// # Example
 /// ```
@@ -52,16 +52,16 @@ pub fn derive_idx_newtype(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 }
 
 /// Derives
-/// [`indexland::IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html)
-/// and [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
-///
-/// This macro supports the same attributes as [`#[derive[Idx]]`](crate::Idx).
+/// [`IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html)
+/// and [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
 ///
 /// In order for `Idx` to be satisfied, the type must implement `Copy` and `Ord`.
 ///
-/// It is generally preferred to use [`#[derive[Idx]]`](crate::Idx), which derives all required
-/// traits for you (aswell as some additional ones for convenience).
-/// See it's documentation for details.
+/// This macro supports the same attributes as [`#[derive[Idx]]`](crate::Idx).
+///
+/// Use this macro for more explicit control over the derived traits.
+/// For oppinionated defaults, use [`#[derive[Idx]]`](crate::Idx) instead,
+/// which derives all required supertraits aswell as arithmetic etc. for you.
 ///
 /// # Example
 /// ```
@@ -82,13 +82,16 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 }
 
 /// Derives
-/// [`indexland::Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
+/// [`Idx`](https://docs.rs/indexland/latest/indexland/trait.Idx.html)
 /// aswell as the required super traits and operator overloads (see the full trait list below).
 ///
-/// If you want to manually derive supertraits, use [`indexland::IdxNewtype`](https://docs.rs/indexland/latest/indexland/trait.IdxNewtype.html)
-/// or [`indexland::IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html) directly,
-/// or customize the derived traits using [`#[indexland(omit(..))]`](Idx#indexlandomit)
-/// and [`#[indexland(only(..))]`](Idx#indexlandonly)
+/// Which traits will be derived can be fully customized using [`#[indexland(omit(..))]`](Idx#indexlandomit)
+/// and [`#[indexland(only(..))]`](Idx#indexlandonly).
+///
+/// This derive macro provides opponionated defaults. For more explicit control, consider using
+/// [`indexland::IdxNewtype`](https://docs.rs/indexland/latest/indexland/trait.IdxNewtype.html)
+/// or [`indexland::IdxEnum`](https://docs.rs/indexland/latest/indexland/trait.IdxEnum.html)
+/// instead.
 ///
 ///
 /// # Implemented Traits
@@ -109,19 +112,14 @@ pub fn derive_idx_enum(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 ///   [`AddAssign`](core::ops::AddAssign)
 /// - [`Sub`](core::ops::Sub) +
 ///   [`SubAssign`](core::ops::SubAssign)
-/// - [`Rem<usize>`](core::ops::Rem) +
-///   [`RemAssign<usize>`](core::ops::RemAssign)
 /// - [`From<usize>`](core::convert::From) +
 ///   [`From<Self> for usize`](core::convert::From)
 ///
-/// # Opt-in Extra Traits ([`#[indexland(extra(..))]`](Idx#indexlandextra))
-/// - [`Add<usize>`](core::ops::Add),
-/// - [`Sub<usize>`](core::ops::Sub)
-/// - [`Rem<usize>`](core::ops::Rem)
-/// - [`AddAssign<usize>`](core::ops::AddAssign)
-/// - [`SubAssign<usize>`](core::ops::SubAssign)
-/// - [`RemAssign<usize>`](core::ops::RemAssign)
+/// # Opt-in Extra Traits (see [`#[indexland(arith_compat(T))]`](Idx#indexlandarith_compatt) and [`#[indexland(extra(..))]`](Idx#indexlandextra))
 /// - [`Display`](core::fmt::Display) (for enums, structs have this enabled by default)
+/// - [`Mul`](core::ops::Mul) + [`MulAssign`](core::ops::MulAssign)
+/// - [`Div`](core::ops::Div) + [`DivAssign`](core::ops::DivAssign)
+/// - [`Rem`](core::ops::Rem) + [`RemAssign`](core::ops::RemAssign)
 ///
 /// # Example
 /// ```

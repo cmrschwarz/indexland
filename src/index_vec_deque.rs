@@ -190,24 +190,18 @@ impl<I, T> IndexVecDeque<I, T> {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, self.data.range_mut(range))
     }
-    pub fn as_slices(&self) -> (&IndexSlice<I, T>, &IndexSlice<I, T>) {
+    pub fn as_index_slices(&self) -> (&IndexSlice<I, T>, &IndexSlice<I, T>) {
         let (s1, s2) = self.data.as_slices();
-        (
-            IndexSlice::from_raw_slice(s1),
-            IndexSlice::from_raw_slice(s2),
-        )
+        (IndexSlice::from_slice(s1), IndexSlice::from_slice(s2))
     }
-    pub fn as_mut_slices(&mut self) -> (&IndexSlice<I, T>, &IndexSlice<I, T>) {
+    pub fn as_mut_index_slices(&mut self) -> (&IndexSlice<I, T>, &IndexSlice<I, T>) {
         let (s1, s2) = self.data.as_mut_slices();
-        (
-            IndexSlice::from_raw_slice(s1),
-            IndexSlice::from_raw_slice(s2),
-        )
+        (IndexSlice::from_slice(s1), IndexSlice::from_slice(s2))
     }
-    pub fn as_raw_slices(&self) -> (&[T], &[T]) {
+    pub fn as_slices(&self) -> (&[T], &[T]) {
         self.data.as_slices()
     }
-    pub fn as_mut_raw_slices(&mut self) -> (&mut [T], &mut [T]) {
+    pub fn as_mut_slices(&mut self) -> (&mut [T], &mut [T]) {
         self.data.as_mut_slices()
     }
     pub fn len(&self) -> usize {
@@ -358,7 +352,7 @@ impl<I, T> IndexVecDeque<I, T> {
     }
 
     pub fn make_contiguous(&mut self) -> &mut IndexSlice<I, T> {
-        IndexSlice::from_mut_raw_slice(self.data.make_contiguous())
+        IndexSlice::from_mut_slice(self.data.make_contiguous())
     }
 
     pub fn rotate_left(&mut self, n: I)
