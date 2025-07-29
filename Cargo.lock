@@ -141,6 +141,7 @@ dependencies = [
  "indexmap",
  "rustversion",
  "serde",
+ "serde_json",
  "slab",
  "smallvec",
  "trybuild",

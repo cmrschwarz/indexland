@@ -673,7 +673,7 @@ pub mod serde_map {
                             len += 1;
                             initialized[index] = true;
                         }
-                        arr[len] = MaybeUninit::new(v);
+                        arr[index] = MaybeUninit::new(v);
                     }
                 }
             }
@@ -722,6 +722,48 @@ pub mod serde_map {
         I: Idx + Deserialize<'de>,
         T: Deserialize<'de>,
     {
-        deserializer.deserialize_seq(MapVisitor(PhantomData))
+        deserializer.deserialize_map(MapVisitor(PhantomData))
+    }
+
+    #[cfg(test)]
+    mod test {
+        use serde::{Deserialize, Serialize};
+
+        use crate::{EnumIndexArray, Idx};
+
+        #[derive(Idx, Serialize, Deserialize)]
+        enum Foo {
+            A,
+            B,
+            C,
+        }
+
+        #[derive(Serialize, Deserialize, PartialEq, Debug)]
+        struct MapArr {
+            #[serde(with = "indexland::index_array::serde_map")]
+            arr: EnumIndexArray<Foo, u32>,
+        }
+
+        #[test]
+        fn serialize() {
+            let arr = MapArr {
+                arr: index_array![0, 1, 2],
+            };
+
+            assert_eq!(
+                r#"{"arr":{"A":0,"B":1,"C":2}}"#,
+                serde_json::to_string(&arr).unwrap()
+            );
+        }
+
+        #[test]
+        fn deserialize() {
+            assert_eq!(
+                serde_json::from_str::<MapArr>(r#"{"arr":{"A":0,"B":1,"C":2}}"#).unwrap(),
+                MapArr {
+                    arr: index_array![0, 1, 2],
+                }
+            );
+        }
     }
 }
