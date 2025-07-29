@@ -904,10 +904,10 @@ impl<I, T> IndexSlice<I, T> {
     ///
     /// If you actualy wanted to enumerate a slice starting from zero,
     /// simply pass [`Idx::ZERO`] as the initial offset.
-    pub fn iter_enumerated(
-        &self,
-        initial_offset: I,
-    ) -> IndexEnumerate<I, core::slice::Iter<'_, T>> {
+    pub fn iter_enumerated(&self, initial_offset: I) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(initial_offset, &self.data)
     }
 
@@ -916,7 +916,10 @@ impl<I, T> IndexSlice<I, T> {
     pub fn iter_enumerated_mut(
         &mut self,
         initial_offset: I,
-    ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>> {
+    ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
+    where
+        I: Idx,
+    {
         IndexEnumerate::new(initial_offset, &mut self.data)
     }
 

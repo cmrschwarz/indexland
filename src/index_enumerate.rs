@@ -1,18 +1,25 @@
+use core::marker::PhantomData;
+
 use crate::Idx;
 
 pub struct IndexEnumerate<I, BaseIter> {
-    next_idx: I,
+    next_idx: usize,
     base_iter: BaseIter,
+    _phantom: PhantomData<I>,
 }
 
 impl<I, BaseIter: Iterator> IndexEnumerate<I, BaseIter> {
     pub fn new<IntoBaseIter: IntoIterator<IntoIter = BaseIter>>(
         next_idx: I,
         base_iter: IntoBaseIter,
-    ) -> Self {
+    ) -> Self
+    where
+        I: Idx,
+    {
         Self {
-            next_idx,
+            next_idx: next_idx.into_usize(),
             base_iter: base_iter.into_iter(),
+            _phantom: PhantomData,
         }
     }
 }
@@ -26,8 +33,8 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let value = self.base_iter.next()?;
         let idx = self.next_idx;
-        self.next_idx = I::from_usize(self.next_idx.into_usize() + 1);
-        Some((idx, value))
+        self.next_idx = idx + 1;
+        Some((I::from_usize(idx), value))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -45,10 +52,39 @@ where
         match self.base_iter.nth(n) {
             Some(v) => {
                 let pos = self.next_idx;
-                self.next_idx = I::from_usize(n + self.next_idx.into_usize() + 1);
+                self.next_idx = pos + 1;
                 Some((I::from_usize(pos.into_usize() + n), v))
             }
             None => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[cfg(feature = "std")]
+    #[test]
+    fn no_overflow_in_enum() {
+        use crate::enum_index_array;
+        use indexland_derive::Idx;
+        use std::vec::Vec;
+
+        #[derive(Idx)]
+        enum Foo {
+            A,
+            B,
+            C,
+        }
+
+        let arr = enum_index_array![
+            Foo::A => 0,
+            Foo::B => 1,
+            Foo::C => 2,
+        ];
+
+        assert_eq!(
+            arr.into_iter_enumerated().collect::<Vec<_>>(),
+            [0, 1, 2].map(|x| (x, x))
+        );
     }
 }
