@@ -14,6 +14,9 @@ use core::{
     ops::{Index, IndexMut, Range, RangeInclusive},
 };
 
+#[cfg(feature = "serde")]
+use serde::{Serialize, Serializer};
+
 #[cfg(feature = "std")]
 use std::io::{BufRead, Read};
 
@@ -869,9 +872,7 @@ impl<I, T> IndexSlice<I, T> {
     {
         Join::join(self, sep)
     }
-}
 
-impl<I, T> IndexSlice<I, T> {
     /// The slice version of `iter_enumerated` takes an `initial_offset`
     /// parameter to avoid the following common mistake:
     /// ``` compile fail
@@ -917,6 +918,49 @@ impl<I, T> IndexSlice<I, T> {
         initial_offset: I,
     ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>> {
         IndexEnumerate::new(initial_offset, &mut self.data)
+    }
+
+    pub fn iter_enumerated_range(
+        &self,
+        range: impl IndexRangeBounds<I>,
+    ) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
+    where
+        I: Idx,
+    {
+        IndexEnumerate::new(I::ZERO, &self.data[range.canonicalize(self.data.len())])
+    }
+
+    pub fn iter_enumerated_range_mut(
+        &mut self,
+        range: impl IndexRangeBounds<I>,
+    ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
+    where
+        I: Idx,
+    {
+        let range = range.canonicalize(self.len());
+        IndexEnumerate::new(I::ZERO, &mut self.data[range])
+    }
+
+    #[cfg(feature = "serde")]
+    /// Use with [`serde(serialize_with = "path")`](https://serde.rs/field-attrs.html#serialize_with)
+    /// to serialize as a map instead of an array.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use indexland::IndexSlice;
+    /// #[derive(serde::Serialize)]
+    /// struct Foo<'a> {
+    ///     #[serde(serialize_with = "IndexSlice::serialize_as_map")]
+    ///     bar: &'a IndexSlice<u32, String>,
+    /// }
+    /// ```
+    pub fn serialize_as_map<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        I: Idx + Serialize,
+        T: Serialize,
+    {
+        serializer.collect_map(self.iter_enumerated_range(..))
     }
 }
 

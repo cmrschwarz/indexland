@@ -4,6 +4,10 @@ use core::{
     marker::PhantomData,
     ops,
 };
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 pub use slab::Drain;
 use slab::{GetDisjointMutError, Slab};
 
@@ -340,6 +344,15 @@ where
     }
 }
 
+impl<I, T> From<Slab<T>> for IndexSlab<I, T> {
+    fn from(value: Slab<T>) -> Self {
+        IndexSlab {
+            data: value,
+            _phantom: PhantomData,
+        }
+    }
+}
+
 // ===== VacantEntry =====
 pub struct VacantEntry<'a, I, T> {
     base: slab::VacantEntry<'a, T>,
@@ -491,3 +504,31 @@ where
 }
 
 impl<I, T> FusedIterator for IterMut<'_, I, T> where I: Idx {}
+
+#[cfg(feature = "serde")]
+impl<I, T> Serialize for IndexSlab<I, T>
+where
+    T: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.data.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, I, T> Deserialize<'de> for IndexSlab<I, T>
+where
+    T: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let slab = Slab::<T>::deserialize(deserializer)?;
+
+        Ok(Self::from(slab))
+    }
+}

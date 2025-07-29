@@ -9,6 +9,9 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 use super::{idx::Idx, index_slice::IndexSlice};
 use crate::{IndexArray, IndexRange, IndexRangeBounds, index_enumerate::IndexEnumerate};
 
@@ -214,6 +217,28 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     pub fn from_index_array<const N: usize>(arr: IndexArray<I, T, N>) -> Self {
         Self::from_iter(arr.into_array())
     }
+
+    #[cfg(feature = "serde")]
+    /// Use with [`serde(serialize_with = "path")`](https://serde.rs/field-attrs.html#serialize_with)
+    /// to serialize as a map instead of an array.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use indexland::IndexSmallVec;
+    /// #[derive(serde::Serialize)]
+    /// struct Foo {
+    ///     #[serde(serialize_with = "IndexSmallVec::serialize_as_map")]
+    ///     bar: IndexSmallVec<u32, String, 42>,
+    /// }
+    /// ```
+    pub fn serialize_as_map<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        I: Idx + Serialize,
+        T: Serialize,
+    {
+        serializer.collect_map(self.iter_enumerated())
+    }
 }
 
 impl<I, T, const CAP: usize> AsRef<[T]> for IndexSmallVec<I, T, CAP> {
@@ -399,12 +424,9 @@ impl<I, T: PartialEq, const CAP: usize> PartialEq<[T]> for IndexSmallVec<I, T, C
 }
 
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-#[cfg(feature = "serde")]
 impl<I, T, const CAP: usize> Serialize for IndexSmallVec<I, T, CAP>
 where
-    SmallVec<[T; CAP]>: Serialize,
+    T: Serialize,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -417,7 +439,7 @@ where
 #[cfg(feature = "serde")]
 impl<'de, I, T, const CAP: usize> Deserialize<'de> for IndexSmallVec<I, T, CAP>
 where
-    SmallVec<[T; CAP]>: Deserialize<'de>,
+    T: Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

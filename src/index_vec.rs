@@ -25,6 +25,9 @@ use alloc::{
     vec::{Drain, Vec},
 };
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 
 /// Create an [`IndexVec`] containing the arguments.
@@ -412,17 +415,18 @@ impl<I, T> IndexVec<I, T> {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
     }
-    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
-    where
-        I: Idx,
-    {
-        IndexEnumerate::new(I::ZERO, &mut self.data)
-    }
+
     pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
     {
         IndexEnumerate::new(I::ZERO, &self.data)
+    }
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
+    where
+        I: Idx,
+    {
+        IndexEnumerate::new(I::ZERO, &mut self.data)
     }
 
     pub fn into_iter_enumerated(self) -> IndexEnumerate<I, alloc::vec::IntoIter<T>>
@@ -456,6 +460,28 @@ impl<I, T> IndexVec<I, T> {
         let res = unsafe { core::ptr::read(&raw const self.data) };
         core::mem::forget(self);
         res
+    }
+
+    #[cfg(feature = "serde")]
+    /// Use with [`serde(serialize_with = "path")`](https://serde.rs/field-attrs.html#serialize_with)
+    /// to serialize as a map instead of an array.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use indexland::IndexVec;
+    /// #[derive(serde::Serialize)]
+    /// struct Foo {
+    ///     #[serde(serialize_with = "IndexVec::serialize_as_map")]
+    ///     bar: IndexVec<u32, String>,
+    /// }
+    /// ```
+    pub fn serialize_as_map<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        I: Idx + Serialize,
+        T: Serialize,
+    {
+        serializer.collect_map(self.iter_enumerated())
     }
 }
 
@@ -1117,12 +1143,9 @@ impl<I> std::io::Write for IndexVec<I, u8> {
 impl<I, T> Eq for IndexVec<I, T> where T: Eq {}
 
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-#[cfg(feature = "serde")]
 impl<I, T> Serialize for IndexVec<I, T>
 where
-    Vec<T>: Serialize,
+    T: Serialize,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -1135,7 +1158,7 @@ where
 #[cfg(feature = "serde")]
 impl<'de, I, T> Deserialize<'de> for IndexVec<I, T>
 where
-    Vec<T>: Deserialize<'de>,
+    T: Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

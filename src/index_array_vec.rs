@@ -408,6 +408,28 @@ impl<I, T, const CAP: usize> IndexArrayVec<I, T, CAP> {
         unsafe { self.push_unchecked(element) };
         Ok(())
     }
+
+    #[cfg(feature = "serde")]
+    /// Use with [`serde(serialize_with = "path")`](https://serde.rs/field-attrs.html#serialize_with)
+    /// to serialize as a map instead of an array.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use indexland::IndexArrayVec;
+    /// #[derive(serde::Serialize)]
+    /// struct Foo {
+    ///     #[serde(serialize_with = "IndexArrayVec::serialize_as_map")]
+    ///     bar: IndexArrayVec<u32, String, 42>,
+    /// }
+    /// ```
+    pub fn serialize_as_map<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        I: Idx + Serialize,
+        T: Serialize,
+    {
+        serializer.collect_map(self.iter_enumerated())
+    }
 }
 
 impl<I, T, const N: usize> AsRef<[T]> for IndexArrayVec<I, T, N> {

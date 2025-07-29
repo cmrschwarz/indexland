@@ -12,6 +12,9 @@ use alloc::{
 
 use crate::{IdxCompat, IndexArray, IndexRangeBounds, IndexVec, index_enumerate::IndexEnumerate};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 use super::{idx::Idx, index_range::IndexRange, index_slice::IndexSlice};
 
 /// Create an [`IndexVecDeque`] containing the arguments.
@@ -476,6 +479,28 @@ impl<I, T> IndexVecDeque<I, T> {
     {
         self.data.resize(len_idx.into_usize(), value);
     }
+
+    #[cfg(feature = "serde")]
+    /// Use with [`serde(serialize_with = "path")`](https://serde.rs/field-attrs.html#serialize_with)
+    /// to serialize as a map instead of an array.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use indexland::IndexVecDeque;
+    /// #[derive(serde::Serialize)]
+    /// struct Foo {
+    ///     #[serde(serialize_with = "IndexVecDeque::serialize_as_map")]
+    ///     bar: IndexVecDeque<u32, String>,
+    /// }
+    /// ```
+    pub fn serialize_as_map<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        I: Idx + Serialize,
+        T: Serialize,
+    {
+        serializer.collect_map(self.iter_enumerated())
+    }
 }
 
 #[cfg(feature = "std")]
@@ -811,3 +836,29 @@ impl<I> std::io::Write for IndexVecDeque<I, u8> {
 }
 
 impl<I, T> Eq for IndexVecDeque<I, T> where T: Eq {}
+
+#[cfg(feature = "serde")]
+impl<I, T> Serialize for IndexVecDeque<I, T>
+where
+    T: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.data.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, I, T> Deserialize<'de> for IndexVecDeque<I, T>
+where
+    T: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from(Vec::deserialize(deserializer)?))
+    }
+}

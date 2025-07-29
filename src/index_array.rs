@@ -13,6 +13,9 @@ use core::{
 #[cfg(feature = "alloc")]
 use alloc::{borrow::Cow, vec::Vec};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 #[repr(transparent)]
 pub struct IndexArray<I, T, const N: usize> {
     data: [T; N],
@@ -121,10 +124,10 @@ impl<I, T, const N: usize> IndexArray<I, MaybeUninit<T>, N> {
     pub const fn transpose(self) -> MaybeUninit<IndexArray<I, T, N>> {
         unsafe {
             // SAFETY: T and MaybeUninit<T> have the same layout.
-            // Rust does not allow `transmute<[MaybeUninit<T>; N], MaybeUninit<[T; N]>>()` though,
-            // so we have to do this hack.
             // We don't have to `forget()` the original value since `MaybeUninit<T>` does not drop `T`.
-            core::ptr::read(&raw const self as *const MaybeUninit<IndexArray<I, T, N>>)
+            // See https://github.com/rust-lang/rust/issues/62875#issuecomment-513834029 for
+            // why we need the `_copy` version
+            core::mem::transmute_copy(&self)
         }
     }
 }
@@ -219,6 +222,28 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     }
     pub const fn from_mut_array_ref(arr: &mut [T; N]) -> &mut IndexArray<I, T, N> {
         unsafe { &mut *arr.as_mut_ptr().cast() }
+    }
+
+    #[cfg(feature = "serde")]
+    /// Use with [`serde(serialize_with = "path")`](https://serde.rs/field-attrs.html#serialize_with)
+    /// to serialize as a map instead of an array.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use indexland::IndexArray;
+    /// #[derive(serde::Serialize)]
+    /// struct Foo {
+    ///     #[serde(serialize_with = "IndexArray::serialize_as_map")]
+    ///     bar: IndexArray<u32, String, 42>,
+    /// }
+    /// ```
+    pub fn serialize_as_map<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        I: Idx + Serialize,
+        T: Serialize,
+    {
+        serializer.collect_map(self.iter_enumerated())
     }
 }
 
@@ -471,12 +496,9 @@ impl<'a, I, T, const N: usize> TryFrom<&'a mut IndexSlice<I, T>> for &'a mut Ind
 }
 
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-#[cfg(feature = "serde")]
 impl<I, T, const N: usize> Serialize for IndexArray<I, T, N>
 where
-    [T; N]: Serialize,
+    T: Serialize,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -487,14 +509,88 @@ where
 }
 
 #[cfg(feature = "serde")]
+struct IndexArrayVisitor<I, T, const N: usize>(PhantomData<(I, T)>);
+
+// We unfortunately can't reuse the serde array implementation because it only supports arrays up
+// to length 32. This is loosely based on https://docs.rs/serde_arrays/latest/src/serde_arrays/lib.rs.html#179
+#[cfg(feature = "serde")]
+impl<'de, I, T, const N: usize> serde::de::Visitor<'de> for IndexArrayVisitor<I, T, N>
+where
+    T: Deserialize<'de>,
+{
+    type Value = IndexArray<I, T, N>;
+
+    fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(formatter, "an array of size {N}")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::SeqAccess<'de>,
+    {
+        let mut filled = 0;
+        let mut err = None;
+
+        let mut arr = [const { MaybeUninit::<T>::uninit() }; N];
+
+        for slot in &mut arr {
+            match seq.next_element() {
+                Err(e) => {
+                    err = Some(e);
+                    break;
+                }
+                Ok(None) => {
+                    err = Some(serde::de::Error::invalid_length(filled, &self));
+                    break;
+                }
+                Ok(Some(e)) => {
+                    *slot = MaybeUninit::new(e);
+                    filled += 1;
+                }
+            }
+        }
+
+        if err.is_none() {
+            match seq.next_element::<T>() {
+                Ok(None) => (),
+                Ok(Some(_)) => {
+                    err = Some(serde::de::Error::invalid_length(filled + 1, &self));
+                }
+                Err(e) => err = Some(e),
+            }
+        }
+
+        if let Some(err) = err {
+            if core::mem::needs_drop::<T>() {
+                for e in arr.into_iter().take(filled) {
+                    // Safety: the loop above ensures the first `filled` elements are initialized
+                    unsafe {
+                        let _ = e.assume_init();
+                    }
+                }
+            }
+            return Err(err);
+        }
+
+        // SAFETY: we ensured that filled == N
+        // We don't need to drop arr because MaybeUninit doesn't drop.
+        // See https://github.com/rust-lang/rust/issues/62875#issuecomment-513834029
+        // for why we need the `_copy` version
+        let array_init = unsafe { core::mem::transmute_copy(&arr) };
+
+        Ok(IndexArray::new(array_init))
+    }
+}
+
+#[cfg(feature = "serde")]
 impl<'de, I, T, const N: usize> Deserialize<'de> for IndexArray<I, T, N>
 where
-    [T; N]: Deserialize<'de>,
+    T: Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        Ok(Self::new(<[T; N]>::deserialize(deserializer)?))
+        deserializer.deserialize_tuple(N, IndexArrayVisitor(PhantomData))
     }
 }
