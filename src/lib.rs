@@ -251,12 +251,11 @@ pub mod __private {
     #[track_caller]
     pub fn index_array_from_values_and_distinct_indices<I, T, const N: usize>(
         indices: [I; N],
-        values: ManuallyDrop<[T; N]>,
+        values: [T; N],
     ) -> IndexArray<I, T, N>
     where
         I: Idx,
     {
-        let values = ManuallyDrop::into_inner(values);
         let mut data: [MaybeUninit<T>; N] = [const { MaybeUninit::uninit() }; N];
         let mut initialized = [false; N];
         let mut i = 0;

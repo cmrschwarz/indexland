@@ -223,28 +223,6 @@ impl<I, T, const N: usize> IndexArray<I, T, N> {
     pub const fn from_mut_array_ref(arr: &mut [T; N]) -> &mut IndexArray<I, T, N> {
         unsafe { &mut *arr.as_mut_ptr().cast() }
     }
-
-    #[cfg(feature = "serde")]
-    /// Use with [`serde(serialize_with = "path")`](https://serde.rs/field-attrs.html#serialize_with)
-    /// to serialize as a map instead of an array.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use indexland::IndexArray;
-    /// #[derive(serde::Serialize)]
-    /// struct Foo {
-    ///     #[serde(serialize_with = "IndexArray::serialize_as_map")]
-    ///     bar: IndexArray<u32, String, 42>,
-    /// }
-    /// ```
-    pub fn serialize_as_map<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        I: Idx + Serialize,
-        T: Serialize,
-    {
-        serializer.collect_map(self.iter_enumerated())
-    }
 }
 
 impl<I, T, const N: usize> AsRef<[T]> for IndexArray<I, T, N> {
@@ -592,5 +570,158 @@ where
         D: Deserializer<'de>,
     {
         deserializer.deserialize_tuple(N, IndexArrayVisitor(PhantomData))
+    }
+}
+
+#[cfg(feature = "serde")]
+pub mod serde_map {
+    //! Functions to serialize and deserialize an [`IndexArray`] as a map.
+    //!
+    //! The default `serde` implementation serializes `IndexArray` as a sequence.
+    //! This module uses a map of indices to values instead. It is mainly indended for
+    //! making human readable formats like json more readable, for example if the index is an enum.
+    //!
+    //! Use [`serde(with = "indexland::index_array::serde_map")`](https://serde.rs/field-attrs.html#serialize_with)
+    //! to apply this to a field.
+    //!
+    //! # Example
+    //!
+    //! ```
+    //! # use indexland::IndexArray;
+    //! # use serde::{Deserialize, Serialize};
+    //!
+    //! #[derive(Deserialize, Serialize)]
+    //! struct Data {
+    //!     #[serde(with = "indexland::index_array::serde_map")]
+    //!     map: IndexArray<usize, String, 42>,
+    //! }
+    //! ```
+
+    use core::{marker::PhantomData, mem::MaybeUninit};
+
+    use crate::{Idx, IndexArray};
+    use serde::{
+        de::{Deserialize, Deserializer, Visitor},
+        ser::{Serialize, Serializer},
+    };
+
+    /// Serializes an [`IndexArray`] as an ordered sequence.
+    ///
+    /// This function may be used in a field attribute for deriving [`Serialize`]:
+    ///
+    /// ```
+    /// # use indexland::IndexArray;
+    /// # use serde::Serialize;
+    /// #[derive(Serialize)]
+    /// struct Data {
+    ///     #[serde(serialize_with = "indexland::index_array::serde_map::serialize")]
+    ///     map: IndexArray<i32, u64, 42>,
+    ///     // ...
+    /// }
+    /// ```
+    pub fn serialize<S, I, T, const N: usize>(
+        array: &IndexArray<I, T, N>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        I: Idx + Serialize,
+        T: Serialize,
+        S: Serializer,
+    {
+        serializer.collect_map(array.iter_enumerated())
+    }
+
+    struct MapVisitor<I, T, const N: usize>(PhantomData<IndexArray<I, T, N>>);
+
+    impl<'de, I: Idx + Deserialize<'de>, T: Deserialize<'de>, const N: usize> Visitor<'de>
+        for MapVisitor<I, T, N>
+    {
+        type Value = IndexArray<I, T, N>;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            write!(formatter, "a map with {N} entries")
+        }
+
+        fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::MapAccess<'de>,
+        {
+            // PERF: use a bitfield for this?
+            let mut initialized = [false; N];
+            let mut arr = [const { MaybeUninit::uninit() }; N];
+
+            let mut len = 0;
+
+            let mut err = None;
+
+            loop {
+                match map.next_entry::<I, T>() {
+                    Ok(None) => break,
+                    Err(e) => {
+                        err = Some(e);
+                        break;
+                    }
+                    Ok(Some((k, v))) => {
+                        let index = k.into_usize();
+                        if initialized[index] {
+                            let _ = unsafe { std::ptr::read(&raw const arr[index]).assume_init() };
+                        } else {
+                            if len == N {
+                                err = Some(serde::de::Error::invalid_length(len + 1, &self));
+                                break;
+                            }
+                            len += 1;
+                            initialized[index] = true;
+                        }
+                        arr[len] = MaybeUninit::new(v);
+                    }
+                }
+            }
+
+            if err.is_none() && len != N {
+                err = Some(serde::de::Error::invalid_length(len, &self));
+            }
+
+            if let Some(err) = err {
+                if core::mem::needs_drop::<T>() {
+                    for (i, &initialized) in initialized.iter().enumerate() {
+                        if initialized {
+                            let _ = unsafe { std::ptr::read(&raw const arr[i]).assume_init() };
+                        }
+                    }
+                }
+                return Err(err);
+            }
+
+            Ok(IndexArray::new(unsafe {
+                //SAFETY: we ensure above that all `N` slots are initialized
+                core::mem::transmute_copy(&arr)
+            }))
+        }
+    }
+
+    /// Deserializes an [`IndexArray`] from a map from index to value.
+    ///
+    /// This function may be used in a field attribute for deriving [`Deserialize`]:
+    ///
+    /// ```
+    /// # use indexland::IndexArray;
+    /// # use serde::Deserialize;
+    /// #[derive(Deserialize)]
+    /// struct Data {
+    ///     #[serde(serialize_with = "indexland::index_array::serde_map::serialize")]
+    ///     map: IndexArray<i32, u64, 42>,
+    ///     // ...
+    /// }
+    /// ```
+    pub fn deserialize<'de, D, I, T, const N: usize>(
+        deserializer: D,
+    ) -> Result<IndexArray<I, T, N>, D::Error>
+    where
+        D: Deserializer<'de>,
+        I: Idx + Deserialize<'de>,
+        T: Deserialize<'de>,
+    {
+        deserializer.deserialize_seq(MapVisitor(PhantomData))
     }
 }
