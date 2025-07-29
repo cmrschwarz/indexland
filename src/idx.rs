@@ -44,6 +44,8 @@ pub trait Idx: 'static + Copy + Ord {
 
 pub trait IdxEnum: Idx {
     const VARIANT_COUNT: usize;
+    // we would like to use [Self; Self::VARIANT_COUNT] instead but unfortunately generic const
+    // exprs are unstable :/
     const VARIANTS: &'static [Self];
 
     /// Helper type to construct [`EnumIndexArray`](crate::index_array::EnumIndexArray)

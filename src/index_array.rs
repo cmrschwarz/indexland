@@ -6,6 +6,7 @@ use core::{
     fmt::Debug,
     hash::Hash,
     marker::PhantomData,
+    mem::MaybeUninit,
     ops::{Deref, DerefMut},
 };
 
@@ -116,19 +117,34 @@ macro_rules! enum_index_array {
     };
 }
 
+impl<I, T, const N: usize> IndexArray<I, MaybeUninit<T>, N> {
+    pub const fn transpose(self) -> MaybeUninit<IndexArray<I, T, N>> {
+        unsafe {
+            // SAFETY: T and MaybeUninit<T> have the same layout.
+            // Rust does not allow `transmute<[MaybeUninit<T>; N], MaybeUninit<[T; N]>>()` though,
+            // so we have to do this hack.
+            // We don't have to `forget()` the original value since `MaybeUninit<T>` does not drop `T`.
+            core::ptr::read(&raw const self as *const MaybeUninit<IndexArray<I, T, N>>)
+        }
+    }
+}
+
 impl<I, T, const N: usize> IndexArray<I, T, N> {
+    #[inline(always)]
     pub const fn new(data: [T; N]) -> Self {
         Self {
             data,
             _phantom: PhantomData,
         }
     }
-    pub fn map<F, U>(self, f: F) -> [U; N]
+
+    pub fn map<F, U>(self, f: F) -> IndexArray<I, U, N>
     where
         F: FnMut(T) -> U,
     {
-        self.data.map(f)
+        IndexArray::new(self.data.map(f))
     }
+
     pub fn as_array(&self) -> &[T; N] {
         &self.data
     }
@@ -211,6 +227,11 @@ impl<I, T, const N: usize> AsRef<[T]> for IndexArray<I, T, N> {
         self.as_slice()
     }
 }
+impl<I, T, const N: usize> AsRef<[T; N]> for IndexArray<I, T, N> {
+    fn as_ref(&self) -> &[T; N] {
+        &self.data
+    }
+}
 impl<I, T, const N: usize> AsRef<IndexSlice<I, T>> for IndexArray<I, T, N> {
     fn as_ref(&self) -> &IndexSlice<I, T> {
         self.as_index_slice()
@@ -225,6 +246,11 @@ impl<I, T, const N: usize> AsMut<[T]> for IndexArray<I, T, N> {
 impl<I, T, const N: usize> AsMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
     fn as_mut(&mut self) -> &mut IndexSlice<I, T> {
         self.as_mut_index_slice()
+    }
+}
+impl<I, T, const N: usize> AsMut<[T; N]> for IndexArray<I, T, N> {
+    fn as_mut(&mut self) -> &mut [T; N] {
+        &mut self.data
     }
 }
 
@@ -252,7 +278,7 @@ impl<I, T, const N: usize> BorrowMut<IndexSlice<I, T>> for IndexArray<I, T, N> {
 
 impl<I, T, const N: usize> Clone for IndexArray<I, T, N>
 where
-    [T; N]: Clone,
+    T: Clone,
 {
     fn clone(&self) -> Self {
         Self {

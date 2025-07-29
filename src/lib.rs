@@ -10,6 +10,7 @@
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::type_complexity)]
 #![allow(clippy::return_self_not_must_use)]
+#![allow(clippy::ptr_as_ptr)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 // nostd
 #![no_std]
