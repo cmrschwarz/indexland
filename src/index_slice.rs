@@ -58,6 +58,15 @@ impl<I, T> IndexSlice<I, T> {
         &mut self.data
     }
 
+    #[inline(always)]
+    pub const fn from_ref(s: &T) -> &Self {
+        IndexSlice::from_slice(core::slice::from_ref(s))
+    }
+    #[inline(always)]
+    pub const fn from_mut(s: &mut T) -> &mut Self {
+        IndexSlice::from_mut_slice(core::slice::from_mut(s))
+    }
+
     #[inline]
     pub const fn len(&self) -> usize {
         self.data.len()

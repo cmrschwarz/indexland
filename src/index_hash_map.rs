@@ -73,19 +73,19 @@ pub struct IndexSlice<I, K, V> {
 }
 
 impl<I, K, V> IndexSlice<I, K, V> {
-    #[inline]
+    #[inline(always)]
     pub fn from_slice(s: &Slice<K, V>) -> &Self {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
-    #[inline]
+    #[inline(always)]
     pub fn from_mut_slice(s: &mut Slice<K, V>) -> &mut Self {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
-    #[inline]
+    #[inline(always)]
     pub fn into_slice(s: &Self) -> &Slice<K, V> {
         unsafe { &*(core::ptr::from_ref(s) as *const Slice<K, V>) }
     }
-    #[inline]
+    #[inline(always)]
     pub fn into_mut_slice(s: &mut Self) -> &mut Slice<K, V> {
         unsafe { &mut *(core::ptr::from_mut(s) as *mut Slice<K, V>) }
     }
