@@ -98,13 +98,7 @@ impl<I, T, const CAP: usize> IndexSmallVec<I, T, CAP> {
     {
         self.data.swap_remove(idx.into_usize())
     }
-    pub fn reserve(&mut self, additional: I)
-    where
-        I: Idx,
-    {
-        self.data.reserve(additional.into_usize());
-    }
-    pub fn reserve_len(&mut self, additional: usize) {
+    pub fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     pub fn extend_from_slice(&mut self, slice: &[T])

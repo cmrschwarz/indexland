@@ -407,13 +407,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     {
         Self::from(self.data.split_off(at))
     }
-    pub fn reserve(&mut self, additional: I)
-    where
-        I: Idx,
-    {
-        self.data.reserve(additional.into_usize());
-    }
-    pub fn reserve_len(&mut self, additional: usize) {
+    pub fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     pub fn insert(&mut self, key: K, value: V) -> Option<V>

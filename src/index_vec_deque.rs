@@ -101,43 +101,14 @@ impl<I, T> IndexVecDeque<I, T> {
     pub fn reserve_exact(&mut self, additional: usize) {
         self.data.reserve_exact(additional);
     }
-    pub fn reserve_exact_total(&mut self, cap_idx: I)
-    where
-        I: Idx,
-    {
-        self.data
-            .reserve_exact(cap_idx.into_usize().saturating_sub(self.len()));
-    }
     pub fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
-    pub fn reserve_total(&mut self, cap_idx: I)
-    where
-        I: Idx,
-    {
-        self.data
-            .reserve(cap_idx.into_usize().saturating_sub(self.len()));
-    }
-
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), TryReserveError> {
         self.data.try_reserve_exact(additional)
     }
-    pub fn try_reserve_exact_total(&mut self, cap_idx: I) -> Result<(), TryReserveError>
-    where
-        I: Idx,
-    {
-        self.data
-            .try_reserve_exact(cap_idx.into_usize().saturating_sub(self.len()))
-    }
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), TryReserveError> {
         self.data.try_reserve(additional)
-    }
-    pub fn try_reserve_total(&mut self, cap_idx: I) -> Result<(), TryReserveError>
-    where
-        I: Idx,
-    {
-        self.data
-            .try_reserve(cap_idx.into_usize().saturating_sub(self.len()))
     }
     pub fn shrink_to_fit(&mut self) {
         self.data.shrink_to_fit();
@@ -461,23 +432,6 @@ impl<I, T> IndexVecDeque<I, T> {
         let res = unsafe { core::ptr::read(&raw const self.data) };
         core::mem::forget(self);
         res
-    }
-
-    // Additional missing VecDeque functions
-    pub fn resize_to_idx_with<F>(&mut self, new_len_idx: I, f: F)
-    where
-        I: Idx,
-        F: FnMut() -> T,
-    {
-        self.data.resize_with(new_len_idx.into_usize(), f);
-    }
-
-    pub fn resize_to_idx(&mut self, len_idx: I, value: T)
-    where
-        T: Clone,
-        I: Idx,
-    {
-        self.data.resize(len_idx.into_usize(), value);
     }
 
     #[cfg(feature = "serde")]

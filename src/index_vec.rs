@@ -111,42 +111,14 @@ impl<I, T> IndexVec<I, T> {
     pub fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
-    pub fn reserve_total(&mut self, cap_idx: I)
-    where
-        I: Idx,
-    {
-        self.data
-            .reserve(cap_idx.into_usize().saturating_sub(self.data.len()));
-    }
     pub fn reserve_exact(&mut self, additional: usize) {
         self.data.reserve_exact(additional);
-    }
-    pub fn reserve_exact_total(&mut self, cap_idx: I)
-    where
-        I: Idx,
-    {
-        self.data
-            .reserve_exact(self.data.len().saturating_sub(cap_idx.into_usize()));
     }
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), TryReserveError> {
         self.data.try_reserve(additional)
     }
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), TryReserveError> {
         self.data.try_reserve_exact(additional)
-    }
-    pub fn try_reserve_total(&mut self, cap_idx: I) -> Result<(), TryReserveError>
-    where
-        I: Idx,
-    {
-        self.data
-            .try_reserve(self.data.len().saturating_sub(cap_idx.into_usize()))
-    }
-    pub fn try_reserve_exact_total(&mut self, cap_idx: I) -> Result<(), TryReserveError>
-    where
-        I: Idx,
-    {
-        self.data
-            .try_reserve_exact(self.data.len().saturating_sub(cap_idx.into_usize()))
     }
 
     pub fn shrink_to_fit(&mut self) {
@@ -309,12 +281,11 @@ impl<I, T> IndexVec<I, T> {
         IndexVec::from(self.data.split_off(at.into_usize()))
     }
 
-    pub fn resize_with<F>(&mut self, new_len: I, f: F)
+    pub fn resize_with<F>(&mut self, new_len: usize, f: F)
     where
-        I: Idx,
         F: FnMut() -> T,
     {
-        self.data.resize_with(new_len.into_usize(), f);
+        self.data.resize_with(new_len, f);
     }
 
     pub fn leak<'a>(self) -> &'a mut IndexSlice<I, T> {
@@ -325,12 +296,11 @@ impl<I, T> IndexVec<I, T> {
         self.data.spare_capacity_mut().into()
     }
 
-    pub fn resize(&mut self, len: I, value: T)
+    pub fn resize(&mut self, len: usize, value: T)
     where
-        I: Idx,
         T: Clone,
     {
-        self.data.resize(len.into_usize(), value);
+        self.data.resize(len, value);
     }
 
     pub fn extend_from_slice<S: AsRef<[T]>>(&mut self, slice: S)

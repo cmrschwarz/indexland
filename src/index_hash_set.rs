@@ -382,38 +382,14 @@ impl<I, T, S> IndexHashSet<I, T, S> {
     pub fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
-    pub fn reserve_total(&mut self, capacity_idx_min: I)
-    where
-        I: Idx,
-    {
-        self.data.reserve(capacity_idx_min.into_usize());
-    }
     pub fn reserve_exact(&mut self, additional: usize) {
         self.data.reserve_exact(additional.into_usize());
-    }
-    pub fn reserve_exact_total(&mut self, capacity_idx: I)
-    where
-        I: Idx,
-    {
-        self.data.reserve_exact(capacity_idx.into_usize());
     }
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), TryReserveError> {
         self.data.try_reserve(additional)
     }
-    pub fn try_reserve_total(&mut self, capacity_idx_min: I) -> Result<(), TryReserveError>
-    where
-        I: Idx,
-    {
-        self.data.try_reserve(capacity_idx_min.into_usize())
-    }
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), TryReserveError> {
         self.data.try_reserve_exact(additional)
-    }
-    pub fn try_reserve_exact_total(&mut self, capacity_idx: I) -> Result<(), TryReserveError>
-    where
-        I: Idx,
-    {
-        self.data.try_reserve_exact(capacity_idx.into_usize())
     }
     pub fn shrink_to_fit(&mut self) {
         self.data.shrink_to_fit();
