@@ -116,7 +116,7 @@ impl<I, T> IndexVec<I, T> {
         I: Idx,
     {
         self.data
-            .reserve(self.data.len().saturating_sub(cap_idx.into_usize()));
+            .reserve(cap_idx.into_usize().saturating_sub(self.data.len()));
     }
     pub fn reserve_exact(&mut self, additional: usize) {
         self.data.reserve_exact(additional);
