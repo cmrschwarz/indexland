@@ -232,6 +232,13 @@ impl<I, T> IndexSlab<I, T> {
             _phantom: PhantomData,
         }
     }
+
+    pub fn indices(&self) -> impl Iterator<Item = I>
+    where
+        I: Idx,
+    {
+        self.data.iter().map(|(key, _value)| I::from_usize(key))
+    }
 }
 
 impl<I, X, T> ops::Index<X> for IndexSlab<I, T>

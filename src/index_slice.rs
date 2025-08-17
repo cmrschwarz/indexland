@@ -1,6 +1,6 @@
 use super::Idx;
 use crate::{
-    IdxCompat, IndexArray, IndexRangeBounds,
+    IdxCompat, IndexArray, IndexRange, IndexRangeBounds,
     index_enumerate::IndexEnumerate,
     sequence::{Sequence, SequenceIndex, SequenceMut, UnsafeSequence, UnsafeSequenceMut},
 };
@@ -882,54 +882,18 @@ impl<I, T> IndexSlice<I, T> {
         Join::join(self, sep)
     }
 
-    /// The slice version of `iter_enumerated` takes an `initial_offset`
-    /// parameter to avoid the following common mistake:
-    /// ``` compile fail
-    /// # use indexland::{index_vec, Idx, IndexVec};
-    /// # #[derive(Idx)]
-    /// # struct MyId(u32);
-    /// #
-    /// # let myvec = IndexVec::from_iter(0..10);
-    ///
-    /// // !!! BUG: `i` would start at zero !!!
-    /// for (i, &v) in myvec[MyId(1)..MyId(3)].iter_enumerated() {
-    ///     println!("myvec[i] = {v}");
-    /// }
-    /// ```
-    ///
-    /// Instead, using [`iter_enumerated_range`](crate::IndexVec::iter_enumerated_range)
-    /// on the container itself is preferred:
-    /// ```
-    /// # use indexland::{index_vec, Idx, IndexVec};
-    /// # #[derive(Idx)]
-    /// # struct MyId(u32);
-    /// #
-    /// # let myvec = IndexVec::from_iter(0..10);
-    /// // instead, use the following code:
-    /// for (i, &v) in myvec.iter_enumerated_range(MyId(1)..MyId(3)) {
-    ///     println!("myvec[i] = {v}");
-    /// }
-    /// ```
-    ///
-    /// If you actualy wanted to enumerate a slice starting from zero,
-    /// simply pass [`Idx::ZERO`] as the initial offset.
-    pub fn iter_enumerated(&self, initial_offset: I) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
+    pub fn iter_enumerated(&self) -> IndexEnumerate<I, core::slice::Iter<'_, T>>
     where
         I: Idx,
     {
-        IndexEnumerate::new(initial_offset, &self.data)
+        IndexEnumerate::new(I::ZERO, &self.data)
     }
 
-    /// See [`iter_enumerated`](IndexSlice::iter_enumerated) for why this api
-    /// deviates by having an `initial_offset`.
-    pub fn iter_enumerated_mut(
-        &mut self,
-        initial_offset: I,
-    ) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
+    pub fn iter_enumerated_mut(&mut self) -> IndexEnumerate<I, core::slice::IterMut<'_, T>>
     where
         I: Idx,
     {
-        IndexEnumerate::new(initial_offset, &mut self.data)
+        IndexEnumerate::new(I::ZERO, &mut self.data)
     }
 
     pub fn iter_enumerated_range(
@@ -951,6 +915,13 @@ impl<I, T> IndexSlice<I, T> {
     {
         let range = range.canonicalize(self.len());
         IndexEnumerate::new(I::ZERO, &mut self.data[range])
+    }
+
+    pub fn indices(&self) -> IndexRange<I>
+    where
+        I: Idx,
+    {
+        IndexRange::new(I::ZERO..self.len_idx())
     }
 
     #[cfg(feature = "serde")]
