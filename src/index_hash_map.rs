@@ -459,6 +459,14 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     {
         self.data.entry(key)
     }
+
+    pub fn get<Q>(&self, key: &Q) -> Option<&V>
+    where
+        Q: ?Sized + Hash + Equivalent<K>,
+        S: BuildHasher,
+    {
+        self.data.get(key)
+    }
 }
 
 impl<'a, Idx, K, V, S> Extend<(&'a K, &'a V)> for IndexHashMap<Idx, K, V, S>
@@ -519,7 +527,31 @@ where
     }
 }
 
-// TODO: implement slicing shenanegans
+impl<K, I1, V1, S1, I2, V2, S2> PartialEq<IndexHashMap<I2, K, V2, S2>>
+    for IndexHashMap<I1, K, V1, S1>
+where
+    K: Hash + Eq,
+    V1: PartialEq<V2>,
+    S1: BuildHasher,
+    S2: BuildHasher,
+{
+    fn eq(&self, other: &IndexHashMap<I2, K, V2, S2>) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        self.iter()
+            .all(|(key, value)| other.get(key).is_some_and(|v| *value == *v))
+    }
+}
+
+impl<K, I, V, S> Eq for IndexHashMap<I, K, V, S>
+where
+    K: Eq + Hash,
+    V: Eq,
+    S: BuildHasher,
+{
+}
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
