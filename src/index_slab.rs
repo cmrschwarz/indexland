@@ -215,6 +215,23 @@ impl<I, T> IndexSlab<I, T> {
     pub fn drain(&mut self) -> Drain<'_, T> {
         self.data.drain()
     }
+
+    pub fn iter_enumerated(&self) -> IterEnumerated<'_, I, T>
+    where
+        I: Idx,
+    {
+        IterEnumerated {
+            base: self.data.iter(),
+            _phantom: PhantomData,
+        }
+    }
+
+    pub fn iter_enumerated_mut(&mut self) -> IterEnumeratedMut<'_, I, T> {
+        IterEnumeratedMut {
+            base: self.data.iter_mut(),
+            _phantom: PhantomData,
+        }
+    }
 }
 
 impl<I, X, T> ops::Index<X> for IndexSlab<I, T>
@@ -256,7 +273,7 @@ impl<'a, I, T> IntoIterator for &'a IndexSlab<I, T>
 where
     I: Idx,
 {
-    type Item = (I, &'a T);
+    type Item = &'a T;
     type IntoIter = Iter<'a, I, T>;
 
     fn into_iter(self) -> Iter<'a, I, T> {
@@ -268,7 +285,7 @@ impl<'a, I, T> IntoIterator for &'a mut IndexSlab<I, T>
 where
     I: Idx,
 {
-    type Item = (I, &'a mut T);
+    type Item = &'a mut T;
     type IntoIter = IterMut<'a, I, T>;
 
     fn into_iter(self) -> IterMut<'a, I, T> {
@@ -301,7 +318,7 @@ where
 {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         if fmt.alternate() {
-            fmt.debug_map().entries(self.iter()).finish()
+            fmt.debug_map().entries(self.iter_enumerated()).finish()
         } else {
             fmt.debug_struct("IndexSlab")
                 .field("len", &self.data.len())
@@ -426,12 +443,10 @@ impl<'a, I, T> Iterator for Iter<'a, I, T>
 where
     I: Idx,
 {
-    type Item = (I, &'a T);
+    type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.base
-            .next()
-            .map(|(key, value)| (I::from_usize(key), value))
+        self.base.next().map(|(_key, value)| value)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -444,9 +459,7 @@ where
     I: Idx,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.base
-            .next_back()
-            .map(|(key, value)| (I::from_usize(key), value))
+        self.base.next_back().map(|(_key, value)| value)
     }
 }
 
@@ -470,12 +483,10 @@ impl<'a, I, T> Iterator for IterMut<'a, I, T>
 where
     I: Idx,
 {
-    type Item = (I, &'a mut T);
+    type Item = &'a mut T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.base
-            .next()
-            .map(|(key, value)| (I::from_usize(key), value))
+        self.base.next().map(|(_key, value)| value)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -488,9 +499,7 @@ where
     I: Idx,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.base
-            .next_back()
-            .map(|(key, value)| (I::from_usize(key), value))
+        self.base.next_back().map(|(_key, value)| value)
     }
 }
 
@@ -505,6 +514,96 @@ where
 
 impl<I, T> FusedIterator for IterMut<'_, I, T> where I: Idx {}
 
+// ===== IterEnumerated =====
+pub struct IterEnumerated<'a, I, T> {
+    base: slab::Iter<'a, T>,
+    _phantom: PhantomData<fn(I) -> &'a T>,
+}
+
+impl<'a, I, T> Iterator for IterEnumerated<'a, I, T>
+where
+    I: Idx,
+{
+    type Item = (I, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.base
+            .next()
+            .map(|(key, value)| (I::from_usize(key), value))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.base.size_hint()
+    }
+}
+
+impl<I, T> DoubleEndedIterator for IterEnumerated<'_, I, T>
+where
+    I: Idx,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.base
+            .next_back()
+            .map(|(key, value)| (I::from_usize(key), value))
+    }
+}
+
+impl<I, T> ExactSizeIterator for IterEnumerated<'_, I, T>
+where
+    I: Idx,
+{
+    fn len(&self) -> usize {
+        self.base.len()
+    }
+}
+
+impl<I, T> FusedIterator for IterEnumerated<'_, I, T> where I: Idx {}
+
+// ===== IterEnumeratedMut =====
+pub struct IterEnumeratedMut<'a, I, T> {
+    base: slab::IterMut<'a, T>,
+    _phantom: PhantomData<fn(I) -> &'a mut T>,
+}
+impl<'a, I, T> Iterator for IterEnumeratedMut<'a, I, T>
+where
+    I: Idx,
+{
+    type Item = (I, &'a mut T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.base
+            .next()
+            .map(|(key, value)| (I::from_usize(key), value))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.base.size_hint()
+    }
+}
+
+impl<I, T> DoubleEndedIterator for IterEnumeratedMut<'_, I, T>
+where
+    I: Idx,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.base
+            .next_back()
+            .map(|(key, value)| (I::from_usize(key), value))
+    }
+}
+
+impl<I, T> ExactSizeIterator for IterEnumeratedMut<'_, I, T>
+where
+    I: Idx,
+{
+    fn len(&self) -> usize {
+        self.base.len()
+    }
+}
+
+impl<I, T> FusedIterator for IterEnumeratedMut<'_, I, T> where I: Idx {}
+
+// ===== serde =====
 #[cfg(feature = "serde")]
 impl<I, T> Serialize for IndexSlab<I, T>
 where
