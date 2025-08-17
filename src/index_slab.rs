@@ -239,6 +239,47 @@ impl<I, T> IndexSlab<I, T> {
     {
         self.data.iter().map(|(key, _value)| I::from_usize(key))
     }
+
+    pub const fn from_slab(slab: Slab<T>) -> Self {
+        IndexSlab {
+            data: slab,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub const fn into_slab(self) -> Slab<T> {
+        // required because this function is const
+        let res = unsafe { core::ptr::read(&raw const self.data) };
+        core::mem::forget(self);
+        res
+    }
+
+    pub fn map<U>(self, f: impl Fn(T) -> U) -> IndexSlab<I, U> {
+        IndexSlab::from_slab(
+            self.data
+                .into_iter()
+                .map(|(key, value)| (key, f(value)))
+                .collect(),
+        )
+    }
+
+    pub fn map_ref<U>(&self, f: impl Fn(&T) -> U) -> IndexSlab<I, U> {
+        IndexSlab::from_slab(
+            self.data
+                .iter()
+                .map(|(key, value)| (key, f(value)))
+                .collect(),
+        )
+    }
+
+    pub fn map_ref_mut<U>(&mut self, f: impl Fn(&mut T) -> U) -> IndexSlab<I, U> {
+        IndexSlab::from_slab(
+            self.data
+                .iter_mut()
+                .map(|(key, value)| (key, f(value)))
+                .collect(),
+        )
+    }
 }
 
 impl<I, X, T> ops::Index<X> for IndexSlab<I, T>
