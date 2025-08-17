@@ -34,6 +34,16 @@ pub struct IndexSlice<I, T> {
 
 impl<I, T> IndexSlice<I, T> {
     #[inline(always)]
+    pub const fn empty() -> &'static Self {
+        Self::from_slice(&[])
+    }
+
+    #[inline(always)]
+    pub const fn empty_mut() -> &'static Self {
+        Self::from_mut_slice(&mut [])
+    }
+
+    #[inline(always)]
     pub const fn from_slice(s: &[T]) -> &Self {
         unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
