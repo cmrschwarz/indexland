@@ -254,29 +254,38 @@ impl<I, T> IndexSlab<I, T> {
         res
     }
 
-    pub fn map<U>(self, f: impl Fn(T) -> U) -> IndexSlab<I, U> {
+    pub fn map<U>(self, mut f: impl FnMut(I, T) -> U) -> IndexSlab<I, U>
+    where
+        I: Idx,
+    {
         IndexSlab::from_slab(
             self.data
                 .into_iter()
-                .map(|(key, value)| (key, f(value)))
+                .map(|(key, value)| (key, f(I::from_usize(key), value)))
                 .collect(),
         )
     }
 
-    pub fn map_ref<U>(&self, f: impl Fn(&T) -> U) -> IndexSlab<I, U> {
+    pub fn map_ref<U>(&self, mut f: impl FnMut(I, &T) -> U) -> IndexSlab<I, U>
+    where
+        I: Idx,
+    {
         IndexSlab::from_slab(
             self.data
                 .iter()
-                .map(|(key, value)| (key, f(value)))
+                .map(|(key, value)| (key, f(I::from_usize(key), value)))
                 .collect(),
         )
     }
 
-    pub fn map_ref_mut<U>(&mut self, f: impl Fn(&mut T) -> U) -> IndexSlab<I, U> {
+    pub fn map_ref_mut<U>(&mut self, mut f: impl FnMut(I, &mut T) -> U) -> IndexSlab<I, U>
+    where
+        I: Idx,
+    {
         IndexSlab::from_slab(
             self.data
                 .iter_mut()
-                .map(|(key, value)| (key, f(value)))
+                .map(|(key, value)| (key, f(I::from_usize(key), value)))
                 .collect(),
         )
     }
