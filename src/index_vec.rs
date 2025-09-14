@@ -560,12 +560,14 @@ impl<I, T> Default for IndexVec<I, T> {
 impl<I, T> Deref for IndexVec<I, T> {
     type Target = IndexSlice<I, T>;
 
+    #[track_caller]
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
         IndexSlice::from_slice(&self.data)
     }
 }
 impl<I, T> DerefMut for IndexVec<I, T> {
+    #[track_caller]
     #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         IndexSlice::from_mut_slice(&mut self.data)
@@ -809,6 +811,7 @@ where
 {
     type Output = S::Output;
 
+    #[inline(always)]
     fn index(&self, index: S) -> &Self::Output {
         index.index(self.as_index_slice())
     }
