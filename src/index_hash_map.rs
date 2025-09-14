@@ -453,12 +453,21 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
         IndexRange::new(I::ZERO..self.len_idx())
     }
 
-    pub fn entry(&mut self, key: K) -> indexmap::map::Entry<'_, K, V>
+    pub fn entry(&mut self, key: K) -> Entry<'_, I, K, V>
     where
         K: Hash + Eq,
         S: BuildHasher,
     {
-        self.data.entry(key)
+        match self.data.entry(key) {
+            indexmap::map::Entry::Occupied(entry) => Entry::Occupied(OccupiedEntry {
+                data: entry,
+                _phantom: PhantomData,
+            }),
+            indexmap::map::Entry::Vacant(entry) => Entry::Vacant(VacantEntry {
+                data: entry,
+                _phantom: PhantomData,
+            }),
+        }
     }
 
     pub fn get<Q>(&self, key: &Q) -> Option<&V>
@@ -496,6 +505,34 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
     {
         let (idx, key, value) = self.data.get_full(key)?;
         Some((I::from_usize(idx), key, value))
+    }
+
+    pub fn swap_indices(&mut self, a: I, b: I)
+    where
+        I: Idx,
+    {
+        self.data.swap_indices(a.into_usize(), b.into_usize());
+    }
+
+    #[track_caller]
+    pub fn move_index(&mut self, from: I, to: I)
+    where
+        I: Idx,
+    {
+        self.data.move_index(from.into_usize(), to.into_usize());
+    }
+
+    pub fn get_index_entry(&mut self, index: I) -> Option<IndexedEntry<'_, I, K, V>>
+    where
+        I: Idx,
+    {
+        if index >= self.len_idx() {
+            return None;
+        }
+        Some(IndexedEntry {
+            data: self.data.get_index_entry(index.into_usize())?,
+            _phantom: PhantomData,
+        })
     }
 }
 
@@ -611,7 +648,7 @@ where
 
 // ========== Entry ==========
 
-/// Entry for an existing key-value pair in an [`IndexHashMap`][crate::IndexHashMap]
+/// Entry for an existing key-value pair in an [`IndexHashMap`]
 /// or a vacant location to insert one.
 pub enum Entry<'a, I, K, V> {
     /// Existing slot with equivalent key.
@@ -734,7 +771,7 @@ impl<I, K: fmt::Debug, V: fmt::Debug> fmt::Debug for Entry<'_, I, K, V> {
     }
 }
 
-/// A view into an occupied entry in an [`IndexMap`][crate::IndexMap].
+/// A view into an occupied entry in an [`IndexHashMap`].
 /// It is part of the [`Entry`] enum.
 pub struct OccupiedEntry<'a, I, K, V> {
     data: indexmap::map::OccupiedEntry<'a, K, V>,
@@ -797,7 +834,7 @@ impl<'a, I, K, V> OccupiedEntry<'a, I, K, V> {
 
     /// Remove the key, value pair stored in the map for this entry, and return the value.
     ///
-    /// Like [`Vec::swap_remove`][crate::Vec::swap_remove], the pair is removed by swapping it with
+    /// Like [`Vec::swap_remove`][std::vec::Vec::swap_remove], the pair is removed by swapping it with
     /// the last element of the map and popping it off.
     /// **This perturbs the position of what used to be the last element!**
     ///
@@ -809,7 +846,7 @@ impl<'a, I, K, V> OccupiedEntry<'a, I, K, V> {
 
     /// Remove the key, value pair stored in the map for this entry, and return the value.
     ///
-    /// Like [`Vec::remove`][crate::Vec::remove], the pair is removed by shifting all of the
+    /// Like [`Vec::remove`][std::vec::Vec::remove], the pair is removed by shifting all of the
     /// elements that follow it, preserving their relative order.
     /// **This perturbs the index of all of those elements!**
     ///
@@ -821,7 +858,7 @@ impl<'a, I, K, V> OccupiedEntry<'a, I, K, V> {
 
     /// Remove and return the key, value pair stored in the map for this entry
     ///
-    /// Like [`Vec::swap_remove`][crate::Vec::swap_remove], the pair is removed by swapping it with
+    /// Like [`Vec::swap_remove`][std::vec::Vec::swap_remove], the pair is removed by swapping it with
     /// the last element of the map and popping it off.
     /// **This perturbs the position of what used to be the last element!**
     ///
@@ -833,7 +870,7 @@ impl<'a, I, K, V> OccupiedEntry<'a, I, K, V> {
 
     /// Remove and return the key, value pair stored in the map for this entry
     ///
-    /// Like [`Vec::remove`][crate::Vec::remove], the pair is removed by shifting all of the
+    /// Like [`Vec::remove`][std::vec::Vec::remove], the pair is removed by shifting all of the
     /// elements that follow it, preserving their relative order.
     /// **This perturbs the index of all of those elements!**
     ///
@@ -845,7 +882,7 @@ impl<'a, I, K, V> OccupiedEntry<'a, I, K, V> {
     /// Moves the position of the entry to a new index
     /// by shifting all other entries in-between.
     ///
-    /// This is equivalent to [`IndexMap::move_index`][`crate::IndexMap::move_index`]
+    /// This is equivalent to [`IndexHashMap::move_index`][`crate::IndexHashMap::move_index`]
     /// coming `from` the current [`.index()`][Self::index].
     ///
     /// * If `self.index() < to`, the other pairs will shift down while the targeted pair moves up.
@@ -865,7 +902,7 @@ impl<'a, I, K, V> OccupiedEntry<'a, I, K, V> {
 
     /// Swaps the position of entry with another.
     ///
-    /// This is equivalent to [`IndexMap::swap_indices`][`crate::IndexMap::swap_indices`]
+    /// This is equivalent to [`IndexHashMap::swap_indices`][`crate::IndexHashMap::swap_indices`]
     /// with the current [`.index()`][Self::index] as one of the two being swapped.
     ///
     /// ***Panics*** if the `other` index is out of bounds.
@@ -906,7 +943,7 @@ impl<'a, K, V> From<IndexedEntry<'a, K, V>> for OccupiedEntry<'a, K, V> {
 }
 */
 
-/// A view into a vacant entry in an [`IndexMap`][crate::IndexMap].
+/// A view into a vacant entry in an [`IndexHashMap`].
 /// It is part of the [`Entry`] enum.
 pub struct VacantEntry<'a, I, K, V> {
     data: indexmap::map::VacantEntry<'a, K, V>,
@@ -995,9 +1032,9 @@ impl<I, K: fmt::Debug, V> fmt::Debug for VacantEntry<'_, I, K, V> {
     }
 }
 
-/// A view into an occupied entry in an [`IndexMap`][crate::IndexMap] obtained by index.
+/// A view into an occupied entry in an [`IndexHashMap`] obtained by index.
 ///
-/// This `struct` is created from the [`get_index_entry`][crate::IndexMap::get_index_entry] method.
+/// This `struct` is created from the [`get_index_entry`][crate::IndexHashMap::get_index_entry] method.
 pub struct IndexedEntry<'a, I, K, V> {
     data: indexmap::map::IndexedEntry<'a, K, V>,
     _phantom: PhantomData<I>,
@@ -1049,7 +1086,7 @@ impl<'a, I, K, V> IndexedEntry<'a, I, K, V> {
 
     /// Remove and return the key, value pair stored in the map for this entry
     ///
-    /// Like [`Vec::swap_remove`][crate::Vec::swap_remove], the pair is removed by swapping it with
+    /// Like [`Vec::swap_remove`][std::vec::Vec::swap_remove], the pair is removed by swapping it with
     /// the last element of the map and popping it off.
     /// **This perturbs the position of what used to be the last element!**
     ///
@@ -1061,7 +1098,7 @@ impl<'a, I, K, V> IndexedEntry<'a, I, K, V> {
 
     /// Remove and return the key, value pair stored in the map for this entry
     ///
-    /// Like [`Vec::remove`][crate::Vec::remove], the pair is removed by shifting all of the
+    /// Like [`Vec::remove`][std::vec::Vec::remove], the pair is removed by shifting all of the
     /// elements that follow it, preserving their relative order.
     /// **This perturbs the index of all of those elements!**
     ///
@@ -1073,7 +1110,7 @@ impl<'a, I, K, V> IndexedEntry<'a, I, K, V> {
 
     /// Remove the key, value pair stored in the map for this entry, and return the value.
     ///
-    /// Like [`Vec::swap_remove`][crate::Vec::swap_remove], the pair is removed by swapping it with
+    /// Like [`Vec::swap_remove`][std::vec::Vec::swap_remove], the pair is removed by swapping it with
     /// the last element of the map and popping it off.
     /// **This perturbs the position of what used to be the last element!**
     ///
@@ -1085,7 +1122,7 @@ impl<'a, I, K, V> IndexedEntry<'a, I, K, V> {
 
     /// Remove the key, value pair stored in the map for this entry, and return the value.
     ///
-    /// Like [`Vec::remove`][crate::Vec::remove], the pair is removed by shifting all of the
+    /// Like [`Vec::remove`][std::vec::Vec::remove], the pair is removed by shifting all of the
     /// elements that follow it, preserving their relative order.
     /// **This perturbs the index of all of those elements!**
     ///
@@ -1098,7 +1135,7 @@ impl<'a, I, K, V> IndexedEntry<'a, I, K, V> {
     /// Moves the position of the entry to a new index
     /// by shifting all other entries in-between.
     ///
-    /// This is equivalent to [`IndexMap::move_index`][`crate::IndexMap::move_index`]
+    /// This is equivalent to [`IndexHashMap::move_index`][`crate::IndexHashMap::move_index`]
     /// coming `from` the current [`.index()`][Self::index].
     ///
     /// * If `self.index() < to`, the other pairs will shift down while the targeted pair moves up.
@@ -1118,7 +1155,7 @@ impl<'a, I, K, V> IndexedEntry<'a, I, K, V> {
 
     /// Swaps the position of entry with another.
     ///
-    /// This is equivalent to [`IndexMap::swap_indices`][`crate::IndexMap::swap_indices`]
+    /// This is equivalent to [`IndexHashMap::swap_indices`][`crate::IndexHashMap::swap_indices`]
     /// with the current [`.index()`][Self::index] as one of the two being swapped.
     ///
     /// ***Panics*** if the `other` index is out of bounds.
