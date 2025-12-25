@@ -81,6 +81,7 @@ fn enum_derive_idx(ctx: &EnumCtx) -> TokenStream {
             const ZERO: Self = #name::#var_zero;
             const ONE: Self = #name::#var_one;
             const MAX: Self = #name::#var_max;
+            const MAX_USIZE: usize = #count;
 
             #[inline(always)]
             fn from_usize_unchecked(v: usize) -> Self {

@@ -324,6 +324,8 @@ macro_rules! impl_nonmax_idx {
             const ZERO: Self = NonMax::<$primitive>::ZERO;
             const ONE: Self = NonMax::<$primitive>::ONE;
             const MAX: Self = NonMax::<$primitive>::MAX;
+            const MAX_USIZE: usize = <$primitive as Idx>::MAX_USIZE;
+
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
                 NonMax::<$primitive>::try_from(v).unwrap()

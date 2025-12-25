@@ -83,6 +83,8 @@ fn newtype_derive_idx(ctx: &NewtypeCtx) -> TokenStream {
             const ZERO: Self = #name(#base_as_idx::ZERO);
             const ONE: Self = #name(#base_as_idx::ONE);
             const MAX: Self = #name(#base_as_idx::MAX);
+            const MAX_USIZE: usize = #base_as_idx::MAX_USIZE;
+
             #checked_conversions
             #[inline(always)]
             fn from_usize_unchecked(v: usize) -> Self {

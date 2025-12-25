@@ -4,6 +4,10 @@ pub trait Idx: 'static + Copy + Ord {
     const ZERO: Self;
     const ONE: Self;
     const MAX: Self;
+
+    /// Same as `Self::MAX`, but given as a usize. Useful in const contexts.
+    const MAX_USIZE: usize;
+
     // We can't use `From<usize>` because e.g. u32 does not implement
     // that, and we can't implement it for it (orphan rule).
     // We also can't have a blanket impl of this trait for types that implement
@@ -30,14 +34,14 @@ pub trait Idx: 'static + Copy + Ord {
         Self::from_usize(
             self.into_usize()
                 .saturating_add(other.into_usize())
-                .min(Self::MAX.into_usize()),
+                .min(Self::MAX_USIZE),
         )
     }
     fn saturating_sub(self, other: Self) -> Self {
         Self::from_usize(
             self.into_usize()
                 .saturating_sub(other.into_usize())
-                .min(Self::MAX.into_usize()),
+                .min(Self::MAX_USIZE),
         )
     }
 }
@@ -91,6 +95,8 @@ impl Idx for usize {
     const ZERO: usize = 0;
     const ONE: usize = 1;
     const MAX: usize = usize::MAX;
+    const MAX_USIZE: usize = usize::MAX;
+
     #[inline(always)]
     fn into_usize(self) -> usize {
         self
@@ -131,6 +137,10 @@ macro_rules! primitive_idx_implemenation_unsized {
             const ZERO: $primitive = 0;
             const ONE: $primitive = 1;
             const MAX: $primitive = $primitive::MAX;
+
+            #[allow(clippy::cast_possible_truncation)]
+            const MAX_USIZE: usize = $primitive::MAX as usize;
+
             #[inline(always)]
             fn into_usize(self) -> usize {
                 ::core::convert::TryInto::<usize>::try_into(self).unwrap()
@@ -183,6 +193,10 @@ macro_rules! primitive_idx_implemenation_sized {
             const ZERO: $primitive = 0;
             const ONE: $primitive = 1;
             const MAX: $primitive = $primitive::MAX;
+
+            #[allow(clippy::cast_possible_truncation)]
+            const MAX_USIZE: usize = $primitive::MAX as usize;
+
             #[inline(always)]
             fn into_usize(self) -> usize {
                 ::core::convert::TryInto::<usize>::try_into(self).unwrap()
@@ -225,8 +239,8 @@ macro_rules! primitive_idx_implemenation_sized {
     )*};
 }
 
-primitive_idx_implemenation_unsized![u8, u16, u32, u64];
-primitive_idx_implemenation_sized![isize, i8, i16, i32, i64];
+primitive_idx_implemenation_unsized![u8, u16, u32, u64, u128];
+primitive_idx_implemenation_sized![isize, i8, i16, i32, i64, i128];
 
 /// Declarative alternative to [`#[derive(IdxNewtype)]`](indexland_derive::IdxNewtype).
 ///
@@ -253,6 +267,8 @@ macro_rules! idx_newtype {
             const ZERO: Self = $name(<$base_type as $crate::Idx>::ZERO);
             const ONE: Self = $name(<$base_type as $crate::Idx>::ONE);
             const MAX: Self = $name(<$base_type as $crate::Idx>::MAX);
+            const MAX_USIZE: usize = <$base_type as $crate::Idx>::MAX_USIZE;
+
             #[inline(always)]
             fn from_usize(v: usize) -> Self {
                 $name(<$base_type as $crate::Idx>::from_usize(v))
@@ -371,6 +387,7 @@ mod test {
             const ZERO: Self = IdxManual(0);
             const ONE: Self = IdxManual(1);
             const MAX: Self = IdxManual(usize::MAX);
+            const MAX_USIZE: usize = usize::MAX;
             fn from_usize(v: usize) -> Self {
                 IdxManual(v)
             }
@@ -418,6 +435,8 @@ mod test {
             const ZERO: Self = Self::A;
             const ONE: Self = Self::B;
             const MAX: Self = Self::C;
+            const MAX_USIZE: usize = Self::VARIANT_COUNT;
+
             fn from_usize(v: usize) -> Self {
                 match v {
                     0 => Self::A,
