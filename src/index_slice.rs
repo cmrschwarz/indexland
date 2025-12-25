@@ -1073,7 +1073,7 @@ unsafe impl<I: Idx> GetDisjointMutIndex<I> for Range<I> {
     }
 }
 
-unsafe impl<I: Idx> GetDisjointMutIndex<I> for RangeInclusive<I> {
+unsafe impl<I: Idx + Ord> GetDisjointMutIndex<I> for RangeInclusive<I> {
     #[inline]
     fn is_in_bounds(&self, len: I) -> bool {
         (self.start().into_usize() <= self.end().into_usize())

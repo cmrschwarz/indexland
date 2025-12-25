@@ -1,6 +1,6 @@
 #![allow(clippy::inline_always)]
 
-pub trait Idx: 'static + Copy + Ord {
+pub trait Idx: 'static + Copy {
     const ZERO: Self;
     const ONE: Self;
     const MAX: Self;

@@ -417,7 +417,7 @@ impl<I> IndexRangeBounds<I> for RangeFull {
     }
 }
 
-impl<I: Idx + Add<Output = I>> Iterator for IndexRange<I> {
+impl<I: Idx + Ord + Add<Output = I>> Iterator for IndexRange<I> {
     type Item = I;
     fn next(&mut self) -> Option<I> {
         if self.start == self.end {
@@ -428,7 +428,7 @@ impl<I: Idx + Add<Output = I>> Iterator for IndexRange<I> {
         Some(curr)
     }
 }
-impl<I: Idx + Add<Output = I> + Sub<Output = I>> DoubleEndedIterator for IndexRange<I> {
+impl<I: Idx + Ord + Add<Output = I> + Sub<Output = I>> DoubleEndedIterator for IndexRange<I> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.start == self.end {
             return None;
@@ -438,7 +438,7 @@ impl<I: Idx + Add<Output = I> + Sub<Output = I>> DoubleEndedIterator for IndexRa
     }
 }
 
-impl<I: Idx + Add<Output = I>> Iterator for IndexRangeInclusive<I> {
+impl<I: Idx + Ord + Add<Output = I>> Iterator for IndexRangeInclusive<I> {
     type Item = I;
     fn next(&mut self) -> Option<I> {
         let curr = self.start;
@@ -453,7 +453,9 @@ impl<I: Idx + Add<Output = I>> Iterator for IndexRangeInclusive<I> {
         Some(curr)
     }
 }
-impl<I: Idx + Add<Output = I> + Sub<Output = I>> DoubleEndedIterator for IndexRangeInclusive<I> {
+impl<I: Idx + Ord + Add<Output = I> + Sub<Output = I>> DoubleEndedIterator
+    for IndexRangeInclusive<I>
+{
     fn next_back(&mut self) -> Option<Self::Item> {
         let curr = self.end;
         if self.start == curr {

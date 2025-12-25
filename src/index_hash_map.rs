@@ -524,7 +524,7 @@ impl<I, K, V, S> IndexHashMap<I, K, V, S> {
 
     pub fn get_index_entry(&mut self, index: I) -> Option<IndexedEntry<'_, I, K, V>>
     where
-        I: Idx,
+        I: Idx + Ord,
     {
         if index >= self.len_idx() {
             return None;
